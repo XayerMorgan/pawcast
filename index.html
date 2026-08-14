@@ -50,7 +50,6 @@
                 <circle cx="12" cy="12" r="3"/>
                 <line x1="12" y1="2" x2="12" y2="6"/>
                 <line x1="12" y1="18" x2="12" y2="22"/>
-                <line x1="2" y1="12" x2="6" y2="12"/>
                 <line x1="18" y1="12" x2="22" y2="12"/>
               </svg>
             </button>
@@ -79,12 +78,19 @@
       <button id="add-favorite-btn" class="chip-add-btn" title="Save current location">+ Add Favorite</button>
     </section>
 
-    <!-- Source Indicator -->
+    <!-- Source Indicator & Official Government Punch-Out Link -->
     <section class="source-bar">
       <div class="source-info">
         <span class="source-pulse green"></span>
-        <span class="source-text">Sources: <strong id="active-source-name">RainViewer Live Radar + Open-Meteo Engine</strong></span>
+        <span class="source-text">Sources: <strong id="active-source-name">RainViewer Radar + Open-Meteo Engine</strong></span>
+        
+        <!-- Official Government Forecast Punch-Out Button -->
+        <a id="nws-gov-link" href="https://forecast.weather.gov" target="_blank" rel="noopener" class="gov-punchout-link" title="Open official NOAA / National Weather Service government forecast for this location">
+          <span class="gov-icon">🏛️</span>
+          <span>NOAA / NWS Official Gov Forecast ↗</span>
+        </a>
       </div>
+
       <div class="source-selector">
         <label for="source-select">Aggregator:</label>
         <select id="source-select">
@@ -108,7 +114,7 @@
               <span id="current-date" class="date-str">Thursday, Aug 14</span>
             </div>
             <div class="temp-display-group">
-              <span id="weather-main-emoji" class="main-emoji">☀️</span>
+              <span id="weather-main-emoji" class="main-emoji" title="Current weather condition symbol">☀️</span>
               <span id="current-temp" class="main-temp">--°</span>
               <div class="high-low-col">
                 <span id="temp-high" class="high-tag">H: --°</span>
@@ -131,11 +137,11 @@
                 </div>
               </div>
               <div class="surface-compare">
-                <div class="surf-item">
+                <div class="surf-item" title="Estimated surface heat of blacktop/asphalt pavement under current sun & wind">
                   <span class="surf-name">Asphalt / Pavement</span>
                   <span id="asphalt-temp-val" class="surf-val">78°F</span>
                 </div>
-                <div class="surf-item">
+                <div class="surf-item" title="Cool natural grass ground surface temperature">
                   <span class="surf-name">Natural Grass</span>
                   <span id="grass-temp-val" class="surf-val green">72°F</span>
                 </div>
@@ -153,8 +159,8 @@
                 </div>
               </div>
               <div class="heat-meta-row">
-                <span>Feels Like: <strong id="feels-like-val">--°</strong></span>
-                <span>Humidity: <strong id="humidity-val">45%</strong></span>
+                <span title="Humidity-adjusted heat index">Feels Like: <strong id="feels-like-val">--°</strong></span>
+                <span title="Relative air humidity percentage">Humidity: <strong id="humidity-val">45%</strong></span>
               </div>
               <p id="heat-safety-desc" class="box-desc">Comfortable weather for exercise. Keep standard water available for your pet.</p>
             </div>
@@ -172,7 +178,7 @@
         </div>
       </section>
 
-      <!-- 2. FRONT & CENTER: 24-HOUR HOURLY FORECAST & TEMPERATURE TRENDS (PLACED ABOVE RADAR) -->
+      <!-- 2. FRONT & CENTER: 24-HOUR HOURLY FORECAST & TEMPERATURE TRENDS WITH SYMBOL TOOLTIPS -->
       <section class="card hourly-chart-card wide-card">
         <div class="card-header">
           <div class="header-title">
@@ -180,11 +186,11 @@
             <h2>Hourly Temperature, Rain & Paw Walk Trends</h2>
           </div>
           <div class="chart-legend">
-            <span class="legend-item"><span class="dot temp-dot"></span> Temp</span>
-            <span class="legend-item"><span class="dot pop-dot"></span> Rain %</span>
-            <span class="legend-item"><span class="dot safe-dot"></span> Safe Paws</span>
-            <span class="legend-item"><span class="dot warn-dot"></span> Caution</span>
-            <span class="legend-item"><span class="dot danger-dot"></span> Hazard</span>
+            <span class="legend-item" title="Hourly air temperature curve"><span class="dot temp-dot"></span> Temp</span>
+            <span class="legend-item" title="Hourly rain/snow probability percentage"><span class="dot pop-dot"></span> Rain %</span>
+            <span class="legend-item" title="Paw Safe: Sidewalks & grass are cool and comfortable"><span class="dot safe-dot"></span> Safe Paws</span>
+            <span class="legend-item" title="Paw Caution: Warm pavement (~105-125°F) or chilly ground"><span class="dot warn-dot"></span> Caution</span>
+            <span class="legend-item" title="Paw Hazard: Hot asphalt (>125°F) or freezing frostbite hazard"><span class="dot danger-dot"></span> Hazard</span>
           </div>
         </div>
 
@@ -193,11 +199,11 @@
           <svg id="hourly-svg" class="hourly-svg" viewBox="0 0 1000 200" preserveAspectRatio="none"></svg>
         </div>
 
-        <!-- Scrollable Hourly Cards -->
+        <!-- Scrollable Hourly Cards with Symbol Tooltips -->
         <div class="hourly-scroller" id="hourly-scroller"></div>
       </section>
 
-      <!-- 3. LIVE WEATHER RADAR CARD (BELOW TEMP TRENDS) -->
+      <!-- 3. LIVE WEATHER RADAR CARD -->
       <section class="card radar-card wide-card">
         <div class="card-header">
           <div class="header-title">
@@ -238,42 +244,42 @@
         </div>
 
         <div class="metrics-grid">
-          <div class="metric-item">
+          <div class="metric-item" title="Chance of precipitation in current hour">
             <span class="m-icon">🌧️</span>
             <div class="m-data">
               <span class="m-label">Precipitation</span>
               <span id="metric-pop" class="m-val">0%</span>
             </div>
           </div>
-          <div class="metric-item">
+          <div class="metric-item" title="Surface wind speed & cardinal direction">
             <span class="m-icon">💨</span>
             <div class="m-data">
               <span class="m-label">Wind</span>
               <span id="metric-wind" class="m-val">5 mph NW</span>
             </div>
           </div>
-          <div class="metric-item">
+          <div class="metric-item" title="Ultraviolet radiation intensity index">
             <span class="m-icon">☀️</span>
             <div class="m-data">
               <span class="m-label">UV Index</span>
               <span id="metric-uv" class="m-val">3 (Moderate)</span>
             </div>
           </div>
-          <div class="metric-item">
+          <div class="metric-item" title="Relative humidity percentage">
             <span class="m-icon">💧</span>
             <div class="m-data">
               <span class="m-label">Humidity</span>
               <span id="metric-humidity" class="m-val">45%</span>
             </div>
           </div>
-          <div class="metric-item">
+          <div class="metric-item" title="Dew point temperature where condensation forms">
             <span class="m-icon">🌡️</span>
             <div class="m-data">
               <span class="m-label">Dew Point</span>
               <span id="metric-dewpoint" class="m-val">52°F</span>
             </div>
           </div>
-          <div class="metric-item">
+          <div class="metric-item" title="Atmospheric barometric pressure">
             <span class="m-icon">⏲️</span>
             <div class="m-data">
               <span class="m-label">Pressure</span>

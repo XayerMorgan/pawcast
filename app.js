@@ -1,5 +1,5 @@
 /* ==========================================================================
-   PawCast JavaScript Application Engine (With High-Contrast Live Radar)
+   PawCast JavaScript Application Engine (With NOAA Punchout Link & Tooltips)
    ========================================================================== */
 
 (function () {
@@ -58,6 +58,7 @@
     addFavoriteBtn: document.getElementById('add-favorite-btn'),
     activeSourceName: document.getElementById('active-source-name'),
     sourceSelect: document.getElementById('source-select'),
+    nwsGovLink: document.getElementById('nws-gov-link'),
 
     // Hero Top Cards
     cityName: document.getElementById('city-name'),
@@ -175,11 +176,10 @@
     });
   }
 
-  // --- LIVE HIGH-CONTRAST RADAR MAP ENGINE ---
+  // --- LIVE RADAR MAP ENGINE ---
   function initLiveRadarMap() {
     if (!window.L || !el.radarMapEl) return;
 
-    // Initialize Leaflet map with dark theme CartoDB basemap tiles
     appState.radarMap = L.map(el.radarMapEl, {
       center: [appState.location.lat, appState.location.lon],
       zoom: 7,
@@ -187,7 +187,6 @@
       attributionControl: false
     });
 
-    // Dark Matter CartoDB Basemap
     L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
       maxZoom: 18,
       subdomains: 'abcd'
@@ -230,7 +229,6 @@
         if (layer) layer.setOpacity(i === index ? 0.85 : 0);
       });
     } else {
-      // Color scheme 2 = Vibrant Universal Doppler Colors
       const tileUrl = `https://tilecache.rainviewer.com${frame.path}/256/{z}/{x}/{y}/2/1_1.png`;
       const newLayer = L.tileLayer(tileUrl, {
         opacity: 0.85,
@@ -283,11 +281,19 @@
     }
   }
 
+  // --- WEATHER DATA FETCHING & GOVERNMENT PUNCH-OUT LINK UPDATE ---
   async function fetchWeatherData(loc) {
     el.cityName.textContent = loc.name;
     el.currentDate.textContent = new Date().toLocaleDateString('en-US', {
       weekday: 'long', month: 'short', day: 'numeric'
     });
+
+    // Update Official NOAA NWS Government Forecast Punch-Out Link Href
+    if (el.nwsGovLink) {
+      const govUrl = `https://forecast.weather.gov/MapClick.php?lat=${loc.lat.toFixed(4)}&lon=${loc.lon.toFixed(4)}`;
+      el.nwsGovLink.href = govUrl;
+      el.nwsGovLink.title = `Open official NOAA / NWS government forecast for ${loc.name} (${loc.lat.toFixed(2)}°, ${loc.lon.toFixed(2)}°)`;
+    }
 
     updateRadarCenter(loc.lat, loc.lon);
 
@@ -545,6 +551,7 @@
     el.tempLow.textContent = `L: ${lowDisp}°`;
     el.weatherConditionText.textContent = condition.label;
     el.weatherMainEmoji.textContent = condition.emoji;
+    el.weatherMainEmoji.title = `${condition.label}: ${condition.detail}`;
 
     const safety = calculateDualSafetyIndex(cur.tempC, cur.humidity, cur.windKmh, cur.isDay, cur.uv);
 
@@ -578,6 +585,7 @@
     updateSimulator();
   }
 
+  // --- RENDER HOURLY FORECAST WITH DETAILED HOVER TOOLTIPS ---
   function renderHourlyForecast(hourly) {
     const isImp = appState.units === 'imperial';
     el.hourlyScroller.innerHTML = '';
@@ -611,6 +619,11 @@
         rect.setAttribute('height', barH);
         rect.setAttribute('fill', 'rgba(59, 130, 246, 0.25)');
         rect.setAttribute('rx', 4);
+        
+        const titleEl = document.createElementNS('http://www.w3.org/2000/svg', 'title');
+        titleEl.textContent = `Precipitation Probability: ${p.pop}% chance of rain/snow`;
+        rect.appendChild(titleEl);
+        
         svg.appendChild(rect);
       }
     });
@@ -643,6 +656,11 @@
       circle.setAttribute('fill', dotColor);
       circle.setAttribute('stroke', '#0B0E14');
       circle.setAttribute('stroke-width', '2');
+
+      const circleTitle = document.createElementNS('http://www.w3.org/2000/svg', 'title');
+      circleTitle.textContent = `${Math.round(p.val)}°: ${p.safety.pawTitle} (Est. Asphalt: ${p.safety.surfaces.asphaltF}°F, Grass: ${p.safety.surfaces.grassF}°F)`;
+      circle.appendChild(circleTitle);
+
       svg.appendChild(circle);
 
       if (i % 2 === 0) {
@@ -666,13 +684,24 @@
       const overallStatus = saf.pawStatus === 'red' || saf.heatStatus === 'red' ? 'red' :
                             saf.pawStatus === 'yellow' || saf.heatStatus === 'yellow' ? 'yellow' : 'green';
 
+      let pawToolTipMeaning = '';
+      if (overallStatus === 'green') {
+        pawToolTipMeaning = `🐾 PAW SAFE: Ground surface is ~${saf.surfaces.asphaltF}°F. Sidewalks and grass are cool & safe for walks.`;
+      } else if (overallStatus === 'yellow') {
+        pawToolTipMeaning = `⚠️ PAW CAUTION: Asphalt surface is warm (~${saf.surfaces.asphaltF}°F). Prefer natural grass (~${saf.surfaces.grassF}°F) or limit walks to 15 mins.`;
+      } else {
+        pawToolTipMeaning = `🔥 PAW HAZARD: Hot asphalt (~${saf.surfaces.asphaltF}°F)! Severe paw burn risk in <60s. Use booties or stick strictly to grass.`;
+      }
+
       const card = document.createElement('div');
       card.className = 'hour-card';
+      card.title = `${timeStr} Forecast: ${cond.label}\nTemperature: ${tVal}° (${isImp ? '°F' : '°C'})\nRain Chance: ${h.pop}%\nUV Index: ${h.uv}\n${pawToolTipMeaning}`;
+      
       card.innerHTML = `
         <span class="hour-time">${timeStr}</span>
-        <span class="hour-emoji">${cond.emoji}</span>
-        <span class="hour-temp">${tVal}°</span>
-        <span class="hour-paw-badge ${overallStatus}">🐾 ${overallStatus.toUpperCase()}</span>
+        <span class="hour-emoji" title="${cond.label}: ${cond.detail}">${cond.emoji}</span>
+        <span class="hour-temp" title="Air Temperature: ${tVal}°">${tVal}°</span>
+        <span class="hour-paw-badge ${overallStatus}" title="${pawToolTipMeaning}">🐾 ${overallStatus.toUpperCase()}</span>
       `;
       el.hourlyScroller.appendChild(card);
     });
@@ -703,9 +732,10 @@
 
       const row = document.createElement('div');
       row.className = 'day-row';
+      row.title = `${dayName}: ${cond.label}. High: ${maxT}°, Low: ${minT}°. Rain Chance: ${d.pop}%. Paw Outlook: ${overallStatus.toUpperCase()}`;
       row.innerHTML = `
         <span class="day-name">${dayName}</span>
-        <span class="day-emoji">${cond.emoji}</span>
+        <span class="day-emoji" title="${cond.label}: ${cond.detail}">${cond.emoji}</span>
         <div class="temp-bar-container">
           <span class="day-low-text">${minT}°</span>
           <div class="temp-bar-bg">
@@ -713,8 +743,8 @@
           </div>
           <span class="day-high-text">${maxT}°</span>
         </div>
-        <span class="day-pop">🌧️ ${d.pop}%</span>
-        <span class="day-paw-status ${overallStatus}">🐾 ${overallStatus.toUpperCase()}</span>
+        <span class="day-pop" title="Precipitation Probability: ${d.pop}%">🌧️ ${d.pop}%</span>
+        <span class="day-paw-status ${overallStatus}" title="Dog Safety Rating: ${overallStatus.toUpperCase()}">🐾 ${overallStatus.toUpperCase()}</span>
       `;
       el.dailyList.appendChild(row);
     });
@@ -759,6 +789,7 @@
     displayWindows.forEach(w => {
       const card = document.createElement('div');
       card.className = `window-card ${w.status}`;
+      card.title = `Recommended Walk Window: ${w.timeStr} (${w.label})`;
       card.innerHTML = `
         <span class="window-time">${w.timeStr}</span>
         <span class="window-tag">${w.label}</span>
@@ -940,7 +971,7 @@
           return;
         }
         appState.location = fav;
-        saveJSON('pawcast_favorites', appState.favorites);
+        saveJSON('pawcast_location', fav);
         renderFavoriteChips();
         fetchWeatherData(fav);
       });
@@ -963,16 +994,16 @@
   }
 
   function getWeatherConditionInfo(code, isDay = true) {
-    if (code === 0) return { label: 'Clear Sky', emoji: isDay ? '☀️' : '🌙', theme: 'sunny' };
-    if (code === 1 || code === 2) return { label: 'Partly Cloudy', emoji: isDay ? '⛅' : '☁️', theme: 'sunny' };
-    if (code === 3) return { label: 'Overcast', emoji: '☁️', theme: 'rainy' };
-    if (code >= 45 && code <= 48) return { label: 'Foggy', emoji: '🌫️', theme: 'rainy' };
-    if (code >= 51 && code <= 67) return { label: 'Rain / Drizzle', emoji: '🌧️', theme: 'rainy' };
-    if (code >= 71 && code <= 77) return { label: 'Snow Flurries', emoji: '❄️', theme: 'snowy' };
-    if (code >= 80 && code <= 82) return { label: 'Rain Showers', emoji: '🌦️', theme: 'rainy' };
-    if (code >= 85 && code <= 86) return { label: 'Snow Showers', emoji: '🌨️', theme: 'snowy' };
-    if (code >= 95) return { label: 'Thunderstorm', emoji: '🌩️', theme: 'rainy' };
-    return { label: 'Fair Weather', emoji: '🌤️', theme: 'default' };
+    if (code === 0) return { label: 'Clear Sky', emoji: isDay ? '☀️' : '🌙', detail: 'Full solar exposure in daylight', theme: 'sunny' };
+    if (code === 1 || code === 2) return { label: 'Partly Cloudy', emoji: isDay ? '⛅' : '☁️', detail: 'Broken solar radiation & clouds', theme: 'sunny' };
+    if (code === 3) return { label: 'Overcast', emoji: '☁️', detail: 'Diffused light & full cloud cover', theme: 'rainy' };
+    if (code >= 45 && code <= 48) return { label: 'Foggy', emoji: '🌫️', detail: 'Reduced visibility & high humidity', theme: 'rainy' };
+    if (code >= 51 && code <= 67) return { label: 'Rain / Drizzle', emoji: '🌧️', detail: 'Slippery ground & wet paw hazard', theme: 'rainy' };
+    if (code >= 71 && code <= 77) return { label: 'Snow Flurries', emoji: '❄️', detail: 'Freezing ground & de-icing salt hazard', theme: 'snowy' };
+    if (code >= 80 && code <= 82) return { label: 'Rain Showers', emoji: '🌦️', detail: 'Passing rain showers', theme: 'rainy' };
+    if (code >= 85 && code <= 86) return { label: 'Snow Showers', emoji: '🌨️', detail: 'Snow accumulation hazard', theme: 'snowy' };
+    if (code >= 95) return { label: 'Thunderstorm', emoji: '🌩️', detail: 'Heavy rain, lightning & thunder noise anxiety', theme: 'rainy' };
+    return { label: 'Fair Weather', emoji: '🌤️', detail: 'Standard clear weather', theme: 'default' };
   }
 
   function degToCompass(num) {
