@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PawCast — Weather, Live Radar & Dog Safety Index</title>
+  <meta name="description" content="The ultimate weather app with live doppler radar maps, dog paw heat & cold safety metrics, pavement temperature calculation, hourly walk planners, and government data aggregation." />
+  <link rel="icon" href="pawcast_logo.png" type="image/png" />
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Leaflet CSS for Live Weather Radar -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body class="theme-default">
+
+  <!-- Background Atmosphere -->
+  <div id="bg-atmosphere" class="bg-atmosphere"></div>
+
+  <!-- App Wrapper -->
+  <div class="app-container">
+
+    <!-- Top Navigation Bar -->
+    <header class="top-nav">
+      <div class="brand">
+        <img src="pawcast_logo.png" alt="PawCast Logo" class="brand-logo" />
+        <div class="brand-text">
+          <h1>PawCast</h1>
+          <span class="tagline">Weather, Live Radar & Canine Safety</span>
+        </div>
+      </div>
+
+      <!-- Search & Quick Controls -->
+      <div class="search-and-controls">
+        <div class="search-box-wrapper">
+          <div class="search-box">
+            <svg class="search-icon" viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input type="text" id="location-input" placeholder="Search city or zip code..." autocomplete="off" />
+            <button id="geo-btn" class="icon-btn" title="Use current GPS location">
+              <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none">
+                <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 18a8 8 0 1 1 8-8 8 8 0 0 1-8 8z"/>
+                <circle cx="12" cy="12" r="3"/>
+                <line x1="12" y1="2" x2="12" y2="6"/>
+                <line x1="12" y1="18" x2="12" y2="22"/>
+                <line x1="2" y1="12" x2="6" y2="12"/>
+                <line x1="18" y1="12" x2="22" y2="12"/>
+              </svg>
+            </button>
+          </div>
+          <div id="search-results" class="search-results-dropdown hidden"></div>
+        </div>
+
+        <div class="nav-actions">
+          <div class="unit-toggle" id="unit-toggle" role="radiogroup" aria-label="Temperature Units">
+            <button id="unit-f" class="unit-btn active" data-unit="imperial">°F, mph</button>
+            <button id="unit-c" class="unit-btn" data-unit="metric">°C, km/h</button>
+          </div>
+
+          <button id="pet-profile-btn" class="pill-btn profile-btn">
+            <span class="btn-paw">🐾</span>
+            <span id="profile-btn-label">My Dog: Max</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Location Chips Bar -->
+    <section class="location-chips-bar" id="location-chips-bar">
+      <span class="chips-label">Favorites:</span>
+      <div id="favorite-chips" class="chips-container"></div>
+      <button id="add-favorite-btn" class="chip-add-btn" title="Save current location">+ Add Favorite</button>
+    </section>
+
+    <!-- Source Indicator -->
+    <section class="source-bar">
+      <div class="source-info">
+        <span class="source-pulse green"></span>
+        <span class="source-text">Sources: <strong id="active-source-name">RainViewer Live Radar + Open-Meteo Engine</strong></span>
+      </div>
+      <div class="source-selector">
+        <label for="source-select">Aggregator:</label>
+        <select id="source-select">
+          <option value="openmeteo">Open-Meteo (Global Best Match)</option>
+          <option value="nws">NOAA / NWS (US Government Source)</option>
+        </select>
+      </div>
+    </section>
+
+    <!-- MAIN DASHBOARD LAYOUT -->
+    <main class="dashboard-grid">
+
+      <!-- 1. HERO TOP ROW: WEATHER SNAPSHOT + DUAL SAFETY CARDS -->
+      <section class="card hero-main-card wide-card">
+        <div class="hero-top-row">
+          
+          <!-- Current Weather Core -->
+          <div class="weather-core">
+            <div class="location-meta">
+              <h2 id="city-name" class="city-name">Loading location...</h2>
+              <span id="current-date" class="date-str">Thursday, Aug 14</span>
+            </div>
+            <div class="temp-display-group">
+              <span id="weather-main-emoji" class="main-emoji">☀️</span>
+              <span id="current-temp" class="main-temp">--°</span>
+              <div class="high-low-col">
+                <span id="temp-high" class="high-tag">H: --°</span>
+                <span id="temp-low" class="low-tag">L: --°</span>
+                <span id="weather-condition-text" class="condition-badge">Clear Sky</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Dual Dog Safety Cards -->
+          <div class="safety-dual-container">
+            
+            <!-- Paw Surface Heat Card -->
+            <div class="safety-card-box" id="box-paw-safety">
+              <div class="box-header">
+                <span class="box-icon">🐾</span>
+                <div>
+                  <span class="box-label">Paw Surface Safety</span>
+                  <strong id="paw-status-title" class="box-title">SAFE ON ALL SURFACES</strong>
+                </div>
+              </div>
+              <div class="surface-compare">
+                <div class="surf-item">
+                  <span class="surf-name">Asphalt / Pavement</span>
+                  <span id="asphalt-temp-val" class="surf-val">78°F</span>
+                </div>
+                <div class="surf-item">
+                  <span class="surf-name">Natural Grass</span>
+                  <span id="grass-temp-val" class="surf-val green">72°F</span>
+                </div>
+              </div>
+              <p id="paw-safety-desc" class="box-desc">Ground surface is cool. Safe for long walks on all surfaces.</p>
+            </div>
+
+            <!-- Body Heatstroke & Breathing Card -->
+            <div class="safety-card-box" id="box-heat-safety">
+              <div class="box-header">
+                <span class="box-icon">🌡️</span>
+                <div>
+                  <span class="box-label">Heatstroke & Breathing Risk</span>
+                  <strong id="heat-status-title" class="box-title">LOW HEAT RISK</strong>
+                </div>
+              </div>
+              <div class="heat-meta-row">
+                <span>Feels Like: <strong id="feels-like-val">--°</strong></span>
+                <span>Humidity: <strong id="humidity-val">45%</strong></span>
+              </div>
+              <p id="heat-safety-desc" class="box-desc">Comfortable weather for exercise. Keep standard water available for your pet.</p>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Quick Best Walk Windows Bar -->
+        <div class="best-walk-strip">
+          <div class="strip-label">
+            <span class="icon">⏰</span>
+            <strong>Best Walk Windows Today:</strong>
+          </div>
+          <div id="walk-windows-grid" class="windows-inline-list"></div>
+        </div>
+      </section>
+
+      <!-- 2. FRONT & CENTER: 24-HOUR HOURLY FORECAST & TEMPERATURE TRENDS (PLACED ABOVE RADAR) -->
+      <section class="card hourly-chart-card wide-card">
+        <div class="card-header">
+          <div class="header-title">
+            <span class="card-badge font-accent">24-Hour Forecast & Walk Suitability</span>
+            <h2>Hourly Temperature, Rain & Paw Walk Trends</h2>
+          </div>
+          <div class="chart-legend">
+            <span class="legend-item"><span class="dot temp-dot"></span> Temp</span>
+            <span class="legend-item"><span class="dot pop-dot"></span> Rain %</span>
+            <span class="legend-item"><span class="dot safe-dot"></span> Safe Paws</span>
+            <span class="legend-item"><span class="dot warn-dot"></span> Caution</span>
+            <span class="legend-item"><span class="dot danger-dot"></span> Hazard</span>
+          </div>
+        </div>
+
+        <!-- Dynamic SVG Chart Canvas -->
+        <div class="svg-chart-container" id="svg-chart-container">
+          <svg id="hourly-svg" class="hourly-svg" viewBox="0 0 1000 200" preserveAspectRatio="none"></svg>
+        </div>
+
+        <!-- Scrollable Hourly Cards -->
+        <div class="hourly-scroller" id="hourly-scroller"></div>
+      </section>
+
+      <!-- 3. LIVE WEATHER RADAR CARD (BELOW TEMP TRENDS) -->
+      <section class="card radar-card wide-card">
+        <div class="card-header">
+          <div class="header-title">
+            <span class="card-badge">Real-Time Doppler</span>
+            <h2>Interactive Live Weather Radar & Storm Tracking</h2>
+          </div>
+          <div class="radar-controls">
+            <button id="radar-play-btn" class="pill-btn radar-btn">
+              <span id="radar-play-icon">▶</span> <span id="radar-play-text">Play Radar</span>
+            </button>
+            <span id="radar-timestamp" class="radar-time-tag">Live Feed: Synchronizing...</span>
+          </div>
+        </div>
+
+        <!-- Interactive Map Container -->
+        <div class="radar-map-wrapper">
+          <div id="radar-map" class="radar-map"></div>
+          <!-- High Contrast Legend Overlay -->
+          <div class="radar-legend">
+            <span class="leg-title">Precipitation:</span>
+            <div class="leg-bar">
+              <span class="leg-stop light">Light</span>
+              <span class="leg-stop mod">Moderate</span>
+              <span class="leg-stop heavy">Heavy</span>
+              <span class="leg-stop extreme">Severe</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 4. ATMOSPHERIC DETAILS -->
+      <section class="card current-metrics-card">
+        <div class="card-header">
+          <div class="header-title">
+            <span class="card-badge">Atmospheric Conditions</span>
+            <h2>Current Weather Details</h2>
+          </div>
+        </div>
+
+        <div class="metrics-grid">
+          <div class="metric-item">
+            <span class="m-icon">🌧️</span>
+            <div class="m-data">
+              <span class="m-label">Precipitation</span>
+              <span id="metric-pop" class="m-val">0%</span>
+            </div>
+          </div>
+          <div class="metric-item">
+            <span class="m-icon">💨</span>
+            <div class="m-data">
+              <span class="m-label">Wind</span>
+              <span id="metric-wind" class="m-val">5 mph NW</span>
+            </div>
+          </div>
+          <div class="metric-item">
+            <span class="m-icon">☀️</span>
+            <div class="m-data">
+              <span class="m-label">UV Index</span>
+              <span id="metric-uv" class="m-val">3 (Moderate)</span>
+            </div>
+          </div>
+          <div class="metric-item">
+            <span class="m-icon">💧</span>
+            <div class="m-data">
+              <span class="m-label">Humidity</span>
+              <span id="metric-humidity" class="m-val">45%</span>
+            </div>
+          </div>
+          <div class="metric-item">
+            <span class="m-icon">🌡️</span>
+            <div class="m-data">
+              <span class="m-label">Dew Point</span>
+              <span id="metric-dewpoint" class="m-val">52°F</span>
+            </div>
+          </div>
+          <div class="metric-item">
+            <span class="m-icon">⏲️</span>
+            <div class="m-data">
+              <span class="m-label">Pressure</span>
+              <span id="metric-pressure" class="m-val">1015 hPa</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 5. 7-DAY FORECAST -->
+      <section class="card daily-forecast-card">
+        <div class="card-header">
+          <div class="header-title">
+            <span class="card-badge">Weekly Outlook</span>
+            <h2>7-Day Paw & Weather Forecast</h2>
+          </div>
+        </div>
+
+        <div class="daily-list" id="daily-list"></div>
+      </section>
+
+      <!-- 6. SIMULATOR & 7-SECOND RULE CARD -->
+      <section class="card paw-calculator-card wide-card">
+        <div class="card-header">
+          <div class="header-title">
+            <span class="card-badge">Interactive Pavement Simulator</span>
+            <h2>Test Ground Surface Heat by Material</h2>
+          </div>
+        </div>
+
+        <div class="calc-grid">
+          <div class="calc-inputs">
+            <p class="calc-intro">Asphalt absorbs direct sunlight and can reach <strong>40°F to 60°F higher</strong> than air temperature! Compare surfaces below:</p>
+            
+            <div class="input-group">
+              <label for="sim-air-temp">Air Temperature: <span id="sim-air-val">87°F</span></label>
+              <input type="range" id="sim-air-temp" min="50" max="115" value="87" />
+            </div>
+
+            <div class="input-group">
+              <label for="sim-sun-condition">Sun Exposure:</label>
+              <select id="sim-sun-condition">
+                <option value="full-sun">Direct Full Sun (Maximum Solar Heat)</option>
+                <option value="partial-shade">Partial Shade / Cloud Cover</option>
+                <option value="full-shade">Full Shade / Night Time</option>
+              </select>
+            </div>
+
+            <div class="input-group">
+              <label for="sim-surface">Surface Type:</label>
+              <select id="sim-surface">
+                <option value="asphalt">Black Asphalt (Heaviest Heat Retention)</option>
+                <option value="concrete">Light Concrete</option>
+                <option value="grass">Natural Grass (Coolest & Safest)</option>
+                <option value="sand">Beach Sand</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="calc-result-box" id="calc-result-box">
+            <span class="res-label">Calculated Surface Temperature:</span>
+            <span id="sim-result-temp" class="res-temp">128°F</span>
+            <div id="sim-risk-badge" class="sim-badge yellow">⚠️ PAW HEAT CAUTION</div>
+            <p id="sim-time-limit" class="sim-time">Ground is hot on asphalt. Stick to grass or use breathable protective booties.</p>
+          </div>
+        </div>
+
+        <!-- 7-Second Rule Banner -->
+        <div class="seven-sec-box">
+          <div class="box-badge">✋ The 7-Second Rule</div>
+          <p>Press the back of your bare hand to the pavement for 7 seconds. If it's too hot for your hand, it's <strong>too hot for your dog's paws</strong>!</p>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+      <div class="footer-content">
+        <p><strong>PawCast</strong> — Aggregating data from RainViewer Live Doppler Radar, NOAA / NWS & Open-Meteo Meteorological Services.</p>
+        <p class="privacy-note">🔒 Privacy First: All pet preferences & custom locations are saved locally in your browser.</p>
+      </div>
+    </footer>
+
+  </div>
+
+  <!-- PET PROFILE MODAL -->
+  <div id="pet-modal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>🐾 Customize Pet Profile</h3>
+        <button id="close-modal-btn" class="icon-btn">&times;</button>
+      </div>
+      <form id="pet-profile-form" class="pet-form">
+        <div class="form-group">
+          <label for="dog-name">Dog Name:</label>
+          <input type="text" id="dog-name" value="Max" placeholder="e.g. Bella, Max, Luna" required />
+        </div>
+
+        <div class="form-group">
+          <label for="dog-size">Dog Size & Weight:</label>
+          <select id="dog-size">
+            <option value="small">Small / Toy (&lt; 20 lbs) — Sensitive to extreme temps</option>
+            <option value="medium" selected>Medium (20 - 50 lbs) — Standard heat endurance</option>
+            <option value="large">Large / Giant (&gt; 50 lbs) — Generates more body heat</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="dog-coat">Coat Type:</label>
+          <select id="dog-coat">
+            <option value="short">Short / Single Coat (e.g. Beagle, Boxer, Lab)</option>
+            <option value="double" selected>Thick / Double Coat (e.g. Husky, Golden, Shepherd)</option>
+            <option value="hairless">Hairless / Extremely Fine (High sun burn & cold risk)</option>
+            <option value="dark">Dark / Black Coat (Absorbs extra solar heat)</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="dog-snout">Snout Type (Breathing Risk):</label>
+          <select id="dog-snout">
+            <option value="normal" selected>Normal / Long Snout (Standard panting cooling)</option>
+            <option value="brachy">Flat-Faced / Brachycephalic (Bulldog, Pug, Frenchie) — High heatstroke hazard</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="dog-age">Age / Health Status:</label>
+          <select id="dog-age">
+            <option value="puppy">Puppy (&lt; 1 year)</option>
+            <option value="adult" selected>Adult (Healthy standard)</option>
+            <option value="senior">Senior / Special Care (&gt; 7 years)</option>
+          </select>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" id="cancel-modal-btn" class="btn secondary">Cancel</button>
+          <button type="submit" class="btn primary">Save Profile</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Leaflet JS CDN for Interactive Live Weather Radar -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script src="app.js"></script>
+</body>
+</html>
