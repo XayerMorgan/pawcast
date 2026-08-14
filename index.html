@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>PawCast — Weather, Live Radar & Dog Safety Index</title>
-  <meta name="description" content="The ultimate weather app with live doppler radar maps, dog paw heat & cold safety metrics, pavement temperature calculation, hourly walk planners, and government data aggregation." />
+  <meta name="description" content="The ultimate weather app with live doppler radar maps, dog paw heat & cold safety metrics, pavement temperature calculation, hourly walk planners, auto-refresh, and government data aggregation." />
   <link rel="icon" href="pawcast_logo.png" type="image/png" />
   
   <!-- Google Fonts -->
@@ -78,7 +78,7 @@
       <button id="add-favorite-btn" class="chip-add-btn" title="Save current location">+ Add Favorite</button>
     </section>
 
-    <!-- Source Indicator & Official Government Punch-Out Link -->
+    <!-- Source Indicator, Government Punch-Out Link & Auto-Refresh Control -->
     <section class="source-bar">
       <div class="source-info">
         <span class="source-pulse green"></span>
@@ -91,12 +91,34 @@
         </a>
       </div>
 
-      <div class="source-selector">
-        <label for="source-select">Aggregator:</label>
-        <select id="source-select">
-          <option value="openmeteo">Open-Meteo (Global Best Match)</option>
-          <option value="nws">NOAA / NWS (US Government Source)</option>
-        </select>
+      <div class="source-controls-right">
+        <!-- Auto-Refresh Selector & Countdown -->
+        <div class="auto-refresh-box">
+          <button id="refresh-now-btn" class="icon-btn refresh-icon-btn" title="Refresh weather & radar now">
+            <svg id="refresh-svg" viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none">
+              <polyline points="23 4 23 10 17 10"></polyline>
+              <polyline points="1 20 1 14 7 14"></polyline>
+              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+            </svg>
+          </button>
+          <label for="auto-refresh-select">Auto-Refresh:</label>
+          <select id="auto-refresh-select" title="Choose automatic data refresh interval">
+            <option value="5">Every 5 mins</option>
+            <option value="10" selected>Every 10 mins</option>
+            <option value="15">Every 15 mins</option>
+            <option value="30">Every 30 mins</option>
+            <option value="0">Off</option>
+          </select>
+          <span id="refresh-countdown" class="refresh-countdown-tag" title="Time remaining until next auto-update">Next: 10:00</span>
+        </div>
+
+        <div class="source-selector">
+          <label for="source-select">Aggregator:</label>
+          <select id="source-select">
+            <option value="openmeteo">Open-Meteo (Global Best Match)</option>
+            <option value="nws">NOAA / NWS (US Government Source)</option>
+          </select>
+        </div>
       </div>
     </section>
 

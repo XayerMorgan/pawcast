@@ -1,5 +1,5 @@
 /* ==========================================================================
-   PawCast JavaScript Application Engine (With NOAA Punchout Link & Tooltips)
+   PawCast JavaScript Application Engine (With Auto-Refresh & Live Countdown)
    ========================================================================== */
 
 (function () {
@@ -37,6 +37,11 @@
     weather: null,
     searchDebounce: null,
     
+    // Auto Refresh State
+    refreshIntervalMins: parseInt(localStorage.getItem('pawcast_refresh_interval') || '10', 10),
+    countdownSeconds: 600,
+    countdownTimer: null,
+
     // Live Radar State
     radarMap: null,
     radarLayers: [],
@@ -59,6 +64,11 @@
     activeSourceName: document.getElementById('active-source-name'),
     sourceSelect: document.getElementById('source-select'),
     nwsGovLink: document.getElementById('nws-gov-link'),
+
+    // Auto Refresh
+    autoRefreshSelect: document.getElementById('auto-refresh-select'),
+    refreshNowBtn: document.getElementById('refresh-now-btn'),
+    refreshCountdown: document.getElementById('refresh-countdown'),
 
     // Hero Top Cards
     cityName: document.getElementById('city-name'),
@@ -130,6 +140,7 @@
     updateUIPreferences();
     renderFavoriteChips();
     initLiveRadarMap();
+    initAutoRefreshSystem();
     fetchWeatherData(appState.location);
     initSimulator();
   }
@@ -174,6 +185,74 @@
         el.searchResults.classList.add('hidden');
       }
     });
+  }
+
+  // --- AUTO-REFRESH & COUNTDOWN TIMER SYSTEM ---
+  function initAutoRefreshSystem() {
+    if (el.autoRefreshSelect) {
+      el.autoRefreshSelect.value = appState.refreshIntervalMins.toString();
+      el.autoRefreshSelect.addEventListener('change', (e) => {
+        appState.refreshIntervalMins = parseInt(e.target.value, 10);
+        localStorage.setItem('pawcast_refresh_interval', appState.refreshIntervalMins);
+        resetAutoRefreshTimer();
+      });
+    }
+
+    if (el.refreshNowBtn) {
+      el.refreshNowBtn.addEventListener('click', () => {
+        triggerRefresh(true);
+      });
+    }
+
+    resetAutoRefreshTimer();
+  }
+
+  function resetAutoRefreshTimer() {
+    clearInterval(appState.countdownTimer);
+    
+    if (appState.refreshIntervalMins <= 0) {
+      el.refreshCountdown.textContent = 'Off';
+      return;
+    }
+
+    appState.countdownSeconds = appState.refreshIntervalMins * 60;
+    updateCountdownUI();
+
+    appState.countdownTimer = setInterval(() => {
+      appState.countdownSeconds--;
+      if (appState.countdownSeconds <= 0) {
+        triggerRefresh(false);
+      } else {
+        updateCountdownUI();
+      }
+    }, 1000);
+  }
+
+  function updateCountdownUI() {
+    if (appState.refreshIntervalMins <= 0) {
+      el.refreshCountdown.textContent = 'Off';
+      return;
+    }
+    const mins = Math.floor(appState.countdownSeconds / 60);
+    const secs = appState.countdownSeconds % 60;
+    const secStr = secs < 10 ? `0${secs}` : `${secs}`;
+    el.refreshCountdown.textContent = `Next: ${mins}:${secStr}`;
+  }
+
+  async function triggerRefresh(isManual = false) {
+    if (el.refreshNowBtn) {
+      el.refreshNowBtn.classList.add('spinning');
+      setTimeout(() => el.refreshNowBtn.classList.remove('spinning'), 1000);
+    }
+
+    try {
+      await fetchWeatherData(appState.location);
+      await fetchRadarFrames();
+    } catch (e) {
+      console.warn('Auto refresh error:', e);
+    }
+
+    resetAutoRefreshTimer();
   }
 
   // --- LIVE RADAR MAP ENGINE ---
@@ -281,14 +360,13 @@
     }
   }
 
-  // --- WEATHER DATA FETCHING & GOVERNMENT PUNCH-OUT LINK UPDATE ---
+  // --- WEATHER DATA FETCHING ---
   async function fetchWeatherData(loc) {
     el.cityName.textContent = loc.name;
     el.currentDate.textContent = new Date().toLocaleDateString('en-US', {
       weekday: 'long', month: 'short', day: 'numeric'
     });
 
-    // Update Official NOAA NWS Government Forecast Punch-Out Link Href
     if (el.nwsGovLink) {
       const govUrl = `https://forecast.weather.gov/MapClick.php?lat=${loc.lat.toFixed(4)}&lon=${loc.lon.toFixed(4)}`;
       el.nwsGovLink.href = govUrl;
@@ -585,7 +663,6 @@
     updateSimulator();
   }
 
-  // --- RENDER HOURLY FORECAST WITH DETAILED HOVER TOOLTIPS ---
   function renderHourlyForecast(hourly) {
     const isImp = appState.units === 'imperial';
     el.hourlyScroller.innerHTML = '';

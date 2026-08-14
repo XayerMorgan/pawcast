@@ -1,5 +1,5 @@
 /* ==========================================================================
-   PawCast CSS System - With Gov Forecast Link & Symbol Tooltip Overlays
+   PawCast CSS System - With Auto-Refresh & Live Countdown Timer
    ========================================================================== */
 
 :root {
@@ -121,7 +121,7 @@ body {
 .search-box input {
   background: none; border: none; outline: none; color: var(--text-main); font-size: 0.88rem; width: 100%;
 }
-.icon-btn { background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 4px; border-radius: 50%; }
+.icon-btn { background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 4px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
 
 .search-results-dropdown {
   position: absolute; top: calc(100% + 6px); left: 0; right: 0;
@@ -156,36 +156,44 @@ body {
 .loc-chip.active { background: rgba(56, 189, 248, 0.15); border-color: var(--accent-cyan); color: #FFF; }
 .chip-add-btn { background: none; border: 1px dashed var(--border-card); color: var(--text-dim); font-size: 0.75rem; padding: 3px 8px; border-radius: var(--radius-pill); cursor: pointer; }
 
-/* SOURCE BAR & GOVERNMENT PUNCH-OUT LINK */
+/* SOURCE BAR, GOVERNMENT LINK & AUTO-REFRESH CONTROLS */
 .source-bar {
   display: flex; align-items: center; justify-content: space-between;
   background: rgba(15, 23, 42, 0.55); border: 1px solid rgba(255, 255, 255, 0.06);
-  padding: 6px 14px; border-radius: var(--radius-md); margin-bottom: 16px; font-size: 0.78rem; color: var(--text-muted);
+  padding: 6px 14px; border-radius: var(--radius-md); margin-bottom: 16px; font-size: 0.78rem; color: var(--text-muted); flex-wrap: wrap; gap: 10px;
 }
 .source-info { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 .source-pulse { width: 8px; height: 8px; border-radius: 50%; background: var(--paw-green); box-shadow: 0 0 8px var(--paw-green); }
 
 .gov-punchout-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
+  display: inline-flex; align-items: center; gap: 6px;
   background: linear-gradient(135deg, rgba(56, 189, 248, 0.12), rgba(59, 130, 246, 0.18));
-  border: 1px solid rgba(56, 189, 248, 0.35);
-  color: var(--accent-cyan);
-  padding: 3px 10px;
-  border-radius: var(--radius-pill);
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-decoration: none;
-  transition: all 0.25s ease;
+  border: 1px solid rgba(56, 189, 248, 0.35); color: var(--accent-cyan);
+  padding: 3px 10px; border-radius: var(--radius-pill); font-size: 0.75rem; font-weight: 600; text-decoration: none; transition: all 0.25s ease;
 }
-
 .gov-punchout-link:hover {
   background: linear-gradient(135deg, rgba(56, 189, 248, 0.25), rgba(59, 130, 246, 0.35));
-  border-color: var(--accent-cyan);
-  color: #FFF;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(56, 189, 248, 0.25);
+  border-color: var(--accent-cyan); color: #FFF; transform: translateY(-1px);
+}
+
+.source-controls-right { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+
+.auto-refresh-box {
+  display: flex; align-items: center; gap: 6px;
+  background: rgba(11, 14, 20, 0.6); border: 1px solid var(--border-card);
+  padding: 3px 10px; border-radius: var(--radius-pill); font-size: 0.75rem;
+}
+.auto-refresh-box label { color: var(--text-muted); font-weight: 600; }
+.auto-refresh-box select {
+  background: none; border: none; color: var(--accent-cyan); font-weight: 700; font-size: 0.75rem; outline: none; cursor: pointer;
+}
+.refresh-icon-btn { color: var(--accent-cyan); transition: transform 0.3s ease; }
+.refresh-icon-btn.spinning svg { animation: spin 0.8s linear infinite; }
+@keyframes spin { 100% { transform: rotate(360deg); } }
+
+.refresh-countdown-tag {
+  font-size: 0.7rem; font-weight: 600; color: var(--text-dim); background: rgba(255, 255, 255, 0.05);
+  padding: 2px 6px; border-radius: var(--radius-pill); white-space: nowrap;
 }
 
 .source-selector select { background: rgba(11, 14, 20, 0.8); border: 1px solid var(--border-card); color: var(--text-main); border-radius: var(--radius-sm); padding: 2px 6px; font-size: 0.75rem; }
@@ -210,11 +218,7 @@ body {
 }
 
 .hero-top-row {
-  display: grid;
-  grid-template-columns: 320px 1fr;
-  gap: 24px;
-  margin-bottom: 16px;
-  align-items: center;
+  display: grid; grid-template-columns: 320px 1fr; gap: 24px; margin-bottom: 16px; align-items: center;
 }
 
 .city-name { font-family: var(--font-heading); font-size: 1.8rem; font-weight: 800; line-height: 1.1; }
@@ -319,7 +323,7 @@ body {
 .leg-stop.heavy { background: #FFD800; }
 .leg-stop.extreme { background: #FF003C; }
 
-/* HOURLY SVG TREND CHART & SYMBOL TOOLTIP OVERLAYS */
+/* HOURLY SVG TREND CHART */
 .chart-legend { display: flex; gap: 12px; font-size: 0.72rem; color: var(--text-muted); }
 .legend-item { display: flex; align-items: center; gap: 4px; cursor: help; }
 .dot { width: 8px; height: 8px; border-radius: 50%; }
@@ -344,10 +348,7 @@ body {
 }
 
 .hour-card:hover {
-  transform: translateY(-3px);
-  background: rgba(28, 35, 51, 0.9);
-  border-color: var(--accent-cyan);
-  box-shadow: 0 6px 16px rgba(0,0,0,0.5);
+  transform: translateY(-3px); background: rgba(28, 35, 51, 0.9); border-color: var(--accent-cyan); box-shadow: 0 6px 16px rgba(0,0,0,0.5);
 }
 
 .hour-time { font-size: 0.75rem; color: var(--text-muted); }
