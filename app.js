@@ -1,5 +1,5 @@
 /* ==========================================================================
-   PawCast JavaScript Application Engine (With Auto-Refresh & Live Countdown)
+   PawCast JavaScript Application Engine (With Timestamp-Based Auto-Refresh)
    ========================================================================== */
 
 (function () {
@@ -37,10 +37,11 @@
     weather: null,
     searchDebounce: null,
     
-    // Auto Refresh State
+    // Auto Refresh State (Timestamp-Based)
     refreshIntervalMins: parseInt(localStorage.getItem('pawcast_refresh_interval') || '10', 10),
-    countdownSeconds: 600,
+    nextRefreshTimestamp: Date.now() + (10 * 60 * 1000),
     countdownTimer: null,
+    isRefreshing: false,
 
     // Live Radar State
     radarMap: null,
@@ -180,6 +181,13 @@
 
     el.radarPlayBtn.addEventListener('click', toggleRadarAnimation);
 
+    // Tab Focus & Visibility Change Listener (Auto-Refresh on return)
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden && appState.refreshIntervalMins > 0) {
+        checkAndExecuteAutoRefresh();
+      }
+    });
+
     document.addEventListener('click', (e) => {
       if (!el.locationInput.contains(e.target) && !el.searchResults.contains(e.target)) {
         el.searchResults.classList.add('hidden');
@@ -187,7 +195,7 @@
     });
   }
 
-  // --- AUTO-REFRESH & COUNTDOWN TIMER SYSTEM ---
+  // --- TIMESTAMP-BASED ACCURATE AUTO-REFRESH SYSTEM ---
   function initAutoRefreshSystem() {
     if (el.autoRefreshSelect) {
       el.autoRefreshSelect.value = appState.refreshIntervalMins.toString();
@@ -211,38 +219,57 @@
     clearInterval(appState.countdownTimer);
     
     if (appState.refreshIntervalMins <= 0) {
-      el.refreshCountdown.textContent = 'Off';
+      if (el.refreshCountdown) el.refreshCountdown.textContent = 'Off';
       return;
     }
 
-    appState.countdownSeconds = appState.refreshIntervalMins * 60;
+    // Set next refresh target timestamp
+    appState.nextRefreshTimestamp = Date.now() + (appState.refreshIntervalMins * 60 * 1000);
     updateCountdownUI();
 
     appState.countdownTimer = setInterval(() => {
-      appState.countdownSeconds--;
-      if (appState.countdownSeconds <= 0) {
-        triggerRefresh(false);
-      } else {
-        updateCountdownUI();
-      }
+      checkAndExecuteAutoRefresh();
     }, 1000);
   }
 
+  function checkAndExecuteAutoRefresh() {
+    if (appState.refreshIntervalMins <= 0 || appState.isRefreshing) return;
+
+    const remainingMs = appState.nextRefreshTimestamp - Date.now();
+    if (remainingMs <= 0) {
+      triggerRefresh(false);
+    } else {
+      updateCountdownUI();
+    }
+  }
+
   function updateCountdownUI() {
+    if (!el.refreshCountdown) return;
     if (appState.refreshIntervalMins <= 0) {
       el.refreshCountdown.textContent = 'Off';
       return;
     }
-    const mins = Math.floor(appState.countdownSeconds / 60);
-    const secs = appState.countdownSeconds % 60;
+
+    const remainingMs = Math.max(0, appState.nextRefreshTimestamp - Date.now());
+    const totalSecs = Math.floor(remainingMs / 1000);
+    const mins = Math.floor(totalSecs / 60);
+    const secs = totalSecs % 60;
     const secStr = secs < 10 ? `0${secs}` : `${secs}`;
+
     el.refreshCountdown.textContent = `Next: ${mins}:${secStr}`;
   }
 
   async function triggerRefresh(isManual = false) {
+    if (appState.isRefreshing) return;
+    appState.isRefreshing = true;
+
     if (el.refreshNowBtn) {
       el.refreshNowBtn.classList.add('spinning');
-      setTimeout(() => el.refreshNowBtn.classList.remove('spinning'), 1000);
+      setTimeout(() => el.refreshNowBtn.classList.remove('spinning'), 1200);
+    }
+
+    if (el.refreshCountdown) {
+      el.refreshCountdown.textContent = 'Updating...';
     }
 
     try {
@@ -250,9 +277,10 @@
       await fetchRadarFrames();
     } catch (e) {
       console.warn('Auto refresh error:', e);
+    } finally {
+      appState.isRefreshing = false;
+      resetAutoRefreshTimer();
     }
-
-    resetAutoRefreshTimer();
   }
 
   // --- LIVE RADAR MAP ENGINE ---
