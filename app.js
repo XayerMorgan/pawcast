@@ -28,6 +28,11 @@
     { name: 'Los Angeles', country: 'United States', lat: 34.0522, lon: -118.2437 }
   ];
 
+  // RainViewer radar tiles support zoom 0–7; 7 matches the working default view.
+  const DEFAULT_RADAR_ZOOM = 7;
+  const MIN_RADAR_ZOOM = 3;
+  const MAX_RADAR_ZOOM = 7;
+
   let appState = {
     location: loadJSON('pawcast_location', DEFAULT_LOCATION),
     units: localStorage.getItem('pawcast_units') || 'imperial',
@@ -100,6 +105,7 @@
     radarPlayBtn: document.getElementById('radar-play-btn'),
     radarPlayIcon: document.getElementById('radar-play-icon'),
     radarPlayText: document.getElementById('radar-play-text'),
+    radarZoomLevel: document.getElementById('radar-zoom-level'),
     radarTimestamp: document.getElementById('radar-timestamp'),
 
     // Hourly & Daily
@@ -289,17 +295,37 @@
 
     appState.radarMap = L.map(el.radarMapEl, {
       center: [appState.location.lat, appState.location.lon],
-      zoom: 7,
+      zoom: DEFAULT_RADAR_ZOOM,
+      minZoom: MIN_RADAR_ZOOM,
+      maxZoom: MAX_RADAR_ZOOM,
       zoomControl: true,
       attributionControl: false
     });
 
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-      maxZoom: 18,
-      subdomains: 'abcd'
+    // Free dark basemap (no API key) — Esri World Dark Gray + labels
+    // Cap tile maxZoom to RainViewer's supported range so we never land on "Zoom level not supported"
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
+      maxZoom: MAX_RADAR_ZOOM,
+      minZoom: MIN_RADAR_ZOOM,
+      attribution: '&copy; Esri, &copy; OpenStreetMap contributors'
+    }).addTo(appState.radarMap);
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}', {
+      maxZoom: MAX_RADAR_ZOOM,
+      minZoom: MIN_RADAR_ZOOM,
+      opacity: 0.9
     }).addTo(appState.radarMap);
 
+    appState.radarMap.on('zoom zoomend', updateRadarZoomTracker);
+    updateRadarZoomTracker();
+
     fetchRadarFrames();
+  }
+
+  function updateRadarZoomTracker() {
+    if (!el.radarZoomLevel || !appState.radarMap) return;
+    const z = appState.radarMap.getZoom();
+    el.radarZoomLevel.textContent = `Zoom ${z}`;
+    el.radarZoomLevel.title = `Current map zoom: ${z} (radar supports ${MIN_RADAR_ZOOM}–${MAX_RADAR_ZOOM}; default ${DEFAULT_RADAR_ZOOM})`;
   }
 
   async function fetchRadarFrames() {
@@ -339,7 +365,9 @@
       const tileUrl = `https://tilecache.rainviewer.com${frame.path}/256/{z}/{x}/{y}/2/1_1.png`;
       const newLayer = L.tileLayer(tileUrl, {
         opacity: 0.85,
-        tileSize: 256
+        tileSize: 256,
+        minZoom: MIN_RADAR_ZOOM,
+        maxZoom: MAX_RADAR_ZOOM
       });
       appState.radarLayers[index] = newLayer;
       newLayer.addTo(appState.radarMap);
@@ -384,7 +412,13 @@
 
   function updateRadarCenter(lat, lon) {
     if (appState.radarMap) {
-      appState.radarMap.setView([lat, lon], 8);
+      // Keep the working default zoom (7); do not jump to unsupported levels
+      const zoom = Math.min(
+        Math.max(appState.radarMap.getZoom() || DEFAULT_RADAR_ZOOM, MIN_RADAR_ZOOM),
+        MAX_RADAR_ZOOM
+      );
+      appState.radarMap.setView([lat, lon], zoom);
+      updateRadarZoomTracker();
     }
   }
 
