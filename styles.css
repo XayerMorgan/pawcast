@@ -1622,6 +1622,7 @@ body.is-night-mode .visual-backdrop {
 .allergy-header-badges {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 10px;
 }
 
@@ -1629,6 +1630,38 @@ body.is-night-mode .visual-backdrop {
   color: var(--signal-sky);
   border-color: rgba(56, 189, 248, 0.35);
   background: rgba(56, 189, 248, 0.1);
+}
+
+.allergen-help-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-color: rgba(234, 88, 12, 0.45);
+}
+
+.allergen-help-btn.active {
+  background: var(--signal-amber);
+  color: #FFFFFF;
+  border-color: var(--signal-amber);
+}
+
+.help-q-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: rgba(234, 88, 12, 0.22);
+  color: var(--signal-amber);
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  font-weight: 700;
+}
+
+.allergen-help-btn.active .help-q-icon {
+  background: rgba(255, 255, 255, 0.25);
+  color: #FFFFFF;
 }
 
 .allergy-monitor-grid {
@@ -1662,9 +1695,91 @@ body.is-night-mode .visual-backdrop {
   font-size: 0.7rem;
 }
 
+.allergen-name-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .allergen-name {
   color: var(--ink-secondary);
   font-weight: 600;
+}
+
+.inline-help-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 1px solid var(--border-strong);
+  background: var(--panel-bg);
+  color: var(--signal-amber);
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  transition: all 0.16s ease;
+}
+
+.inline-help-trigger.sm {
+  width: 14px;
+  height: 14px;
+  font-size: 0.56rem;
+}
+
+.inline-help-trigger:hover,
+.inline-help-trigger:focus-visible {
+  background: var(--signal-amber);
+  color: #FFFFFF;
+  border-color: var(--signal-amber);
+  transform: scale(1.1);
+}
+
+/* Tactile Floating Help Popover on Hover / Focus */
+.help-popover {
+  position: absolute;
+  left: 0;
+  bottom: calc(100% + 8px);
+  width: 290px;
+  background: #14171A;
+  color: #F4F1EA;
+  border: 1px solid var(--signal-amber);
+  border-radius: var(--radius-xs);
+  padding: 10px 12px;
+  font-family: var(--font-sans);
+  font-size: 0.74rem;
+  font-weight: 400;
+  line-height: 1.45;
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.78);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(4px);
+  transition: opacity 0.18s ease, transform 0.18s ease, visibility 0.18s;
+  pointer-events: none;
+  z-index: 80;
+}
+
+.help-popover strong {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  color: var(--signal-amber);
+  letter-spacing: 0.04em;
+  margin-bottom: 4px;
+}
+
+.allergen-name-wrap:hover .help-popover,
+.allergen-name-wrap:focus-within .help-popover,
+.aqi-cell.has-help:hover .help-popover,
+.aqi-cell.has-help:focus-within .help-popover {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
 }
 
 .allergen-level {
@@ -1719,12 +1834,26 @@ body.is-night-mode .visual-backdrop {
 }
 
 .aqi-cell {
+  position: relative;
   background: var(--panel-bg);
   border: 1px solid var(--border-hairline);
   border-radius: var(--radius-xs);
   padding: 8px 10px;
   display: flex;
   flex-direction: column;
+}
+
+.aqi-cell.has-help .help-popover {
+  left: auto;
+  right: 0;
+  width: 255px;
+}
+
+.aqi-cell-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 4px;
 }
 
 .aqi-label {
@@ -1779,6 +1908,182 @@ body.is-night-mode .visual-backdrop {
   border: 1px solid var(--border-hairline);
   padding: 3px 8px;
   border-radius: var(--radius-xs);
+  cursor: help;
+}
+
+/* ==========================================================================
+   EXPANDABLE ALLERGEN & PARTICULATE FIELD MANUAL DRAWER
+   ========================================================================== */
+.allergen-help-drawer {
+  margin-top: 20px;
+  padding-top: 18px;
+  border-top: 1px dashed var(--border-strong);
+  animation: drawerSlideIn 0.24s ease-out;
+}
+
+.allergen-help-drawer.hidden {
+  display: none;
+}
+
+@keyframes drawerSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.help-drawer-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.help-drawer-title {
+  font-family: var(--font-serif);
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--ink-primary);
+}
+
+.help-drawer-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.help-filter-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+
+.help-tab {
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  padding: 6px 12px;
+  border-radius: var(--radius-xs);
+  border: 1px solid var(--border-strong);
+  background: var(--panel-recessed);
+  color: var(--ink-secondary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.help-tab:hover {
+  border-color: var(--signal-amber);
+  color: var(--ink-primary);
+}
+
+.help-tab.active {
+  background: var(--signal-amber);
+  color: #FFFFFF;
+  border-color: var(--signal-amber);
+}
+
+.allergen-definitions-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+
+.allergen-def-card {
+  background: var(--panel-recessed);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-sm);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 10px;
+  transition: border-color 0.25s ease, box-shadow 0.25s ease, transform 0.2s ease;
+}
+
+.allergen-def-card.hidden-by-filter {
+  display: none;
+}
+
+.allergen-def-card.spotlight-card {
+  border-color: var(--signal-amber);
+  box-shadow: 0 0 0 2px rgba(234, 88, 12, 0.35), 0 10px 24px rgba(0, 0, 0, 0.35);
+  transform: translateY(-2px);
+}
+
+.def-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 6px;
+}
+
+.def-badge {
+  font-family: var(--font-mono);
+  font-size: 0.56rem;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 3px;
+  letter-spacing: 0.05em;
+}
+
+.def-badge.bio {
+  background: rgba(34, 197, 94, 0.14);
+  color: var(--signal-sage);
+  border: 1px solid rgba(34, 197, 94, 0.35);
+}
+
+.def-badge.aqi-tag {
+  background: rgba(56, 189, 248, 0.14);
+  color: var(--signal-sky);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+}
+
+.def-season {
+  font-family: var(--font-mono);
+  font-size: 0.55rem;
+  color: var(--ink-muted);
+}
+
+.def-title {
+  font-family: var(--font-serif);
+  font-size: 0.96rem;
+  font-weight: 700;
+  color: var(--ink-primary);
+  line-height: 1.25;
+}
+
+.def-body {
+  font-size: 0.76rem;
+  color: var(--ink-secondary);
+  line-height: 1.48;
+}
+
+.def-clinical-meta {
+  background: var(--panel-bg);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-xs);
+  padding: 8px 10px;
+  font-size: 0.7rem;
+  color: var(--ink-secondary);
+  line-height: 1.4;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.def-clinical-meta strong {
+  color: var(--ink-primary);
+  font-family: var(--font-mono);
+  font-size: 0.63rem;
 }
 
 /* ==========================================================================
@@ -1788,6 +2093,9 @@ body.is-night-mode .visual-backdrop {
   .hero-station-grid,
   .allergy-monitor-grid {
     grid-template-columns: 1fr;
+  }
+  .allergen-definitions-grid {
+    grid-template-columns: repeat(2, 1fr);
   }
   .weekly-top-grid {
     grid-template-columns: repeat(4, 1fr);
@@ -1812,7 +2120,8 @@ body.is-night-mode .visual-backdrop {
 }
 
 @media (max-width: 720px) {
-  .telemetry-gauges-col {
+  .telemetry-gauges-col,
+  .allergen-definitions-grid {
     grid-template-columns: 1fr;
   }
   .weekly-top-grid,
@@ -1821,3 +2130,4 @@ body.is-night-mode .visual-backdrop {
     grid-template-columns: repeat(2, 1fr);
   }
 }
+

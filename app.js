@@ -203,6 +203,10 @@
     allergyVerdictTitle: document.getElementById('allergy-verdict-title'),
     allergyVerdictDesc: document.getElementById('allergy-verdict-desc'),
     symptomWatchRow: document.getElementById('symptom-watch-row'),
+    allergenHelpToggleBtn: document.getElementById('allergen-help-toggle-btn'),
+    allergenHelpBtnText: document.getElementById('allergen-help-btn-text'),
+    allergenHelpDrawer: document.getElementById('allergen-help-drawer'),
+    closeAllergenHelpBtn: document.getElementById('close-allergen-help-btn'),
 
     // Atmospheric Sensor Dials
     metricPop: document.getElementById('metric-pop'),
@@ -318,6 +322,37 @@
     el.cancelModalBtn.addEventListener('click', closePetModal);
     el.petProfileForm.addEventListener('submit', handleSavePetProfile);
 
+    // Allergen & Particulate Help System Listeners
+    if (el.allergenHelpToggleBtn) {
+      el.allergenHelpToggleBtn.addEventListener('click', () => {
+        playHardwareClick(680);
+        toggleAllergenHelpDrawer();
+      });
+    }
+
+    if (el.closeAllergenHelpBtn) {
+      el.closeAllergenHelpBtn.addEventListener('click', () => {
+        playHardwareClick(560);
+        toggleAllergenHelpDrawer(false);
+      });
+    }
+
+    document.querySelectorAll('.inline-help-trigger').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        playHardwareClick(740);
+        const targetKey = btn.dataset.helpTarget;
+        openAndSpotlightAllergenDef(targetKey);
+      });
+    });
+
+    document.querySelectorAll('.help-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        playHardwareClick(640);
+        filterAllergenDefinitions(tab.dataset.helpFilter);
+      });
+    });
+
     el.radarPlayBtn.addEventListener('click', () => {
       playHardwareClick(760);
       toggleRadarAnimation();
@@ -332,6 +367,62 @@
     document.addEventListener('click', (e) => {
       if (!el.locationInput.contains(e.target) && !el.searchResults.contains(e.target)) {
         el.searchResults.classList.add('hidden');
+      }
+    });
+  }
+
+  function toggleAllergenHelpDrawer(forceOpen) {
+    if (!el.allergenHelpDrawer) return;
+    const isCurrentlyHidden = el.allergenHelpDrawer.classList.contains('hidden');
+    const shouldOpen = typeof forceOpen === 'boolean' ? forceOpen : isCurrentlyHidden;
+
+    if (shouldOpen) {
+      el.allergenHelpDrawer.classList.remove('hidden');
+      el.allergenHelpDrawer.setAttribute('aria-hidden', 'false');
+      if (el.allergenHelpToggleBtn) {
+        el.allergenHelpToggleBtn.classList.add('active');
+        el.allergenHelpToggleBtn.setAttribute('aria-expanded', 'true');
+      }
+      if (el.allergenHelpBtnText) {
+        el.allergenHelpBtnText.textContent = 'HIDE GUIDE';
+      }
+    } else {
+      el.allergenHelpDrawer.classList.add('hidden');
+      el.allergenHelpDrawer.setAttribute('aria-hidden', 'true');
+      if (el.allergenHelpToggleBtn) {
+        el.allergenHelpToggleBtn.classList.remove('active');
+        el.allergenHelpToggleBtn.setAttribute('aria-expanded', 'false');
+      }
+      if (el.allergenHelpBtnText) {
+        el.allergenHelpBtnText.textContent = 'ALLERGEN GUIDE';
+      }
+      document.querySelectorAll('.allergen-def-card').forEach(c => c.classList.remove('spotlight-card'));
+    }
+  }
+
+  function filterAllergenDefinitions(category) {
+    document.querySelectorAll('.help-tab').forEach(t => {
+      t.classList.toggle('active', t.dataset.helpFilter === category);
+    });
+
+    document.querySelectorAll('.allergen-def-card').forEach(card => {
+      if (category === 'all' || card.dataset.defCat === category) {
+        card.classList.remove('hidden-by-filter');
+      } else {
+        card.classList.add('hidden-by-filter');
+      }
+    });
+  }
+
+  function openAndSpotlightAllergenDef(defKey) {
+    toggleAllergenHelpDrawer(true);
+    filterAllergenDefinitions('all');
+
+    document.querySelectorAll('.allergen-def-card').forEach(card => {
+      const isMatch = card.dataset.defId === defKey;
+      card.classList.toggle('spotlight-card', isMatch);
+      if (isMatch) {
+        card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
       }
     });
   }

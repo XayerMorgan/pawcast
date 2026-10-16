@@ -340,15 +340,26 @@
           <div class="allergy-header-badges">
             <span id="aqi-badge" class="mono-tag aqi-pill">US AQI: --</span>
             <span id="allergy-overall-badge" class="status-pill">ALLERGY RISK: LOW</span>
+            <button id="allergen-help-toggle-btn" class="hw-pill-switch allergen-help-btn" type="button" aria-expanded="false" title="Open comprehensive definitions and veterinary guidance for all pollen, mold, and AQI categories">
+              <span class="help-q-icon">?</span>
+              <span id="allergen-help-btn-text">ALLERGEN GUIDE</span>
+            </button>
           </div>
         </div>
 
         <div class="allergy-monitor-grid">
           <!-- Left: 4-Channel Aeroallergen Spectrum Bars -->
           <div class="allergen-channels">
-            <div class="allergen-row" title="Poaceae grass pollen load — primary trigger for canine paw-licking &amp; belly rash">
+            <div class="allergen-row" data-allergen-help="grass">
               <div class="allergen-meta">
-                <span class="allergen-name">GRASS / TURF POLLEN</span>
+                <span class="allergen-name-wrap">
+                  <span class="allergen-name">GRASS / TURF POLLEN</span>
+                  <button type="button" class="inline-help-trigger" data-help-target="grass" aria-label="Grass pollen definition">?</button>
+                  <span class="help-popover" role="tooltip">
+                    <strong>GRASS / TURF POLLEN (Poaceae)</strong>
+                    Released by lawn grasses (Bermuda, Kentucky Bluegrass, Timothy, Rye). Unlike humans who inhale it, dogs absorb grass allergens directly through bare skin on paw pads, interdigital webbing, and the underbelly while walking.
+                  </span>
+                </span>
                 <strong id="pollen-grass-val" class="allergen-level">LOW (1.8 / 10)</strong>
               </div>
               <div class="allergen-bar-track">
@@ -356,9 +367,16 @@
               </div>
             </div>
 
-            <div class="allergen-row" title="Deciduous &amp; coniferous tree pollen (Oak, Birch, Alder, Pine)">
+            <div class="allergen-row" data-allergen-help="tree">
               <div class="allergen-meta">
-                <span class="allergen-name">ARBOREAL / TREE POLLEN</span>
+                <span class="allergen-name-wrap">
+                  <span class="allergen-name">ARBOREAL / TREE POLLEN</span>
+                  <button type="button" class="inline-help-trigger" data-help-target="tree" aria-label="Tree pollen definition">?</button>
+                  <span class="help-popover" role="tooltip">
+                    <strong>ARBOREAL / TREE POLLEN (Oak, Birch, Alder, Pine)</strong>
+                    Fine, wind-dispersed spring pollen capable of traveling miles. Easily traps inside dense canine topcoats and eyelashes, triggering watery eyes (conjunctivitis), ear canal inflammation (otitis), and facial rubbing.
+                  </span>
+                </span>
                 <strong id="pollen-tree-val" class="allergen-level">LOW (1.2 / 10)</strong>
               </div>
               <div class="allergen-bar-track">
@@ -366,9 +384,16 @@
               </div>
             </div>
 
-            <div class="allergen-row" title="Late-summer &amp; autumn herbaceous weeds (Ragweed, Mugwort, Nettle)">
+            <div class="allergen-row" data-allergen-help="weed">
               <div class="allergen-meta">
-                <span class="allergen-name">RAGWEED &amp; HERBACEOUS WEEDS</span>
+                <span class="allergen-name-wrap">
+                  <span class="allergen-name">RAGWEED &amp; HERBACEOUS WEEDS</span>
+                  <button type="button" class="inline-help-trigger" data-help-target="weed" aria-label="Ragweed and weed pollen definition">?</button>
+                  <span class="help-popover" role="tooltip">
+                    <strong>RAGWEED &amp; HERBACEOUS WEEDS (Ambrosia, Mugwort, Nettle)</strong>
+                    Late-summer to autumn weeds producing spiky, microscopic pollen grains that cling stubbornly to fur around the muzzle and paws. A primary trigger for intense late-season canine skin itching (pruritus) and reverse sneezing.
+                  </span>
+                </span>
                 <strong id="pollen-weed-val" class="allergen-level">MODERATE (4.8 / 10)</strong>
               </div>
               <div class="allergen-bar-track">
@@ -376,9 +401,16 @@
               </div>
             </div>
 
-            <div class="allergen-row" title="Fungal spores (Alternaria, Cladosporium) driven by humidity, damp leaves &amp; dew point">
+            <div class="allergen-row" data-allergen-help="mold">
               <div class="allergen-meta">
-                <span class="allergen-name">FUNGAL MOLD &amp; DAMP SPORES</span>
+                <span class="allergen-name-wrap">
+                  <span class="allergen-name">FUNGAL MOLD &amp; DAMP SPORES</span>
+                  <button type="button" class="inline-help-trigger" data-help-target="mold" aria-label="Fungal mold spores definition">?</button>
+                  <span class="help-popover" role="tooltip">
+                    <strong>FUNGAL MOLD &amp; DAMP SPORES (Alternaria, Cladosporium)</strong>
+                    Microscopic fungal spores thriving in damp soil, wet grass, shaded mulch, and decaying autumn leaves. Spikes during high humidity and after rain, causing respiratory irritation and secondary yeast infections between damp toes.
+                  </span>
+                </span>
                 <strong id="pollen-mold-val" class="allergen-level">LOW (2.4 / 10)</strong>
               </div>
               <div class="allergen-bar-track">
@@ -390,21 +422,49 @@
           <!-- Right: Air Quality Telemetry & Post-Excursion Canine Grooming Protocol -->
           <div class="allergy-protocol-card" id="allergy-protocol-card">
             <div class="aqi-telemetry-strip">
-              <div class="aqi-cell" title="US EPA Air Quality Index (0-50 Good, 51-100 Moderate, 101+ Sensitive Hazard)">
-                <span class="aqi-label">US EPA AQI</span>
+              <div class="aqi-cell has-help" data-help-target="aqi">
+                <div class="aqi-cell-top">
+                  <span class="aqi-label">US EPA AQI</span>
+                  <button type="button" class="inline-help-trigger sm" data-help-target="aqi" aria-label="US EPA AQI definition">?</button>
+                </div>
                 <strong id="aqi-num-val" class="aqi-val">--</strong>
+                <span class="help-popover" role="tooltip">
+                  <strong>US EPA AIR QUALITY INDEX (0–500)</strong>
+                  Composite index of atmospheric pollution. 0–50: Good; 51–100: Moderate; 101–150: Unhealthy for sensitive/brachycephalic dogs; 151+: Hazardous for all canine exercise.
+                </span>
               </div>
-              <div class="aqi-cell" title="Fine inhalable particulate matter (wildfire smoke, exhaust) under 2.5 microns">
-                <span class="aqi-label">PM2.5 FINE</span>
+              <div class="aqi-cell has-help" data-help-target="pm25">
+                <div class="aqi-cell-top">
+                  <span class="aqi-label">PM2.5 FINE</span>
+                  <button type="button" class="inline-help-trigger sm" data-help-target="pm25" aria-label="PM2.5 definition">?</button>
+                </div>
                 <strong id="pm25-val" class="aqi-val">-- µg/m³</strong>
+                <span class="help-popover" role="tooltip">
+                  <strong>FINE PARTICULATE MATTER (&lt;2.5 Microns)</strong>
+                  Combustion soot and wildfire smoke particles 30x smaller than a hair width. Bypasses canine nasal filtration to penetrate deep into lung alveoli and the bloodstream.
+                </span>
               </div>
-              <div class="aqi-cell" title="Coarse airborne dust &amp; pollen particulates under 10 microns">
-                <span class="aqi-label">PM10 / DUST</span>
+              <div class="aqi-cell has-help" data-help-target="pm10">
+                <div class="aqi-cell-top">
+                  <span class="aqi-label">PM10 / DUST</span>
+                  <button type="button" class="inline-help-trigger sm" data-help-target="pm10" aria-label="PM10 definition">?</button>
+                </div>
                 <strong id="pm10-val" class="aqi-val">-- µg/m³</strong>
+                <span class="help-popover" role="tooltip">
+                  <strong>COARSE PARTICULATES (&lt;10 Microns)</strong>
+                  Airborne road dust, construction grit, and fragmented pollen grains. Settling near ground level (6–24 inches high—exact dog breathing height), it irritates canine eyes, throat, and nasal passages.
+                </span>
               </div>
-              <div class="aqi-cell" title="Tropospheric ground-level ozone respiratory irritant">
-                <span class="aqi-label">OZONE (O₃)</span>
+              <div class="aqi-cell has-help" data-help-target="ozone">
+                <div class="aqi-cell-top">
+                  <span class="aqi-label">OZONE (O₃)</span>
+                  <button type="button" class="inline-help-trigger sm" data-help-target="ozone" aria-label="Ozone definition">?</button>
+                </div>
                 <strong id="ozone-val" class="aqi-val">-- µg/m³</strong>
+                <span class="help-popover" role="tooltip">
+                  <strong>TROPOSPHERIC GROUND-LEVEL OZONE (O₃)</strong>
+                  Reactive gas formed when sunlight bakes vehicle exhaust on hot afternoons. Causes airway inflammation and coughing, especially in rapidly panting dogs.
+                </span>
               </div>
             </div>
 
@@ -417,11 +477,161 @@
                 Evaluating local aeroallergen load and particulate concentrations for your dog...
               </p>
               <div class="symptom-watch-row" id="symptom-watch-row">
-                <span class="symptom-chip">🐾 Interdigital Paw Licking</span>
-                <span class="symptom-chip">👁️ Ocular Discharge</span>
-                <span class="symptom-chip">👂 Otitis / Ear Scratching</span>
+                <span class="symptom-chip" title="Obsessive licking or chewing between toes — classic #1 sign of histamine release from grass/weed contact">🐾 Interdigital Paw Licking</span>
+                <span class="symptom-chip" title="Clear or mucoid tearing at the inner corner of the eyes from airborne pollen &amp; PM10 dust">👁️ Ocular Discharge</span>
+                <span class="symptom-chip" title="Head shaking, red ear flaps, or scratching at the base of the ears (allergic otitis externa)">👂 Otitis / Ear Scratching</span>
               </div>
             </div>
+          </div>
+        </div>
+
+        <!-- EXPANDABLE ALLERGEN & PARTICULATE FIELD MANUAL (HELP DRAWER) -->
+        <div id="allergen-help-drawer" class="allergen-help-drawer hidden" aria-hidden="true">
+          <div class="help-drawer-header">
+            <div>
+              <span class="panel-code">FIELD MANUAL REFERENCE // CANINE IMMUNOLOGY &amp; ATMOSPHERIC TOXICOLOGY</span>
+              <h3 class="help-drawer-title">Allergen &amp; Particulate Definitions: How Environmental Triggers Affect Dogs</h3>
+            </div>
+            <div class="help-drawer-actions">
+              <span class="mono-tag">TIP: DOGS ABSORB ~70% OF ALLERGENS THROUGH PAW &amp; BELLY SKIN</span>
+              <button type="button" id="close-allergen-help-btn" class="hw-btn secondary sm-btn">CLOSE MANUAL ✕</button>
+            </div>
+          </div>
+
+          <!-- Filter Tabs for Quick Navigation -->
+          <div class="help-filter-tabs" role="tablist">
+            <button type="button" class="help-tab active" data-help-filter="all">ALL DEFINITIONS (8)</button>
+            <button type="button" class="help-tab" data-help-filter="pollen">BIO-POLLENS &amp; MOLD (4)</button>
+            <button type="button" class="help-tab" data-help-filter="aqi">AIR QUALITY &amp; PARTICULATES (4)</button>
+          </div>
+
+          <div class="allergen-definitions-grid">
+            <!-- 1. Grass Pollen -->
+            <article class="allergen-def-card" data-def-id="grass" data-def-cat="pollen">
+              <div class="def-card-head">
+                <span class="def-badge bio">BIO-ALLERGEN 01</span>
+                <span class="def-season">PEAK: LATE SPRING – SUMMER</span>
+              </div>
+              <h4 class="def-title">🌱 Grass / Turf Pollen (<em>Poaceae</em>)</h4>
+              <p class="def-body">
+                Microscopic reproductive grains shed by cultivated turf and wild pasture grasses (Bermuda, Timothy, Kentucky Bluegrass, Orchard, and Rye). Because dogs walk directly through grass blades, exposure is primarily <strong>percutaneous (skin-contact)</strong> rather than just inhaled.
+              </p>
+              <div class="def-clinical-meta">
+                <div><strong>Canine Target Zones:</strong> Interdigital paw webbing, carpal pads, groin, axillae (armpits), and muzzle.</div>
+                <div><strong>Mitigation Protocol:</strong> Rinse or wipe paws with cool water immediately after walks; keep lawn grass mowed short before seed heads form.</div>
+              </div>
+            </article>
+
+            <!-- 2. Tree Pollen -->
+            <article class="allergen-def-card" data-def-id="tree" data-def-cat="pollen">
+              <div class="def-card-head">
+                <span class="def-badge bio">BIO-ALLERGEN 02</span>
+                <span class="def-season">PEAK: FEB – MAY</span>
+              </div>
+              <h4 class="def-title">🌳 Arboreal / Tree Pollen (<em>Oak, Birch, Alder, Pine</em>)</h4>
+              <p class="def-body">
+                Lightweight, wind-pollinated grains released in massive plumes by deciduous and coniferous trees. Tree pollen stays suspended in dry, breezy air for days and settles as a fine dust across sidewalks, patios, and your dog's dorsal coat.
+              </p>
+              <div class="def-clinical-meta">
+                <div><strong>Canine Target Zones:</strong> Periocular skin (around eyes), pinnae (ear canals), and full body coat.</div>
+                <div><strong>Mitigation Protocol:</strong> Brush coat outdoors after walks; use sterile saline eye wipes if tear staining or squinting occurs.</div>
+              </div>
+            </article>
+
+            <!-- 3. Ragweed & Herbaceous Weeds -->
+            <article class="allergen-def-card" data-def-id="weed" data-def-cat="pollen">
+              <div class="def-card-head">
+                <span class="def-badge bio">BIO-ALLERGEN 03</span>
+                <span class="def-season">PEAK: AUG – FIRST FROST</span>
+              </div>
+              <h4 class="def-title">🌾 Ragweed &amp; Herbaceous Weeds (<em>Ambrosia, Mugwort</em>)</h4>
+              <p class="def-body">
+                A single ragweed plant can release up to <strong>1 billion spiky pollen grains</strong> per season. Under a microscope, weed pollen features barbed spines (echinate surface) that mechanically hook onto canine hair shafts and irritate mucous membranes.
+              </p>
+              <div class="def-clinical-meta">
+                <div><strong>Canine Target Zones:</strong> Nasal passages (triggering paroxysmal "reverse sneezing"), lips, chin, and belly skin.</div>
+                <div><strong>Mitigation Protocol:</strong> Avoid overgrown trail edges and ditches in late summer/autumn; wipe muzzle and paws with a damp microfiber cloth.</div>
+              </div>
+            </article>
+
+            <!-- 4. Fungal Mold & Damp Spores -->
+            <article class="allergen-def-card" data-def-id="mold" data-def-cat="pollen">
+              <div class="def-card-head">
+                <span class="def-badge bio">BIO-ALLERGEN 04</span>
+                <span class="def-season">PEAK: HUMID / POST-RAIN / AUTUMN</span>
+              </div>
+              <h4 class="def-title">🍄 Fungal Mold &amp; Damp Spores (<em>Alternaria, Cladosporium</em>)</h4>
+              <p class="def-body">
+                Unlike plant pollens that wash away in rain, fungal spores <strong>multiply rapidly in high humidity (&gt;65% RH)</strong>, damp soil, shaded bark mulch, and decomposing autumn leaf piles. Remains active year-round in non-freezing climates.
+              </p>
+              <div class="def-clinical-meta">
+                <div><strong>Canine Target Zones:</strong> Bronchial airways and damp interdigital spaces (predisposing paws to <em>Malassezia</em> yeast overgrowth).</div>
+                <div><strong>Mitigation Protocol:</strong> Thoroughly dry between toes after wet walks; prevent dogs from rooting in decaying leaf litter or wet mulch.</div>
+              </div>
+            </article>
+
+            <!-- 5. US EPA AQI -->
+            <article class="allergen-def-card" data-def-id="aqi" data-def-cat="aqi">
+              <div class="def-card-head">
+                <span class="def-badge aqi-tag">ATMOS METRIC 01</span>
+                <span class="def-season">SCALE: 0 TO 500</span>
+              </div>
+              <h4 class="def-title">📊 US EPA Air Quality Index (AQI)</h4>
+              <p class="def-body">
+                Standardized federal benchmark measuring combined atmospheric pollutants. Because dogs exercise with high minute-ventilation (panting) and breathe through their mouths during exertion, they inhale <strong>2–3x more air per pound of body weight</strong> than humans.
+              </p>
+              <div class="def-clinical-meta">
+                <div><strong>Canine Thresholds:</strong> <strong>0–50:</strong> Nominal | <strong>51–100:</strong> Monitor brachycephalic/senior dogs | <strong>101–150:</strong> Shorten walks, no running | <strong>151+:</strong> Indoor potty breaks only.</div>
+              </div>
+            </article>
+
+            <!-- 6. PM2.5 Fine Particulates -->
+            <article class="allergen-def-card" data-def-id="pm25" data-def-cat="aqi">
+              <div class="def-card-head">
+                <span class="def-badge aqi-tag">ATMOS METRIC 02</span>
+                <span class="def-season">SIZE: &lt; 2.5 MICRONS (µm)</span>
+              </div>
+              <h4 class="def-title">🌫️ PM2.5 Fine Inhalable Particulates</h4>
+              <p class="def-body">
+                Microscopic combustion aerosols from wildfire smoke, diesel exhaust, and power plants. At less than 1/30th the diameter of a human hair, PM2.5 bypasses the moist filtering turbinates of a dog's nose and embeds directly in deep lung alveoli.
+              </p>
+              <div class="def-clinical-meta">
+                <div><strong>Canine Risk Profile:</strong> High hazard for flat-faced breeds (Pugs, Bulldogs), dogs with collapsing trachea, bronchitis, or cardiac disease.</div>
+                <div><strong>Safe Limit:</strong> Ideal &lt; 12 µg/m³; restrict vigorous fetch or running when &gt; 35 µg/m³.</div>
+              </div>
+            </article>
+
+            <!-- 7. PM10 Coarse Dust -->
+            <article class="allergen-def-card" data-def-id="pm10" data-def-cat="aqi">
+              <div class="def-card-head">
+                <span class="def-badge aqi-tag">ATMOS METRIC 03</span>
+                <span class="def-season">SIZE: 2.5 – 10 MICRONS (µm)</span>
+              </div>
+              <h4 class="def-title">💨 PM10 Coarse Dust &amp; Bio-Particulates</h4>
+              <p class="def-body">
+                Coarser airborne particles including road grit, windblown soil, brake dust, and fractured pollen shells. Because heavier particles settle near the pavement boundary layer (<strong>6 to 24 inches off the ground</strong>), dogs walk directly inside the highest concentration zone.
+              </p>
+              <div class="def-clinical-meta">
+                <div><strong>Canine Target Zones:</strong> Corneas (dry eye / keratitis), nasal mucosa (sneezing/discharge), and pharynx.</div>
+                <div><strong>Mitigation Protocol:</strong> Prefer grassy park interiors over dusty roadside sidewalks on windy days.</div>
+              </div>
+            </article>
+
+            <!-- 8. Tropospheric Ozone -->
+            <article class="allergen-def-card" data-def-id="ozone" data-def-cat="aqi">
+              <div class="def-card-head">
+                <span class="def-badge aqi-tag">ATMOS METRIC 04</span>
+                <span class="def-season">PEAK: HOT SUNNY AFTERNOONS</span>
+              </div>
+              <h4 class="def-title">☀️ Tropospheric Ground-Level Ozone (O₃)</h4>
+              <p class="def-body">
+                A corrosive photochemical gas created when UV sunlight reacts with nitrogen oxides and volatile organic compounds from traffic. Ground-level ozone is heaviest right above sun-baked asphalt between <strong>2:00 PM and 7:00 PM</strong>.
+              </p>
+              <div class="def-clinical-meta">
+                <div><strong>Canine Target Zones:</strong> Trachea and bronchial lining — causes oxidative airway irritation, dry coughing, and reduced stamina.</div>
+                <div><strong>Mitigation Protocol:</strong> Schedule walks in early morning when ozone and pavement temperatures are both at daily minimums.</div>
+              </div>
+            </article>
           </div>
         </div>
       </section>
