@@ -1682,10 +1682,176 @@ body.is-night-mode .visual-backdrop {
 }
 
 /* ==========================================================================
+   AEROALLERGEN, POLLEN & AIR QUALITY BIO-MONITOR (INSTRUMENT 05)
+   ========================================================================== */
+.allergy-header-badges {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.aqi-pill {
+  color: var(--signal-sky);
+  border-color: rgba(56, 189, 248, 0.35);
+  background: rgba(56, 189, 248, 0.1);
+}
+
+.allergy-monitor-grid {
+  display: grid;
+  grid-template-columns: 1.15fr 1fr;
+  gap: 22px;
+}
+
+.allergen-channels {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 12px;
+  background: var(--panel-recessed);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-sm);
+  padding: 16px 18px;
+}
+
+.allergen-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.allergen-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+}
+
+.allergen-name {
+  color: var(--ink-secondary);
+  font-weight: 600;
+}
+
+.allergen-level {
+  color: var(--ink-primary);
+  font-weight: 700;
+}
+
+.allergen-bar-track {
+  height: 7px;
+  background: var(--panel-bg);
+  border: 1px solid var(--border-hairline);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.allergen-bar-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.allergen-bar-fill.safe { background: var(--signal-sage); }
+.allergen-bar-fill.caution { background: var(--signal-ochre); }
+.allergen-bar-fill.danger { background: var(--signal-crimson); }
+
+/* Right Column: AQI Telemetry + Canine Dermatitis Protocol */
+.allergy-protocol-card {
+  background: var(--panel-recessed);
+  border: 1px solid var(--border-hairline);
+  border-top: 3px solid var(--signal-sage);
+  border-radius: var(--radius-sm);
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.allergy-protocol-card.status-yellow {
+  border-top-color: var(--signal-ochre);
+}
+
+.allergy-protocol-card.status-red {
+  border-top-color: var(--signal-crimson);
+  background: linear-gradient(180deg, rgba(239, 68, 68, 0.06) 0%, var(--panel-recessed) 100%);
+}
+
+.aqi-telemetry-strip {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.aqi-cell {
+  background: var(--panel-bg);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-xs);
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+}
+
+.aqi-label {
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  color: var(--ink-muted);
+}
+
+.aqi-val {
+  font-family: var(--font-mono);
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--ink-primary);
+  margin-top: 2px;
+}
+
+.canine-dermatitis-readout {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.derm-title {
+  font-family: var(--font-serif);
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--ink-primary);
+}
+
+.allergy-protocol-card.status-green .derm-title { color: #86EFAC; }
+.allergy-protocol-card.status-yellow .derm-title { color: #FDE047; }
+.allergy-protocol-card.status-red .derm-title { color: #FCA5A5; }
+
+.derm-desc {
+  font-size: 0.8rem;
+  color: var(--ink-secondary);
+  line-height: 1.45;
+}
+
+.symptom-watch-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 2px;
+}
+
+.symptom-chip {
+  font-family: var(--font-mono);
+  font-size: 0.64rem;
+  color: var(--ink-secondary);
+  background: var(--panel-bg);
+  border: 1px solid var(--border-hairline);
+  padding: 3px 8px;
+  border-radius: var(--radius-xs);
+}
+
+/* ==========================================================================
    RESPONSIVE BREAKPOINTS
    ========================================================================== */
 @media (max-width: 1040px) {
-  .hero-station-grid {
+  .hero-station-grid,
+  .allergy-monitor-grid {
     grid-template-columns: 1fr;
   }
   .instrument-deck {
@@ -1709,6 +1875,9 @@ body.is-night-mode .visual-backdrop {
   .lab-workbench,
   .control-split {
     grid-template-columns: 1fr;
+  }
+  .aqi-telemetry-strip {
+    grid-template-columns: repeat(2, 1fr);
   }
   .day-row {
     grid-template-columns: 68px 28px 1fr 56px;

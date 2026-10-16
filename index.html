@@ -313,11 +313,107 @@
         </div>
       </section>
 
-      <!-- ROW 4: ATMOSPHERIC SENSORS (LEFT) + 7-DAY ALMANAC (RIGHT) -->
+      <!-- ROW 4: AEROALLERGEN, POLLEN & AIR QUALITY BIO-MONITOR (NEW INSTRUMENT 05) -->
+      <section class="panel allergy-panel span-full">
+        <div class="panel-header">
+          <div>
+            <span class="panel-code">INSTRUMENT 05 // AEROALLERGEN &amp; AIR QUALITY BIO-MONITOR</span>
+            <h2 class="panel-title">Pollen Spectrum, Particulate AQI &amp; Canine Atopic Dermatitis Index</h2>
+          </div>
+          <div class="allergy-header-badges">
+            <span id="aqi-badge" class="mono-tag aqi-pill">US AQI: --</span>
+            <span id="allergy-overall-badge" class="status-pill">ALLERGY RISK: LOW</span>
+          </div>
+        </div>
+
+        <div class="allergy-monitor-grid">
+          <!-- Left: 4-Channel Aeroallergen Spectrum Bars -->
+          <div class="allergen-channels">
+            <div class="allergen-row" title="Poaceae grass pollen load — primary trigger for canine paw-licking &amp; belly rash">
+              <div class="allergen-meta">
+                <span class="allergen-name">GRASS / TURF POLLEN</span>
+                <strong id="pollen-grass-val" class="allergen-level">LOW (1.8 / 10)</strong>
+              </div>
+              <div class="allergen-bar-track">
+                <div id="pollen-grass-bar" class="allergen-bar-fill safe" style="width: 18%;"></div>
+              </div>
+            </div>
+
+            <div class="allergen-row" title="Deciduous &amp; coniferous tree pollen (Oak, Birch, Alder, Pine)">
+              <div class="allergen-meta">
+                <span class="allergen-name">ARBOREAL / TREE POLLEN</span>
+                <strong id="pollen-tree-val" class="allergen-level">LOW (1.2 / 10)</strong>
+              </div>
+              <div class="allergen-bar-track">
+                <div id="pollen-tree-bar" class="allergen-bar-fill safe" style="width: 12%;"></div>
+              </div>
+            </div>
+
+            <div class="allergen-row" title="Late-summer &amp; autumn herbaceous weeds (Ragweed, Mugwort, Nettle)">
+              <div class="allergen-meta">
+                <span class="allergen-name">RAGWEED &amp; HERBACEOUS WEEDS</span>
+                <strong id="pollen-weed-val" class="allergen-level">MODERATE (4.8 / 10)</strong>
+              </div>
+              <div class="allergen-bar-track">
+                <div id="pollen-weed-bar" class="allergen-bar-fill caution" style="width: 48%;"></div>
+              </div>
+            </div>
+
+            <div class="allergen-row" title="Fungal spores (Alternaria, Cladosporium) driven by humidity, damp leaves &amp; dew point">
+              <div class="allergen-meta">
+                <span class="allergen-name">FUNGAL MOLD &amp; DAMP SPORES</span>
+                <strong id="pollen-mold-val" class="allergen-level">LOW (2.4 / 10)</strong>
+              </div>
+              <div class="allergen-bar-track">
+                <div id="pollen-mold-bar" class="allergen-bar-fill safe" style="width: 24%;"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right: Air Quality Telemetry & Post-Excursion Canine Grooming Protocol -->
+          <div class="allergy-protocol-card" id="allergy-protocol-card">
+            <div class="aqi-telemetry-strip">
+              <div class="aqi-cell" title="US EPA Air Quality Index (0-50 Good, 51-100 Moderate, 101+ Sensitive Hazard)">
+                <span class="aqi-label">US EPA AQI</span>
+                <strong id="aqi-num-val" class="aqi-val">--</strong>
+              </div>
+              <div class="aqi-cell" title="Fine inhalable particulate matter (wildfire smoke, exhaust) under 2.5 microns">
+                <span class="aqi-label">PM2.5 FINE</span>
+                <strong id="pm25-val" class="aqi-val">-- µg/m³</strong>
+              </div>
+              <div class="aqi-cell" title="Coarse airborne dust &amp; pollen particulates under 10 microns">
+                <span class="aqi-label">PM10 / DUST</span>
+                <strong id="pm10-val" class="aqi-val">-- µg/m³</strong>
+              </div>
+              <div class="aqi-cell" title="Tropospheric ground-level ozone respiratory irritant">
+                <span class="aqi-label">OZONE (O₃)</span>
+                <strong id="ozone-val" class="aqi-val">-- µg/m³</strong>
+              </div>
+            </div>
+
+            <div class="canine-dermatitis-readout">
+              <div class="derm-header">
+                <span class="panel-code">POST-WALK DERMATOLOGICAL &amp; RESPIRATORY PROTOCOL</span>
+                <h3 id="allergy-verdict-title" class="derm-title">STANDARD PAW RINSE ADVISED</h3>
+              </div>
+              <p id="allergy-verdict-desc" class="derm-desc">
+                Evaluating local aeroallergen load and particulate concentrations for your dog...
+              </p>
+              <div class="symptom-watch-row" id="symptom-watch-row">
+                <span class="symptom-chip">🐾 Interdigital Paw Licking</span>
+                <span class="symptom-chip">👁️ Ocular Discharge</span>
+                <span class="symptom-chip">👂 Otitis / Ear Scratching</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ROW 5: ATMOSPHERIC SENSORS (LEFT) + 7-DAY ALMANAC (RIGHT) -->
       <section class="panel sensors-panel">
         <div class="panel-header">
           <div>
-            <span class="panel-code">INSTRUMENT 05 // ATMOSPHERIC SENSORS</span>
+            <span class="panel-code">INSTRUMENT 06 // ATMOSPHERIC SENSORS</span>
             <h2 class="panel-title">Local Station Telemetry</h2>
           </div>
         </div>
@@ -383,19 +479,19 @@
       <section class="panel almanac-panel">
         <div class="panel-header">
           <div>
-            <span class="panel-code">INSTRUMENT 06 // 7-DAY ALMANAC</span>
-            <h2 class="panel-title">Weekly Thermal Range & Canine Suitability</h2>
+            <span class="panel-code">INSTRUMENT 07 // 7-DAY ALMANAC</span>
+            <h2 class="panel-title">Weekly Thermal Range &amp; Canine Suitability</h2>
           </div>
         </div>
 
         <div class="almanac-table" id="daily-list"></div>
       </section>
 
-      <!-- ROW 5: THERMODYNAMIC SUBSTRATE SIMULATOR & 7-SECOND FIELD PROTOCOL -->
+      <!-- ROW 6: THERMODYNAMIC SUBSTRATE SIMULATOR & 7-SECOND FIELD PROTOCOL -->
       <section class="panel simulator-panel span-full">
         <div class="panel-header">
           <div>
-            <span class="panel-code">INSTRUMENT 07 // SUBSTRATE CONDUCTIVITY LAB</span>
+            <span class="panel-code">INSTRUMENT 08 // SUBSTRATE CONDUCTIVITY LAB</span>
             <h2 class="panel-title">Interactive Ground Surface Heat Simulator</h2>
           </div>
           <span class="mono-tag">SOLAR ABSORPTION MODEL v2.4</span>
@@ -460,8 +556,8 @@
     <!-- STATION FOOTER -->
     <footer class="station-footer">
       <div class="footer-left">
-        <span class="mono-code">PAWCAST FIELD STATION // REV 4.2</span>
-        <span>Telemetry aggregated via Open-Meteo WMO, NOAA National Weather Service & RainViewer Doppler Network.</span>
+        <span class="mono-code">PAWCAST FIELD STATION // REV 4.5</span>
+        <span>Telemetry aggregated via Open-Meteo WMO, CAMS Air Quality, NOAA National Weather Service &amp; RainViewer Doppler Network.</span>
       </div>
       <div class="footer-right">
         <span class="privacy-pill">LOCAL-FIRST ARCHITECTURE // ZERO EXTERNAL TRACKING</span>
@@ -487,7 +583,7 @@
         </div>
 
         <div class="form-field">
-          <label for="dog-size">BODY MASS & THERMOREGULATION CLASS</label>
+          <label for="dog-size">BODY MASS &amp; THERMOREGULATION CLASS</label>
           <select id="dog-size">
             <option value="small">Small / Toy (&lt; 20 lbs) — High surface-to-volume ratio (Cold sensitive)</option>
             <option value="medium" selected>Medium (20 – 50 lbs) — Baseline thermal equilibrium</option>
@@ -496,11 +592,11 @@
         </div>
 
         <div class="form-field">
-          <label for="dog-coat">COAT INSULATION & ALBEDO</label>
+          <label for="dog-coat">COAT INSULATION &amp; ALBEDO</label>
           <select id="dog-coat">
             <option value="short">Short / Single Coat (Rapid convective heat exchange)</option>
-            <option value="double" selected>Dense / Double Coat (Husky, Shepherd, Golden — Retains core heat)</option>
-            <option value="hairless">Hairless / Fine Coat (High UV & hypothermia vulnerability)</option>
+            <option value="double" selected>Dense / Double Coat (Husky, Shepherd, Golden — Traps pollen &amp; heat)</option>
+            <option value="hairless">Hairless / Fine Coat (High UV, allergen contact &amp; cold vulnerability)</option>
             <option value="dark">Black / Low-Albedo Coat (Elevated solar absorption)</option>
           </select>
         </div>
@@ -509,12 +605,20 @@
           <label for="dog-snout">CRANIOFACIAL AIRWAY MORPHOLOGY</label>
           <select id="dog-snout">
             <option value="normal" selected>Mesaticephalic / Dolichocephalic (Standard evaporative panting)</option>
-            <option value="brachy">Brachycephalic / Flat-Faced (Bulldog, Pug, Frenchie — Restricted cooling)</option>
+            <option value="brachy">Brachycephalic / Flat-Faced (Bulldog, Pug, Frenchie — High AQI &amp; heat sensitivity)</option>
           </select>
         </div>
 
         <div class="form-field">
-          <label for="dog-age">LIFE STAGE & METABOLIC RESILIENCE</label>
+          <label for="dog-allergy">ATOPIC / ENVIRONMENTAL ALLERGY SENSITIVITY</label>
+          <select id="dog-allergy">
+            <option value="normal" selected>Standard Resilience (No known seasonal atopic dermatitis)</option>
+            <option value="sensitive">Allergy-Prone / Atopic (Prone to paw licking, ear infections &amp; turf rash)</option>
+          </select>
+        </div>
+
+        <div class="form-field">
+          <label for="dog-age">LIFE STAGE &amp; METABOLIC RESILIENCE</label>
           <select id="dog-age">
             <option value="puppy">Juvenile / Puppy (&lt; 1 yr — Developing thermoregulation)</option>
             <option value="adult" selected>Prime Adult (Baseline cardiovascular capacity)</option>

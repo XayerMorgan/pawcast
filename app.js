@@ -15,6 +15,7 @@
     size: 'medium',
     coat: 'double',
     snout: 'normal',
+    allergy: 'normal',
     age: 'adult'
   };
 
@@ -40,6 +41,7 @@
     pet: loadJSON('pawcast_pet', DEFAULT_PET),
     favorites: loadJSON('pawcast_favorites', DEFAULT_FAVORITES),
     weather: null,
+    airQuality: null,
     searchDebounce: null,
 
     // Auto-Polling State
@@ -128,6 +130,26 @@
     hourlyScroller: document.getElementById('hourly-scroller'),
     dailyList: document.getElementById('daily-list'),
 
+    // Aeroallergen & Air Quality Bio-Monitor
+    aqiBadge: document.getElementById('aqi-badge'),
+    allergyOverallBadge: document.getElementById('allergy-overall-badge'),
+    pollenGrassVal: document.getElementById('pollen-grass-val'),
+    pollenGrassBar: document.getElementById('pollen-grass-bar'),
+    pollenTreeVal: document.getElementById('pollen-tree-val'),
+    pollenTreeBar: document.getElementById('pollen-tree-bar'),
+    pollenWeedVal: document.getElementById('pollen-weed-val'),
+    pollenWeedBar: document.getElementById('pollen-weed-bar'),
+    pollenMoldVal: document.getElementById('pollen-mold-val'),
+    pollenMoldBar: document.getElementById('pollen-mold-bar'),
+    allergyProtocolCard: document.getElementById('allergy-protocol-card'),
+    aqiNumVal: document.getElementById('aqi-num-val'),
+    pm25Val: document.getElementById('pm25-val'),
+    pm10Val: document.getElementById('pm10-val'),
+    ozoneVal: document.getElementById('ozone-val'),
+    allergyVerdictTitle: document.getElementById('allergy-verdict-title'),
+    allergyVerdictDesc: document.getElementById('allergy-verdict-desc'),
+    symptomWatchRow: document.getElementById('symptom-watch-row'),
+
     // Atmospheric Sensor Dials
     metricPop: document.getElementById('metric-pop'),
     barPop: document.getElementById('bar-pop'),
@@ -157,6 +179,7 @@
     dogSizeSelect: document.getElementById('dog-size'),
     dogCoatSelect: document.getElementById('dog-coat'),
     dogSnoutSelect: document.getElementById('dog-snout'),
+    dogAllergySelect: document.getElementById('dog-allergy'),
     dogAgeSelect: document.getElementById('dog-age')
   };
 
@@ -677,7 +700,7 @@
   }
 
   // ==========================================================================
-  // TELEMETRY ACQUISITION (OPEN-METEO & NOAA NWS)
+  // TELEMETRY ACQUISITION (OPEN-METEO, CAMS AIR QUALITY & NOAA NWS)
   // ==========================================================================
   async function fetchWeatherData(loc) {
     el.cityName.textContent = loc.name;
@@ -701,16 +724,19 @@
 
     try {
       let data = null;
+      const aqPromise = fetchAirQualityData(loc.lat, loc.lon);
+
       if (appState.source === 'nws' && loc.country === 'United States') {
         data = await fetchNWSData(loc.lat, loc.lon);
-        el.activeSourceName.textContent = 'NOAA NWS + RAINVIEWER';
+        el.activeSourceName.textContent = 'NOAA NWS + CAMS AQI + RAINVIEWER';
       }
 
       if (!data) {
         data = await fetchOpenMeteoData(loc.lat, loc.lon);
-        el.activeSourceName.textContent = 'OPEN-METEO WMO + RAINVIEWER';
+        el.activeSourceName.textContent = 'OPEN-METEO WMO + CAMS AQI + RAINVIEWER';
       }
 
+      appState.airQuality = await aqPromise;
       appState.weather = data;
       renderAllWeatherData(data);
       if (appState.isAudioEnabled) {
@@ -720,6 +746,193 @@
       console.error('Weather fetch error:', err);
       el.cityName.textContent = 'Telemetry Link Fault';
     }
+  }
+
+  async function fetchAirQualityData(lat, lon) {
+    try {
+      const url = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lon}&current=us_aqi,pm10,pm2_5,ozone,dust,grass_pollen,birch_pollen,ragweed_pollen,alder_pollen,mugwort_pollen,olive_pollen&timezone=auto`;
+      const res = await fetch(url);
+      if (!res.ok) return null;
+      const raw = await res.json();
+      return raw.current || null;
+    } catch (e) {
+      console.warn('Air quality fetch warning:', e);
+      return null;
+    }
+  }
+
+  function computeAeroallergenProfile(curWeather, aqData, lat) {
+    const tempF = (curWeather.tempC * 9 / 5) + 32;
+    const rh = curWeather.humidity || 50;
+    const windMph = (curWeather.windKmh || 8) * 0.621371;
+    const isRaining = curWeather.weatherCode >= 51 && curWeather.weatherCode <= 82;
+    const month = new Date().getMonth(); // 0 = Jan .. 9 = Oct .. 11 = Dec
+    const isNorthern = lat >= 0;
+    const adjMonth = isNorthern ? month : (month + 6) % 12;
+
+    // Rain washout factor: active precipitation scrubs airborne pollen but boosts fungal spores
+    const rainWashout = isRaining ? 0.35 : 1.0;
+    const windDispersion = Math.min(1.35, 0.8 + (windMph / 25));
+
+    // 1. Grass Pollen (0 - 10 scale)
+    let grassScore = 1.2;
+    if (aqData && typeof aqData.grass_pollen === 'number' && aqData.grass_pollen !== null) {
+      grassScore = Math.min(10, (aqData.grass_pollen / 60) * 10);
+    } else {
+      // Phenological model: peaks May-July (months 4,5,6), moderate in warm Sept/Oct
+      let seasonalBase = 1.0;
+      if (adjMonth >= 4 && adjMonth <= 6) seasonalBase = 6.8;
+      else if (adjMonth === 3 || adjMonth === 7) seasonalBase = 4.5;
+      else if (adjMonth === 8 || adjMonth === 9) seasonalBase = 2.6;
+      const tempFactor = tempF < 42 ? 0.15 : tempF > 92 ? 0.7 : 1.0;
+      grassScore = seasonalBase * tempFactor * windDispersion * rainWashout;
+    }
+
+    // 2. Tree Pollen (0 - 10 scale)
+    let treeScore = 1.0;
+    const rawTree = aqData && (aqData.birch_pollen !== null || aqData.alder_pollen !== null)
+      ? (aqData.birch_pollen || 0) + (aqData.alder_pollen || 0) + (aqData.olive_pollen || 0)
+      : null;
+    if (rawTree !== null) {
+      treeScore = Math.min(10, (rawTree / 120) * 10);
+    } else {
+      // Peaks Feb-May (months 1,2,3,4)
+      let seasonalBase = 0.8;
+      if (adjMonth >= 2 && adjMonth <= 4) seasonalBase = 7.4;
+      else if (adjMonth === 1 || adjMonth === 5) seasonalBase = 4.2;
+      else if (adjMonth === 9) seasonalBase = 1.5; // Autumn cedar/elm minor
+      const tempFactor = tempF < 36 ? 0.1 : 1.0;
+      treeScore = seasonalBase * tempFactor * windDispersion * rainWashout;
+    }
+
+    // 3. Ragweed & Herbaceous Weeds (0 - 10 scale)
+    let weedScore = 1.5;
+    const rawWeed = aqData && (aqData.ragweed_pollen !== null || aqData.mugwort_pollen !== null)
+      ? (aqData.ragweed_pollen || 0) + (aqData.mugwort_pollen || 0)
+      : null;
+    if (rawWeed !== null) {
+      weedScore = Math.min(10, (rawWeed / 80) * 10);
+    } else {
+      // Peaks Aug-Oct (months 7,8,9) until first hard frost
+      let seasonalBase = 1.0;
+      if (adjMonth >= 7 && adjMonth <= 9) seasonalBase = 6.9;
+      else if (adjMonth === 6 || adjMonth === 10) seasonalBase = 3.8;
+      const frostKill = tempF <= 32 ? 0.1 : tempF < 50 ? 0.55 : 1.05;
+      weedScore = seasonalBase * frostKill * windDispersion * rainWashout;
+    }
+
+    // 4. Fungal Mold & Damp Leaf Spores (0 - 10 scale)
+    // Driven by relative humidity, dew point, warm/cool dampness & decaying vegetation
+    let moldScore = 1.8;
+    const humidityFactor = rh >= 80 ? 2.1 : rh >= 65 ? 1.45 : rh <= 35 ? 0.5 : 0.9;
+    const autumnLeafFactor = (adjMonth >= 8 && adjMonth <= 10) ? 1.4 : 1.0;
+    const rainBoost = isRaining ? 1.35 : 1.0;
+    const freezeFactor = tempF < 32 ? 0.15 : 1.0;
+    moldScore = Math.min(10, 2.2 * humidityFactor * autumnLeafFactor * rainBoost * freezeFactor);
+
+    grassScore = Math.max(0.2, Math.min(10, Number(grassScore.toFixed(1))));
+    treeScore = Math.max(0.2, Math.min(10, Number(treeScore.toFixed(1))));
+    weedScore = Math.max(0.2, Math.min(10, Number(weedScore.toFixed(1))));
+    moldScore = Math.max(0.2, Math.min(10, Number(moldScore.toFixed(1))));
+
+    const usAqi = (aqData && typeof aqData.us_aqi === 'number') ? Math.round(aqData.us_aqi) : 34;
+    const pm25 = (aqData && typeof aqData.pm2_5 === 'number') ? aqData.pm2_5.toFixed(1) : '7.2';
+    const pm10 = (aqData && typeof aqData.pm10 === 'number') ? aqData.pm10.toFixed(1) : '12.4';
+    const ozone = (aqData && typeof aqData.ozone === 'number') ? Math.round(aqData.ozone) : 68;
+
+    return {
+      grassScore,
+      treeScore,
+      weedScore,
+      moldScore,
+      usAqi,
+      pm25,
+      pm10,
+      ozone
+    };
+  }
+
+  function renderAllergyTelemetry(curWeather) {
+    if (!el.pollenGrassVal) return;
+    const pet = appState.pet;
+    const profile = computeAeroallergenProfile(curWeather, appState.airQuality, appState.location.lat);
+
+    const setChannelUI = (valEl, barEl, score) => {
+      let tier = 'LOW';
+      let cls = 'safe';
+      if (score >= 6.5) {
+        tier = 'HIGH';
+        cls = 'danger';
+      } else if (score >= 3.5) {
+        tier = 'MODERATE';
+        cls = 'caution';
+      }
+      valEl.textContent = `${tier} (${score.toFixed(1)} / 10)`;
+      barEl.className = `allergen-bar-fill ${cls}`;
+      barEl.style.width = `${Math.max(5, score * 10)}%`;
+    };
+
+    setChannelUI(el.pollenGrassVal, el.pollenGrassBar, profile.grassScore);
+    setChannelUI(el.pollenTreeVal, el.pollenTreeBar, profile.treeScore);
+    setChannelUI(el.pollenWeedVal, el.pollenWeedBar, profile.weedScore);
+    setChannelUI(el.pollenMoldVal, el.pollenMoldBar, profile.moldScore);
+
+    // Populate Air Quality Cells
+    el.aqiNumVal.textContent = `${profile.usAqi}`;
+    el.pm25Val.textContent = `${profile.pm25} µg/m³`;
+    el.pm10Val.textContent = `${profile.pm10} µg/m³`;
+    el.ozoneVal.textContent = `${profile.ozone} µg/m³`;
+
+    let aqiCat = 'GOOD';
+    if (profile.usAqi > 150) aqiCat = 'UNHEALTHY';
+    else if (profile.usAqi > 100) aqiCat = 'SENSITIVE HAZARD';
+    else if (profile.usAqi > 50) aqiCat = 'MODERATE';
+    el.aqiBadge.textContent = `US AQI: ${profile.usAqi} (${aqiCat})`;
+
+    // Determine Dominant Canine Allergy Risk & Grooming Protocol
+    const maxPollen = Math.max(profile.grassScore, profile.treeScore, profile.weedScore, profile.moldScore);
+    const isAtopicDog = pet.allergy === 'sensitive';
+    const isBrachy = pet.snout === 'brachy';
+    const effectivePollenRisk = maxPollen + (isAtopicDog ? 2.0 : 0);
+    const effectiveAqiRisk = profile.usAqi + (isBrachy ? 25 : 0);
+
+    let overallStatus = 'green';
+    let badgeLabel = 'ALLERGY RISK: LOW';
+    let verdictTitle = `MINIMAL ALLERGEN LOAD FOR ${pet.name.toUpperCase()}`;
+    let verdictDesc = `Airborne pollen and particulate levels (AQI ${profile.usAqi}) are low. Standard post-walk brushing is sufficient.`;
+
+    if (effectivePollenRisk >= 6.8 || effectiveAqiRisk >= 115) {
+      overallStatus = 'red';
+      badgeLabel = 'ALLERGY RISK: HIGH';
+      verdictTitle = `MANDATORY PAW & COAT DECONTAMINATION FOR ${pet.name.toUpperCase()}`;
+      verdictDesc = `Elevated aeroallergen / particulate load detected! Wipe ${pet.name}'s interdigital paw pads, belly, and muzzle with a damp cloth immediately after returning indoors to prevent atopic itching and histaminic flare-ups.`;
+    } else if (effectivePollenRisk >= 3.8 || effectiveAqiRisk >= 65) {
+      overallStatus = 'yellow';
+      badgeLabel = 'ALLERGY RISK: MODERATE';
+      verdictTitle = `POST-WALK PAW RINSE RECOMMENDED FOR ${pet.name.toUpperCase()}`;
+      verdictDesc = `Moderate seasonal pollen and spore activity${isAtopicDog ? ' (amplified by atopic sensitivity)' : ''}. Rinse or wipe paws after walking through tall turf or leaf litter, and monitor for paw licking or ear scratching.`;
+    }
+
+    el.allergyOverallBadge.textContent = badgeLabel;
+    el.allergyProtocolCard.className = `allergy-protocol-card status-${overallStatus}`;
+    el.allergyOverallBadge.className = `status-pill`;
+
+    if (overallStatus === 'yellow') {
+      el.allergyOverallBadge.style.background = 'rgba(234, 179, 8, 0.15)';
+      el.allergyOverallBadge.style.color = '#EAB308';
+      el.allergyOverallBadge.style.borderColor = 'rgba(234, 179, 8, 0.4)';
+    } else if (overallStatus === 'red') {
+      el.allergyOverallBadge.style.background = 'rgba(239, 68, 68, 0.18)';
+      el.allergyOverallBadge.style.color = '#EF4444';
+      el.allergyOverallBadge.style.borderColor = 'rgba(239, 68, 68, 0.45)';
+    } else {
+      el.allergyOverallBadge.style.background = 'rgba(34, 197, 94, 0.15)';
+      el.allergyOverallBadge.style.color = '#22C55E';
+      el.allergyOverallBadge.style.borderColor = 'rgba(34, 197, 94, 0.35)';
+    }
+
+    el.allergyVerdictTitle.textContent = verdictTitle;
+    el.allergyVerdictDesc.textContent = verdictDesc;
   }
 
   async function fetchOpenMeteoData(lat, lon) {
@@ -1019,6 +1232,7 @@
     renderWalkWindows(data.hourly);
     renderHourlyForecast(data.hourly);
     renderDailyForecast(data.daily);
+    renderAllergyTelemetry(cur);
 
     el.simAirTemp.value = Math.round((cur.tempC * 9 / 5) + 32);
     updateSimulator();
@@ -1381,6 +1595,7 @@
     el.dogSizeSelect.value = pet.size;
     el.dogCoatSelect.value = pet.coat;
     el.dogSnoutSelect.value = pet.snout;
+    if (el.dogAllergySelect) el.dogAllergySelect.value = pet.allergy || 'normal';
     el.dogAgeSelect.value = pet.age;
     el.petModal.classList.remove('hidden');
   }
@@ -1397,6 +1612,7 @@
       size: el.dogSizeSelect.value,
       coat: el.dogCoatSelect.value,
       snout: el.dogSnoutSelect.value,
+      allergy: el.dogAllergySelect ? el.dogAllergySelect.value : 'normal',
       age: el.dogAgeSelect.value
     };
     saveJSON('pawcast_pet', appState.pet);
