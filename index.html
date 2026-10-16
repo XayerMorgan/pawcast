@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>PAWCAST // Meteorological & Canine Field Station</title>
-  <meta name="description" content="Precision Meteorological & Multi-Dog Ground-Thermodynamics Instrument. Weekly Almanac, Live Doppler Radar, Aeroallergen Bio-Monitor, and Acoustic Field Audio." />
+  <title>PawCast — Weather, Radar, Air Quality &amp; Dog Walk Forecast</title>
+  <meta name="description" content="Local weather forecast, rolling 7-day outlook, live Doppler radar, EPA air quality &amp; pollen tracker, and dog walk pavement safety guide." />
   <link rel="icon" href="pawcast_logo.png" type="image/png" />
   
   <!-- Editorial & Technical Typography: Fraunces (Serif), Plus Jakarta Sans (Humanist), JetBrains Mono (Telemetry) -->
@@ -22,128 +22,143 @@
   <!-- Subtle Tactile Paper / Anodized Grain Overlay -->
   <div class="grain-overlay" aria-hidden="true"></div>
 
-  <!-- Instrument Chassis -->
+  <!-- Main Application Container -->
   <div class="station-chassis">
 
-    <!-- TOP TELEMETRY RIBBON (Braun / Field Station Hardware Header) -->
+    <!-- TOP HEADER: SLIMMED TO CORE CONTROLS (Brand, Search, Units, Dogs, Settings) -->
     <header class="telemetry-header">
       <div class="station-id-block">
         <div class="station-mark">
-          <span class="led-indicator active" id="station-led"></span>
-          <span class="station-code">STN-04 // PAWCAST</span>
+          <span class="led-indicator active" id="station-led" aria-hidden="true"></span>
+          <span class="station-code">LOCAL WEATHER &amp; WALK GUIDE</span>
         </div>
-        <h1 class="station-title">Precision Weather &amp; Atmospheric Field Station</h1>
+        <h1 class="station-title">PawCast</h1>
       </div>
 
-      <!-- Location Search & Coordinates -->
+      <!-- Location Search & GPS -->
       <div class="station-search-module">
         <div class="search-input-housing">
-          <svg class="reticle-icon" viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="2" fill="none">
-            <circle cx="12" cy="12" r="8"></circle>
-            <line x1="12" y1="1" x2="12" y2="5"></line>
-            <line x1="12" y1="19" x2="12" y2="23"></line>
-            <line x1="1" y1="12" x2="5" y2="12"></line>
-            <line x1="19" y1="12" x2="23" y2="12"></line>
+          <label for="location-input" class="sr-only">Search city or postal code</label>
+          <svg class="reticle-icon" viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" aria-hidden="true">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
           </svg>
-          <input type="text" id="location-input" placeholder="Enter city, postal code, or coordinates..." autocomplete="off" />
-          <button id="geo-btn" class="hw-icon-btn" title="Acquire GPS Coordinates">
-            <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="2" fill="none">
+          <input type="text" id="location-input" placeholder="Search city or postal code..." autocomplete="off" />
+          <button id="geo-btn" class="hw-icon-btn" type="button" aria-label="Use my current GPS location" title="Use my current GPS location">
+            <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" aria-hidden="true">
               <polygon points="3 11 22 2 13 21 11 13 3 11"></polygon>
             </svg>
           </button>
         </div>
-        <div id="search-results" class="search-results-dropdown hidden"></div>
+        <div id="search-results" class="search-results-dropdown hidden" role="listbox" aria-label="City search suggestions"></div>
       </div>
 
-      <!-- Hardware Switches: Acoustic Monitor, Units, Canine Pack Roster Manager -->
+      <!-- Core Header Controls: Units, Dogs, and Settings Overflow -->
       <div class="hardware-switches">
-        <!-- Acoustic Weather Soundscape Toggle -->
-        <button id="sound-toggle-btn" class="hw-pill-switch sound-switch" title="Toggle Live Ambient Weather Soundscape &amp; Tactile Audio">
-          <span class="eq-bars" id="eq-bars">
-            <i></i><i></i><i></i><i></i>
-          </span>
-          <span id="sound-btn-label">AUDIO: OFF</span>
-        </button>
-
-        <!-- Unit Toggle Switch -->
-        <div class="hw-rocker" id="unit-toggle" role="radiogroup" aria-label="Telemetry Units">
-          <button id="unit-f" class="rocker-btn active" data-unit="imperial">°F / MPH</button>
-          <button id="unit-c" class="rocker-btn" data-unit="metric">°C / KMH</button>
+        <!-- Accessible Unit Toggle Switch -->
+        <div class="hw-rocker" id="unit-toggle" role="radiogroup" aria-label="Temperature and wind speed units">
+          <button id="unit-f" type="button" class="rocker-btn active" role="radio" aria-checked="true" data-unit="imperial">°F / mph</button>
+          <button id="unit-c" type="button" class="rocker-btn" role="radio" aria-checked="false" data-unit="metric">°C / km/h</button>
         </div>
 
-        <!-- Canine Pack Roster & Calibration Button -->
-        <button id="pet-profile-btn" class="hw-pill-switch subject-switch" title="Manage Canine Companion Pack &amp; Profiles">
-          <span class="paw-glyph">🐾</span>
-          <span id="profile-btn-label">PACK: MAX</span>
+        <!-- Dogs Profile Button -->
+        <button id="pet-profile-btn" type="button" class="hw-pill-switch subject-switch" title="Manage your dogs and customize walk safety settings">
+          <span class="paw-glyph" aria-hidden="true">🐾</span>
+          <span id="profile-btn-label">Dog: Max</span>
+        </button>
+
+        <!-- Settings & Data Options Toggle (Houses Audio, Polling, Source, Weather.gov) -->
+        <button id="settings-toggle-btn" type="button" class="hw-pill-switch settings-switch" aria-expanded="false" aria-controls="station-settings-drawer" title="Open data source, auto-refresh, and audio settings">
+          <span aria-hidden="true">⚙️</span>
+          <span>Options</span>
         </button>
       </div>
     </header>
 
-    <!-- SUB-HEADER: SAVED WAYPOINTS + ADJUNCT DOG SWITCHER + TELEMETRY FEED CONTROLS -->
-    <div class="sub-telemetry-bar">
-      <!-- Saved Location Waypoints (Primary) -->
-      <div class="waypoints-group">
-        <span class="mono-label">LOCATIONS //</span>
-        <div id="favorite-chips" class="chips-container"></div>
-        <button id="add-favorite-btn" class="waypoint-add-btn" title="Save current location">+ SAVE CITY</button>
-      </div>
-
-      <!-- Multi-Dog Pack Switcher Strip (Adjunct) -->
-      <div class="waypoints-group pack-switcher-group">
-        <span class="mono-label">CANINE ADJUNCT //</span>
-        <div id="dog-roster-chips" class="chips-container"></div>
-        <button id="add-dog-quick-btn" class="waypoint-add-btn" title="Add another dog to your pack">+ ADD DOG</button>
-      </div>
-
-      <div class="feed-controls-group">
-        <div class="source-readout">
-          <span class="mono-label">FEED:</span>
-          <strong id="active-source-name" class="mono-val">OPEN-METEO + RAINVIEWER</strong>
+    <!-- COLLAPSIBLE OPTIONS & DATA SETTINGS DRAWER (Keeps header uncluttered) -->
+    <div id="station-settings-drawer" class="settings-drawer hidden" aria-hidden="true">
+      <div class="settings-drawer-inner">
+        <div class="setting-item">
+          <label for="source-select" class="mono-label">Weather Data Source:</label>
+          <select id="source-select">
+            <option value="openmeteo">Open-Meteo Global Forecast</option>
+            <option value="nws">NOAA National Weather Service (US)</option>
+          </select>
+          <span id="active-source-name" class="mono-val sr-only">Open-Meteo + RainViewer</span>
         </div>
 
-        <a id="nws-gov-link" href="https://forecast.weather.gov" target="_blank" rel="noopener" class="gov-dispatch-link" title="Open official NOAA / National Weather Service government dispatch for these coordinates">
-          <span>NOAA.GOV DISPATCH</span>
-          <svg viewBox="0 0 24 24" width="11" height="11" stroke="currentColor" stroke-width="2.5" fill="none">
-            <line x1="7" y1="17" x2="17" y2="7"></line>
-            <polyline points="7 7 17 7 17 17"></polyline>
-          </svg>
-        </a>
+        <div class="setting-item">
+          <label for="auto-refresh-select" class="mono-label">Auto-Refresh:</label>
+          <div class="sync-module">
+            <select id="auto-refresh-select">
+              <option value="5">Every 5 min</option>
+              <option value="10" selected>Every 10 min</option>
+              <option value="15">Every 15 min</option>
+              <option value="30">Every 30 min</option>
+              <option value="0">Off (Manual only)</option>
+            </select>
+            <button id="refresh-now-btn" type="button" class="hw-icon-btn sync-btn" aria-label="Refresh weather now" title="Refresh weather now">
+              <svg id="refresh-svg" viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2.2" fill="none" aria-hidden="true">
+                <polyline points="23 4 23 10 17 10"></polyline>
+                <polyline points="1 20 1 14 7 14"></polyline>
+                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+              </svg>
+            </button>
+            <span id="refresh-countdown" class="mono-tag" title="Time until next automatic weather update">Next: 10:00</span>
+          </div>
+        </div>
 
-        <div class="sync-module">
-          <button id="refresh-now-btn" class="hw-icon-btn sync-btn" title="Force immediate telemetry sync">
-            <svg id="refresh-svg" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2.2" fill="none">
-              <polyline points="23 4 23 10 17 10"></polyline>
-              <polyline points="1 20 1 14 7 14"></polyline>
-              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
-            </svg>
+        <div class="setting-item">
+          <span class="mono-label">Ambient Sound:</span>
+          <button id="sound-toggle-btn" type="button" class="hw-pill-switch sound-switch" aria-pressed="false" title="Toggle ambient weather sound effects">
+            <span class="eq-bars" id="eq-bars" aria-hidden="true">
+              <i></i><i></i><i></i><i></i>
+            </span>
+            <span id="sound-btn-label">Weather Audio: Off</span>
           </button>
-          <select id="auto-refresh-select" aria-label="Auto Sync Interval" title="Select telemetry polling rate">
-            <option value="5">POLL: 5M</option>
-            <option value="10" selected>POLL: 10M</option>
-            <option value="15">POLL: 15M</option>
-            <option value="30">POLL: 30M</option>
-            <option value="0">POLL: OFF</option>
-          </select>
-          <span id="refresh-countdown" class="mono-tag">T-10:00</span>
         </div>
 
-        <div class="aggregator-module">
-          <select id="source-select" aria-label="Primary Telemetry Source">
-            <option value="openmeteo">SRC: OPEN-METEO</option>
-            <option value="nws">SRC: NOAA/NWS</option>
-          </select>
+        <div class="setting-item">
+          <a id="nws-gov-link" href="https://forecast.weather.gov" target="_blank" rel="noopener" class="gov-dispatch-link" title="Open official National Weather Service forecast for this location">
+            <span>Official Weather.gov Forecast</span>
+            <svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" stroke-width="2.5" fill="none" aria-hidden="true">
+              <line x1="7" y1="17" x2="17" y2="7"></line>
+              <polyline points="7 7 17 7 17 17"></polyline>
+            </svg>
+          </a>
         </div>
       </div>
     </div>
 
-    <!-- MAIN INSTRUMENT DECK -->
+    <!-- QUICK SWITCHER BAR: SAVED CITIES & DOG PROFILES -->
+    <div class="sub-telemetry-bar" aria-label="Saved cities and dog profiles">
+      <div class="waypoints-group">
+        <span class="mono-label">Saved Cities:</span>
+        <div id="favorite-chips" class="chips-container"></div>
+        <button id="add-favorite-btn" type="button" class="waypoint-add-btn" title="Save current city to quick list">+ Save City</button>
+      </div>
+
+      <div class="waypoints-group pack-switcher-group">
+        <span class="mono-label">My Dogs:</span>
+        <div id="dog-roster-chips" class="chips-container"></div>
+        <button id="add-dog-quick-btn" type="button" class="waypoint-add-btn" title="Add another dog profile">+ Add Dog</button>
+      </div>
+    </div>
+
+    <!-- MAIN CONTENT -->
     <main class="instrument-deck">
 
-      <!-- ROW 1: PRIMARY WEATHER STATION HERO + ROLLING 7-DAY FORECAST RIBBON -->
+      <!-- Status Banner for Loading & Network Errors -->
+      <div id="weather-status-banner" class="weather-status-banner hidden" role="status" aria-live="polite">
+        <span id="weather-status-text">Updating local weather forecast...</span>
+        <button id="weather-retry-btn" type="button" class="hw-btn secondary sm-btn hidden">Retry Now</button>
+      </div>
+
+      <!-- ROW 1: CURRENT WEATHER HERO + 7-DAY FORECAST -->
       <section class="panel hero-station-panel span-full">
         <div class="hero-station-grid">
           
-          <!-- Left Column: Atmospheric Visual Window & Primary Thermometer -->
+          <!-- Left Column: Current Temperature & Sky Visual -->
           <div class="station-visual-card" id="station-visual-card">
             <div class="visual-backdrop" id="visual-backdrop"></div>
             <div class="visual-scrim"></div>
@@ -152,61 +167,61 @@
               <div class="sector-header">
                 <div class="sector-title-wrap">
                   <span class="mono-tag coord-badge" id="coord-display">40.71°N, 74.01°W</span>
-                  <h2 id="city-name" class="editorial-city">New York</h2>
-                  <span id="current-date" class="editorial-date">Friday, Oct 16</span>
+                  <h2 id="city-name" class="editorial-city">Loading Weather...</h2>
+                  <span id="current-date" class="editorial-date">Today</span>
                 </div>
                 <div class="sky-badge-wrap">
-                  <span id="weather-main-emoji" class="sky-glyph" title="Atmospheric Condition">☀️</span>
-                  <span id="weather-condition-text" class="sky-condition-label">Clear Sky</span>
+                  <span id="weather-main-emoji" class="sky-glyph" aria-hidden="true">☀️</span>
+                  <span id="weather-condition-text" class="sky-condition-label">Checking Sky...</span>
                 </div>
               </div>
 
               <div class="primary-temp-readout">
                 <span id="current-temp" class="editorial-big-temp">--°</span>
                 <div class="temp-extremes-stack">
-                  <span id="temp-high" class="extreme-val high">HIGH --°</span>
-                  <span id="temp-low" class="extreme-val low">LOW --°</span>
-                  <span class="acoustic-hint" id="acoustic-status-text">Soundscape Ready</span>
+                  <span id="temp-high" class="extreme-val high">High --°</span>
+                  <span id="temp-low" class="extreme-val low">Low --°</span>
+                  <span class="acoustic-hint" id="acoustic-status-text">Live Weather</span>
                 </div>
               </div>
             </div>
           </div>
 
-          <!-- Right Column: Primary Weather Almanac (Card 1) + Canine Companion Adjunct (Card 2) -->
+          <!-- Right Column: Today's Weather Summary (Card 1) + Dog Walk & Pavement Check (Card 2) -->
           <div class="telemetry-gauges-col">
             
-            <!-- Card 1: Primary Atmospheric & Solar Almanac (General Weather) -->
+            <!-- Card 1: Today's Weather Summary -->
             <div class="instrument-gauge" id="box-heat-safety">
               <div class="gauge-top-bar">
-                <span class="gauge-index">STATION 01 // ATMOSPHERIC &amp; SOLAR ALMANAC</span>
+                <span class="gauge-index">TODAY'S WEATHER SUMMARY</span>
                 <span class="status-pill" id="heat-status-pill">FAIR WEATHER</span>
               </div>
 
-              <h3 id="heat-status-title" class="gauge-verdict">COMFORTABLE OUTDOOR CONDITIONS</h3>
+              <h3 id="heat-status-title" class="gauge-verdict">Comfortable Outdoor Conditions</h3>
 
               <div class="almanac-metrics-grid">
-                <div class="resp-cell" title="Apparent temperature accounting for humidity and wind chill">
-                  <span class="resp-label">FEELS LIKE</span>
+                <div class="resp-cell">
+                  <span class="resp-label">Feels Like</span>
                   <strong id="feels-like-val" class="resp-val">--°</strong>
                 </div>
-                <div class="resp-cell" title="Relative atmospheric humidity &amp; dew point">
-                  <span class="resp-label">HUMIDITY / DEW</span>
-                  <strong id="humidity-val" class="resp-val">45%</strong>
+                <div class="resp-cell">
+                  <span class="resp-label">Humidity &amp; Dew</span>
+                  <strong id="humidity-val" class="resp-val">--%</strong>
                 </div>
-                <div class="resp-cell" title="Surface wind speed, compass bearing &amp; gusts">
-                  <span class="resp-label">WIND &amp; GUSTS</span>
+                <div class="resp-cell">
+                  <span class="resp-label">Wind &amp; Gusts</span>
                   <strong id="hero-wind-val" class="resp-val">-- mph</strong>
                 </div>
-                <div class="resp-cell" title="Local solar sunrise and sunset times">
-                  <span class="resp-label">SUNRISE / SET</span>
-                  <strong id="hero-sun-val" class="resp-val">6:58a / 6:15p</strong>
+                <div class="resp-cell">
+                  <span class="resp-label">Sunrise / Sunset</span>
+                  <strong id="hero-sun-val" class="resp-val">-- / --</strong>
                 </div>
-                <div class="resp-cell" title="Horizontal atmospheric visibility distance">
-                  <span class="resp-label">VISIBILITY</span>
+                <div class="resp-cell">
+                  <span class="resp-label">Visibility</span>
                   <strong id="hero-vis-val" class="resp-val">10.0 mi</strong>
                 </div>
-                <div class="resp-cell" title="Current lunar cycle phase">
-                  <span class="resp-label">LUNAR PHASE</span>
+                <div class="resp-cell">
+                  <span class="resp-label">Moon Phase</span>
                   <strong id="hero-moon-val" class="resp-val">🌔 Gibbous</strong>
                 </div>
               </div>
@@ -214,43 +229,43 @@
               <p id="heat-safety-desc" class="gauge-advisory">Pleasant ambient conditions with clear visibility and light winds.</p>
             </div>
 
-            <!-- Card 2: Canine Companion Adjunct (Ground Surface & Dog Comfort) -->
+            <!-- Card 2: Dog Walk & Pavement Check -->
             <div class="instrument-gauge" id="box-paw-safety">
               <div class="gauge-top-bar">
-                <span class="gauge-index">ADJUNCT // CANINE COMPANION &amp; SURFACE OUTLOOK</span>
+                <span class="gauge-index">DOG WALK &amp; PAVEMENT CHECK</span>
                 <span class="status-pill" id="paw-status-pill">PAWS SAFE</span>
               </div>
 
               <div class="adjunct-title-row">
-                <h3 id="paw-status-title" class="gauge-verdict">ALL SURFACES SAFE</h3>
-                <span id="subject-coat-val" class="mono-tag">🐾 MAX</span>
+                <h3 id="paw-status-title" class="gauge-verdict">All Surfaces Safe</h3>
+                <span id="subject-coat-val" class="mono-tag">🐾 Max</span>
               </div>
 
-              <!-- Analog Horizontal Thermal Scale -->
+              <!-- Pavement Temperature Scale -->
               <div class="thermal-scale-wrap">
                 <div class="thermal-scale-labels">
-                  <span>32°F FREEZE</span>
-                  <span>85°F IDEAL</span>
-                  <span>105°F WARM</span>
-                  <span>125°F+ HOT</span>
+                  <span>32°F Freeze</span>
+                  <span>85°F Ideal</span>
+                  <span>105°F Warm</span>
+                  <span>125°F+ Hot</span>
                 </div>
                 <div class="thermal-track">
                   <div class="thermal-zones"></div>
-                  <div class="thermal-needle" id="paw-thermal-needle" style="left: 42%;" title="Estimated Blacktop Temperature">
+                  <div class="thermal-needle" id="paw-thermal-needle" style="left: 42%;">
                     <span class="needle-head"></span>
                   </div>
                 </div>
               </div>
 
               <div class="surface-telemetry-row">
-                <div class="surf-readout-box" title="Solar-heated blacktop asphalt temperature">
-                  <span class="surf-label">ASPHALT / PAVEMENT</span>
-                  <strong id="asphalt-temp-val" class="surf-mono-val">78°F</strong>
+                <div class="surf-readout-box">
+                  <span class="surf-label">Asphalt / Pavement (Est.)</span>
+                  <strong id="asphalt-temp-val" class="surf-mono-val">--°F</strong>
                 </div>
                 <div class="surf-divider"></div>
-                <div class="surf-readout-box" title="Evaporatively cooled natural turf temperature">
-                  <span class="surf-label">LAWN / NATURAL TURF</span>
-                  <strong id="grass-temp-val" class="surf-mono-val safe-text">72°F</strong>
+                <div class="surf-readout-box">
+                  <span class="surf-label">Lawn / Grass (Est.)</span>
+                  <strong id="grass-temp-val" class="surf-mono-val safe-text">--°F</strong>
                 </div>
               </div>
 
@@ -260,119 +275,119 @@
           </div>
         </div>
 
-        <!-- TOP ROLLING 7-DAY WEATHER FORECAST (AT THE TOP) -->
+        <!-- TOP 7-DAY WEATHER FORECAST -->
         <div class="top-weekly-almanac-block">
           <div class="weekly-block-header">
             <div class="dispatch-label">
-              <span class="pulse-dot"></span>
-              <span class="mono-title">ROLLING 7-DAY WEATHER OUTLOOK //</span>
+              <span class="pulse-dot" aria-hidden="true"></span>
+              <span class="mono-title">7-Day Weather Forecast</span>
             </div>
-            <span class="mono-tag" id="weekly-pack-tag">🐾 ADJUNCT: MAX</span>
+            <span class="mono-tag" id="weekly-pack-tag">🐾 Walk tags for: Max</span>
           </div>
           <div class="weekly-top-grid" id="daily-list"></div>
         </div>
 
-        <!-- Today's Best Outdoor & Walk Windows Strip -->
+        <!-- Best Hours to Walk Today Strip -->
         <div class="excursion-dispatch-strip">
           <div class="dispatch-label">
-            <span class="pulse-dot amber"></span>
-            <span class="mono-title">TODAY'S BEST OUTDOOR &amp; WALK WINDOWS //</span>
+            <span class="pulse-dot amber" aria-hidden="true"></span>
+            <span class="mono-title">Best Hours Outdoors Today:</span>
           </div>
           <div id="walk-windows-grid" class="windows-ribbon"></div>
         </div>
       </section>
 
-      <!-- ROW 2: 24-HOUR ROLLING WEATHER HORIZON (ABOVE RADAR) -->
+      <!-- ROW 2: 24-HOUR FORECAST -->
       <section class="panel horizon-panel span-full">
         <div class="panel-header">
           <div>
-            <span class="panel-code">INSTRUMENT 02 // 24-HOUR ROLLING WEATHER HORIZON</span>
-            <h2 class="panel-title">Hourly Temperature Curve, Rain Probability, Wind &amp; Comfort Matrix</h2>
+            <span class="panel-code">HOURLY OUTLOOK</span>
+            <h2 class="panel-title">24-Hour Temperature, Rain Chance &amp; Wind Forecast</h2>
           </div>
           <div class="horizon-legend">
-            <span class="leg-chip" title="Ambient air temperature curve"><i class="swatch temp"></i> Temp Curve</span>
-            <span class="leg-chip" title="Hourly precipitation probability"><i class="swatch rain"></i> Rain %</span>
-            <span class="leg-chip" title="Comfortable outdoor &amp; walking conditions"><i class="swatch safe"></i> Ideal (Green)</span>
-            <span class="leg-chip" title="Warm pavement, brisk wind, or rain caution"><i class="swatch warn"></i> Caution (Amber)</span>
-            <span class="leg-chip" title="Severe heat, storm, or freezing hazard"><i class="swatch danger"></i> Hazard (Crimson)</span>
+            <span class="leg-chip"><i class="swatch temp" aria-hidden="true"></i> Temperature</span>
+            <span class="leg-chip"><i class="swatch rain" aria-hidden="true"></i> Rain Chance %</span>
+            <span class="leg-chip"><i class="swatch safe" aria-hidden="true"></i> Ideal (Green)</span>
+            <span class="leg-chip"><i class="swatch warn" aria-hidden="true"></i> Caution (Amber)</span>
+            <span class="leg-chip"><i class="swatch danger" aria-hidden="true"></i> Alert (Red)</span>
           </div>
         </div>
 
-        <!-- Precision SVG Telemetry Graph -->
+        <!-- Hourly SVG Graph -->
         <div class="svg-telemetry-frame" id="svg-chart-container">
-          <svg id="hourly-svg" class="hourly-svg" viewBox="0 0 1000 200" preserveAspectRatio="none"></svg>
+          <svg id="hourly-svg" class="hourly-svg" viewBox="0 0 1000 200" preserveAspectRatio="none" role="img" aria-label="24-hour temperature and precipitation chart"></svg>
         </div>
 
-        <!-- Tactile Hourly Strip with Hover Symbol Breakdown -->
+        <!-- Hourly Cards Strip -->
         <div class="hourly-strip" id="hourly-scroller"></div>
       </section>
 
-      <!-- ROW 3: HIGH-CONTRAST DOPPLER RADAR SCOPE -->
+      <!-- ROW 3: LIVE WEATHER RADAR -->
       <section class="panel radar-scope-panel span-full">
         <div class="panel-header">
           <div>
-            <span class="panel-code">INSTRUMENT 03 // PRECIPITATION DOPPLER SCOPE</span>
-            <h2 class="panel-title">Live Weather Radar &amp; Storm Vector Tracking</h2>
+            <span class="panel-code">LIVE DOPPLER RADAR</span>
+            <h2 class="panel-title">Precipitation Radar &amp; Storm Tracker</h2>
           </div>
           <div class="radar-scope-controls">
-            <button id="radar-play-btn" class="hw-pill-switch radar-play-switch">
-              <span id="radar-play-icon">▶</span>
-              <span id="radar-play-text">SWEEP: PAUSED</span>
+            <button id="radar-play-btn" type="button" class="hw-pill-switch radar-play-switch">
+              <span id="radar-play-icon" aria-hidden="true">▶</span>
+              <span id="radar-play-text">Play Radar</span>
             </button>
-            <span id="radar-zoom-level" class="mono-tag radar-zoom-tag" title="Current map zoom (radar supports 3–7)">ZOOM 7</span>
-            <span id="radar-timestamp" class="mono-tag radar-clock">SCAN: SYNCHRONIZING...</span>
+            <span id="radar-zoom-level" class="mono-tag radar-zoom-tag">Zoom 7</span>
+            <span id="radar-timestamp" class="mono-tag radar-clock">Loading radar...</span>
           </div>
         </div>
 
         <div class="radar-viewport">
-          <div id="radar-map" class="radar-map"></div>
-          <!-- Tactical Crosshair Overlay (non-interactive) -->
+          <div id="radar-map" class="radar-map" role="application" aria-label="Interactive weather radar map"></div>
+          <!-- Subtle Center Crosshair -->
           <div class="radar-reticle-overlay" aria-hidden="true">
             <div class="reticle-ring"></div>
             <div class="reticle-cross-h"></div>
             <div class="reticle-cross-v"></div>
           </div>
-          <!-- High Contrast DBZ Reflectivity Legend -->
+          <!-- Radar Intensity Legend -->
           <div class="radar-dbz-scale">
-            <span class="dbz-label">dBZ REFLECTIVITY</span>
+            <span class="dbz-label">Rain Intensity</span>
             <div class="dbz-bars">
-              <span class="dbz-seg light">LIGHT</span>
-              <span class="dbz-seg mod">MOD</span>
-              <span class="dbz-seg heavy">HEAVY</span>
-              <span class="dbz-seg extreme">SEVERE</span>
+              <span class="dbz-seg light">Light</span>
+              <span class="dbz-seg mod">Mod</span>
+              <span class="dbz-seg heavy">Heavy</span>
+              <span class="dbz-seg extreme">Severe</span>
             </div>
           </div>
         </div>
       </section>
 
-      <!-- ROW 4: AIR QUALITY, POLLEN & ALLERGY MONITOR (INSTRUMENT 04) -->
+      <!-- ROW 4: AIR QUALITY, POLLEN & ALLERGY FORECAST -->
       <section class="panel allergy-panel span-full">
         <div class="panel-header">
           <div>
-            <span class="panel-code">INSTRUMENT 04 // AIR QUALITY, POLLEN &amp; ENVIRONMENTAL ALLERGY MONITOR</span>
-            <h2 class="panel-title">Pollen Spectrum, US EPA Air Quality Index &amp; Outdoor Respiratory Guide</h2>
+            <span class="panel-code">AIR QUALITY &amp; ALLERGENS</span>
+            <h2 class="panel-title">Pollen Levels, EPA Air Quality Index &amp; Allergy Guide</h2>
           </div>
           <div class="allergy-header-badges">
             <span id="aqi-badge" class="mono-tag aqi-pill">US AQI: --</span>
-            <span id="allergy-overall-badge" class="status-pill">ALLERGY RISK: LOW</span>
-            <button id="allergen-help-toggle-btn" class="hw-pill-switch allergen-help-btn" type="button" aria-expanded="false" title="Open comprehensive definitions for all pollen, mold, and AQI categories">
-              <span class="help-q-icon">?</span>
-              <span id="allergen-help-btn-text">ALLERGEN GUIDE</span>
+            <span id="allergy-overall-badge" class="status-pill">Allergy Risk: Low</span>
+            <button id="allergen-help-toggle-btn" class="hw-pill-switch allergen-help-btn" type="button" aria-expanded="false" aria-controls="allergen-help-drawer">
+              <span class="help-q-icon" aria-hidden="true">?</span>
+              <span id="allergen-help-btn-text">Allergen Guide</span>
             </button>
           </div>
         </div>
 
         <div class="allergy-monitor-grid">
-          <!-- Left: 4-Channel Aeroallergen Spectrum Bars -->
+          <!-- Left: 4-Channel Pollen & Mold Spectrum Bars -->
           <div class="allergen-channels">
             <div class="allergen-row" data-allergen-help="grass">
               <div class="allergen-meta">
                 <span class="allergen-name-wrap">
-                  <span class="allergen-name">GRASS / TURF POLLEN</span>
+                  <span class="allergen-name">Grass / Turf Pollen</span>
                   <button type="button" class="inline-help-trigger" data-help-target="grass" aria-label="Grass pollen definition">?</button>
                   <span class="help-popover" role="tooltip">
-                    <strong>GRASS / TURF POLLEN (Poaceae)</strong>
-                    Primary late-spring &amp; summer allergen (Bermuda, Timothy, Bluegrass, Rye). Triggers human nasal congestion/sneezing when airborne, and absorbs directly through canine paw pads on lawns.
+                    <strong>Grass / Turf Pollen (Poaceae)</strong>
+                    Common late-spring and summer allergen (Bermuda, Timothy, Bluegrass, Rye). Can trigger human hay fever when airborne and cling to dog paws on lawns.
                   </span>
                 </span>
                 <strong id="pollen-grass-val" class="allergen-level">LOW (1.8 / 10)</strong>
@@ -385,11 +400,11 @@
             <div class="allergen-row" data-allergen-help="tree">
               <div class="allergen-meta">
                 <span class="allergen-name-wrap">
-                  <span class="allergen-name">ARBOREAL / TREE POLLEN</span>
+                  <span class="allergen-name">Tree Pollen</span>
                   <button type="button" class="inline-help-trigger" data-help-target="tree" aria-label="Tree pollen definition">?</button>
                   <span class="help-popover" role="tooltip">
-                    <strong>ARBOREAL / TREE POLLEN (Oak, Birch, Alder, Pine)</strong>
-                    Fine, wind-dispersed spring pollen capable of traveling miles. Major driver of human spring hay fever and itchy eyes; also settles in dog coats and eyelashes.
+                    <strong>Tree Pollen (Oak, Birch, Alder, Pine)</strong>
+                    Wind-dispersed spring pollen. A primary driver of spring sinus congestion and itchy eyes; also settles on outdoor surfaces and pet coats.
                   </span>
                 </span>
                 <strong id="pollen-tree-val" class="allergen-level">LOW (1.2 / 10)</strong>
@@ -402,11 +417,11 @@
             <div class="allergen-row" data-allergen-help="weed">
               <div class="allergen-meta">
                 <span class="allergen-name-wrap">
-                  <span class="allergen-name">RAGWEED &amp; HERBACEOUS WEEDS</span>
+                  <span class="allergen-name">Ragweed &amp; Weeds</span>
                   <button type="button" class="inline-help-trigger" data-help-target="weed" aria-label="Ragweed and weed pollen definition">?</button>
                   <span class="help-popover" role="tooltip">
-                    <strong>RAGWEED &amp; HERBACEOUS WEEDS (Ambrosia, Mugwort, Nettle)</strong>
-                    Prolific late-summer to autumn allergen until the first frost. Causes severe human sinus pressure and allergic rhinitis, plus skin itching and reverse sneezing in dogs.
+                    <strong>Ragweed &amp; Herbaceous Weeds (Ambrosia, Mugwort)</strong>
+                    Late-summer to autumn allergen active until frost. Triggers human seasonal allergies and can irritate sensitive skin or paws in dogs.
                   </span>
                 </span>
                 <strong id="pollen-weed-val" class="allergen-level">MODERATE (4.8 / 10)</strong>
@@ -419,11 +434,11 @@
             <div class="allergen-row" data-allergen-help="mold">
               <div class="allergen-meta">
                 <span class="allergen-name-wrap">
-                  <span class="allergen-name">FUNGAL MOLD &amp; DAMP SPORES</span>
-                  <button type="button" class="inline-help-trigger" data-help-target="mold" aria-label="Fungal mold spores definition">?</button>
+                  <span class="allergen-name">Mold &amp; Damp Spores</span>
+                  <button type="button" class="inline-help-trigger" data-help-target="mold" aria-label="Mold spores definition">?</button>
                   <span class="help-popover" role="tooltip">
-                    <strong>FUNGAL MOLD &amp; DAMP SPORES (Alternaria, Cladosporium)</strong>
-                    Microscopic spores thriving in humidity, damp soil, and wet autumn leaves. Triggers human sinus/asthma flare-ups and damp paw irritation in dogs.
+                    <strong>Fungal Mold &amp; Damp Spores (Alternaria, Cladosporium)</strong>
+                    Spores thriving in high humidity, damp soil, and wet leaves. Can trigger sinus or respiratory irritation and damp paw sensitivity.
                   </span>
                 </span>
                 <strong id="pollen-mold-val" class="allergen-level">LOW (2.4 / 10)</strong>
@@ -434,7 +449,7 @@
             </div>
           </div>
 
-          <!-- Right: Air Quality Telemetry & Outdoor Health + Canine Adjunct Protocol -->
+          <!-- Right: Air Quality Metrics & Outdoor Guidance -->
           <div class="allergy-protocol-card" id="allergy-protocol-card">
             <div class="aqi-telemetry-strip">
               <div class="aqi-cell has-help" data-help-target="aqi">
@@ -444,272 +459,272 @@
                 </div>
                 <strong id="aqi-num-val" class="aqi-val">--</strong>
                 <span class="help-popover" role="tooltip">
-                  <strong>US EPA AIR QUALITY INDEX (0–500)</strong>
-                  Standardized air pollution scale. 0–50: Good; 51–100: Moderate; 101–150: Unhealthy for Sensitive Groups; 151+: Unhealthy for all outdoor exercise.
+                  <strong>US EPA Air Quality Index (0–500)</strong>
+                  EPA air pollution scale. 0–50: Good; 51–100: Moderate; 101–150: Unhealthy for Sensitive Groups; 151+: Unhealthy for all outdoor exercise.
                 </span>
               </div>
               <div class="aqi-cell has-help" data-help-target="pm25">
                 <div class="aqi-cell-top">
-                  <span class="aqi-label">PM2.5 FINE</span>
+                  <span class="aqi-label">PM2.5 Fine</span>
                   <button type="button" class="inline-help-trigger sm" data-help-target="pm25" aria-label="PM2.5 definition">?</button>
                 </div>
                 <strong id="pm25-val" class="aqi-val">-- µg/m³</strong>
                 <span class="help-popover" role="tooltip">
-                  <strong>FINE PARTICULATE MATTER (&lt;2.5 Microns)</strong>
-                  Combustion soot and wildfire smoke particles 30x smaller than a human hair. Penetrates deep into lung alveoli and bloodstream during outdoor exercise.
+                  <strong>Fine Particulate Matter (&lt;2.5 Microns)</strong>
+                  Fine inhalable particles from smoke and exhaust that can enter deep lung tissue during outdoor exercise.
                 </span>
               </div>
               <div class="aqi-cell has-help" data-help-target="pm10">
                 <div class="aqi-cell-top">
-                  <span class="aqi-label">PM10 / DUST</span>
+                  <span class="aqi-label">PM10 Dust</span>
                   <button type="button" class="inline-help-trigger sm" data-help-target="pm10" aria-label="PM10 definition">?</button>
                 </div>
                 <strong id="pm10-val" class="aqi-val">-- µg/m³</strong>
                 <span class="help-popover" role="tooltip">
-                  <strong>COARSE PARTICULATES (&lt;10 Microns)</strong>
-                  Airborne road dust, construction grit, and fragmented pollen grains. Irritates eyes, throat, and upper nasal passages on dry, windy days.
+                  <strong>Coarse Particulates (&lt;10 Microns)</strong>
+                  Airborne road dust, soil, and pollen fragments that can irritate eyes, throat, and nasal passages on windy days.
                 </span>
               </div>
               <div class="aqi-cell has-help" data-help-target="ozone">
                 <div class="aqi-cell-top">
-                  <span class="aqi-label">OZONE (O₃)</span>
+                  <span class="aqi-label">Ozone (O₃)</span>
                   <button type="button" class="inline-help-trigger sm" data-help-target="ozone" aria-label="Ozone definition">?</button>
                 </div>
                 <strong id="ozone-val" class="aqi-val">-- µg/m³</strong>
                 <span class="help-popover" role="tooltip">
-                  <strong>TROPOSPHERIC GROUND-LEVEL OZONE (O₃)</strong>
-                  Reactive smog formed when afternoon sunlight bakes vehicle exhaust. Causes throat irritation, coughing, and reduced lung capacity during afternoon runs or walks.
+                  <strong>Ground-Level Ozone (O₃)</strong>
+                  Smog formed when sunlight reacts with vehicle and industrial emissions on warm afternoons. Can irritate airways during exercise.
                 </span>
               </div>
             </div>
 
             <div class="canine-dermatitis-readout">
               <div class="derm-header">
-                <span class="panel-code">OUTDOOR AIR &amp; ALLERGY ADVISORY (+ CANINE ADJUNCT)</span>
-                <h3 id="allergy-verdict-title" class="derm-title">CLEAN AIR &amp; LOW POLLEN</h3>
+                <span class="panel-code">OUTDOOR AIR &amp; ALLERGY SUMMARY</span>
+                <h3 id="allergy-verdict-title" class="derm-title">Clean Air &amp; Low Pollen</h3>
               </div>
               <p id="allergy-verdict-desc" class="derm-desc">
-                Evaluating local pollen spectrum and EPA particulate concentrations...
+                Evaluating local pollen levels and EPA particulate concentrations...
               </p>
               <div class="symptom-watch-row" id="symptom-watch-row">
-                <span class="symptom-chip" title="Low risk for human hay fever, sinus congestion, or itchy eyes">🌬️ Sinus / Hay Fever: Low</span>
-                <span class="symptom-chip" title="Air quality is clean for outdoor running, cycling, and recreation">🏃 Outdoor Exercise: Clear</span>
-                <span class="symptom-chip" title="Canine adjunct: Standard paw check after walks">🐾 Canine Adjunct: Nominal</span>
+                <span class="symptom-chip">🌬️ Sinus / Hay Fever: Low</span>
+                <span class="symptom-chip">🏃 Outdoor Exercise: Ideal</span>
+                <span class="symptom-chip">🐾 Dog Walk: Standard Check</span>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- EXPANDABLE ALLERGEN & PARTICULATE FIELD MANUAL (HELP DRAWER) -->
+        <!-- EXPANDABLE ALLERGEN & PARTICULATE GUIDE DRAWER -->
         <div id="allergen-help-drawer" class="allergen-help-drawer hidden" aria-hidden="true">
           <div class="help-drawer-header">
             <div>
-              <span class="panel-code">FIELD MANUAL REFERENCE // AEROBIOLOGY &amp; ATMOSPHERIC AIR QUALITY</span>
-              <h3 class="help-drawer-title">Allergen &amp; Particulate Definitions: Human Health &amp; Canine Adjunct Guide</h3>
+              <span class="panel-code">REFERENCE GUIDE // POLLEN, MOLD &amp; AIR QUALITY DEFINITIONS</span>
+              <h3 class="help-drawer-title">What Each Allergen &amp; Air Quality Metric Means</h3>
             </div>
             <div class="help-drawer-actions">
-              <span class="mono-tag">CLICK ANY [?] ICON TO SPOTLIGHT A METRIC</span>
-              <button type="button" id="close-allergen-help-btn" class="hw-btn secondary sm-btn">CLOSE MANUAL ✕</button>
+              <span class="mono-tag">Informational reference only — not medical or veterinary advice</span>
+              <button type="button" id="close-allergen-help-btn" class="hw-btn secondary sm-btn">Close Guide ✕</button>
             </div>
           </div>
 
-          <!-- Filter Tabs for Quick Navigation -->
-          <div class="help-filter-tabs" role="tablist">
-            <button type="button" class="help-tab active" data-help-filter="all">ALL DEFINITIONS (8)</button>
-            <button type="button" class="help-tab" data-help-filter="pollen">POLLENS &amp; MOLD (4)</button>
-            <button type="button" class="help-tab" data-help-filter="aqi">AIR QUALITY &amp; PARTICULATES (4)</button>
+          <!-- Accessible Filter Tabs -->
+          <div class="help-filter-tabs" role="tablist" aria-label="Filter allergen definitions">
+            <button type="button" class="help-tab active" role="tab" aria-selected="true" data-help-filter="all">All Definitions (8)</button>
+            <button type="button" class="help-tab" role="tab" aria-selected="false" data-help-filter="pollen">Pollens &amp; Mold (4)</button>
+            <button type="button" class="help-tab" role="tab" aria-selected="false" data-help-filter="aqi">Air Quality &amp; Particulates (4)</button>
           </div>
 
           <div class="allergen-definitions-grid">
             <!-- 1. Grass Pollen -->
             <article class="allergen-def-card" data-def-id="grass" data-def-cat="pollen">
               <div class="def-card-head">
-                <span class="def-badge bio">BIO-ALLERGEN 01</span>
-                <span class="def-season">PEAK: LATE SPRING – SUMMER</span>
+                <span class="def-badge bio">POLLEN</span>
+                <span class="def-season">Late Spring – Summer</span>
               </div>
               <h4 class="def-title">🌱 Grass / Turf Pollen (<em>Poaceae</em>)</h4>
               <p class="def-body">
-                Microscopic pollen shed by turf and pasture grasses (Bermuda, Timothy, Kentucky Bluegrass, Rye). Releases heavily on warm, dry, breezy mornings and spikes sharply during lawn mowing.
+                Pollen released by lawn and pasture grasses (Bermuda, Timothy, Kentucky Bluegrass, Rye). Concentrations are highest on warm, dry, breezy mornings and during lawn mowing.
               </p>
               <div class="def-clinical-meta">
-                <div><strong>Human Impact:</strong> Classic summer hay fever (sneezing, runny nose, itchy/watery eyes) and grass-induced asthma.</div>
-                <div><strong>🐾 Canine Adjunct:</strong> Absorbed directly through paw pads and belly skin; wipe paws with a damp cloth if your dog licks its toes.</div>
+                <div><strong>Human Impact:</strong> Common trigger for summer hay fever (sneezing, nasal congestion, itchy eyes).</div>
+                <div><strong>🐾 Dog Care Tip:</strong> Dogs walking through tall grass can pick up pollen on their paws and coat; wiping paws with a damp cloth after walks helps reduce irritation.</div>
               </div>
             </article>
 
             <!-- 2. Tree Pollen -->
             <article class="allergen-def-card" data-def-id="tree" data-def-cat="pollen">
               <div class="def-card-head">
-                <span class="def-badge bio">BIO-ALLERGEN 02</span>
-                <span class="def-season">PEAK: FEB – MAY</span>
+                <span class="def-badge bio">POLLEN</span>
+                <span class="def-season">Feb – May</span>
               </div>
-              <h4 class="def-title">🌳 Arboreal / Tree Pollen (<em>Oak, Birch, Alder, Pine</em>)</h4>
+              <h4 class="def-title">🌳 Tree Pollen (<em>Oak, Birch, Alder, Pine</em>)</h4>
               <p class="def-body">
-                Lightweight, wind-pollinated grains released in massive spring plumes by deciduous and coniferous trees. Can travel dozens of miles on brisk spring winds and coat outdoor surfaces in yellow dust.
+                Lightweight, wind-borne pollen released in spring by deciduous and coniferous trees. Travels easily on breezy days and settles as a fine dusting on outdoor surfaces.
               </p>
               <div class="def-clinical-meta">
-                <div><strong>Human Impact:</strong> Early-spring sinus congestion, post-nasal drip, allergic conjunctivitis, and oral allergy syndrome.</div>
-                <div><strong>🐾 Canine Adjunct:</strong> Settles in dense fur and eyelashes; quick brushing after walks prevents indoor transfer.</div>
+                <div><strong>Human Impact:</strong> Major cause of early-spring seasonal allergies, sinus congestion, and watery eyes.</div>
+                <div><strong>🐾 Dog Care Tip:</strong> Brushing your dog's coat after spring walks helps keep outdoor pollen off indoor furniture and bedding.</div>
               </div>
             </article>
 
             <!-- 3. Ragweed & Herbaceous Weeds -->
             <article class="allergen-def-card" data-def-id="weed" data-def-cat="pollen">
               <div class="def-card-head">
-                <span class="def-badge bio">BIO-ALLERGEN 03</span>
-                <span class="def-season">PEAK: AUG – FIRST FROST</span>
+                <span class="def-badge bio">POLLEN</span>
+                <span class="def-season">Aug – First Frost</span>
               </div>
-              <h4 class="def-title">🌾 Ragweed &amp; Herbaceous Weeds (<em>Ambrosia, Mugwort</em>)</h4>
+              <h4 class="def-title">🌾 Ragweed &amp; Weeds (<em>Ambrosia, Mugwort</em>)</h4>
               <p class="def-body">
-                A single ragweed plant can release up to <strong>1 billion spiky pollen grains</strong> per season. Remains the #1 cause of late-summer and autumn seasonal allergies across North America until a hard freeze (`≤32°F`).
+                Fine, wind-dispersed pollen produced by late-summer and autumn weeds. Remains a leading seasonal allergen across North America until temperatures drop below freezing (`≤32°F`).
               </p>
               <div class="def-clinical-meta">
-                <div><strong>Human Impact:</strong> Intense autumn hay fever, sinus pressure, scratchy throat, and disrupted sleep.</div>
-                <div><strong>🐾 Canine Adjunct:</strong> Spiky grains cling to muzzle and paws, triggering skin itching and occasional reverse sneezing.</div>
+                <div><strong>Human Impact:</strong> Primary driver of late-summer and fall hay fever and sinus pressure.</div>
+                <div><strong>🐾 Dog Care Tip:</strong> Avoid overgrown trail edges in late summer and wipe your dog's muzzle and paws after walks if they are allergy-prone.</div>
               </div>
             </article>
 
             <!-- 4. Fungal Mold & Damp Spores -->
             <article class="allergen-def-card" data-def-id="mold" data-def-cat="pollen">
               <div class="def-card-head">
-                <span class="def-badge bio">BIO-ALLERGEN 04</span>
-                <span class="def-season">PEAK: HUMID / POST-RAIN / AUTUMN</span>
+                <span class="def-badge bio">MOLD SPORES</span>
+                <span class="def-season">Humid / Post-Rain / Fall</span>
               </div>
-              <h4 class="def-title">🍄 Fungal Mold &amp; Damp Spores (<em>Alternaria, Cladosporium</em>)</h4>
+              <h4 class="def-title">🍄 Mold &amp; Damp Spores (<em>Alternaria, Cladosporium</em>)</h4>
               <p class="def-body">
-                Unlike plant pollens that wash out in rain, fungal spores <strong>multiply rapidly in high humidity (&gt;65% RH)</strong>, damp soil, shaded mulch, and decomposing autumn leaf piles.
+                Unlike plant pollens that wash out during rain, fungal spores thrive in high humidity (`&gt;65%`), damp soil, shaded mulch, and decaying autumn leaves.
               </p>
               <div class="def-clinical-meta">
-                <div><strong>Human Impact:</strong> Persistent sinus congestion, wheezing, and cough after rainstorms or while raking leaves.</div>
-                <div><strong>🐾 Canine Adjunct:</strong> Dry between toes after wet walks to prevent dampness-related paw irritation.</div>
+                <div><strong>Human Impact:</strong> Can trigger sinus congestion and respiratory irritation after rainstorms or while raking wet leaves.</div>
+                <div><strong>🐾 Dog Care Tip:</strong> Dry between your dog's toes after wet walks and avoid letting them dig in damp leaf piles.</div>
               </div>
             </article>
 
             <!-- 5. US EPA AQI -->
             <article class="allergen-def-card" data-def-id="aqi" data-def-cat="aqi">
               <div class="def-card-head">
-                <span class="def-badge aqi-tag">ATMOS METRIC 01</span>
-                <span class="def-season">SCALE: 0 TO 500</span>
+                <span class="def-badge aqi-tag">AIR QUALITY</span>
+                <span class="def-season">Scale: 0 to 500</span>
               </div>
               <h4 class="def-title">📊 US EPA Air Quality Index (AQI)</h4>
               <p class="def-body">
-                Official federal index combining particulate matter, ozone, carbon monoxide, and sulfur dioxide into a single 0–500 health benchmark for outdoor activity planning.
+                Standardized EPA index combining particulate matter and ground-level ozone into a 0–500 scale for planning outdoor activity.
               </p>
               <div class="def-clinical-meta">
-                <div><strong>0–50 (Good):</strong> Ideal outdoors | <strong>51–100 (Moderate):</strong> Acceptable | <strong>101–150:</strong> Sensitive groups &amp; flat-faced dogs limit exertion | <strong>151+:</strong> Unhealthy for all.</div>
+                <div><strong>0–50 (Good):</strong> Ideal outdoors | <strong>51–100 (Moderate):</strong> Generally acceptable | <strong>101–150:</strong> Sensitive groups &amp; flat-faced dogs should limit heavy exertion | <strong>151+:</strong> Unhealthy for all.</div>
               </div>
             </article>
 
             <!-- 6. PM2.5 Fine Particulates -->
             <article class="allergen-def-card" data-def-id="pm25" data-def-cat="aqi">
               <div class="def-card-head">
-                <span class="def-badge aqi-tag">ATMOS METRIC 02</span>
-                <span class="def-season">SIZE: &lt; 2.5 MICRONS (µm)</span>
+                <span class="def-badge aqi-tag">PARTICULATE</span>
+                <span class="def-season">Size: &lt; 2.5 µm</span>
               </div>
               <h4 class="def-title">🌫️ PM2.5 Fine Inhalable Particulates</h4>
               <p class="def-body">
-                Microscopic combustion aerosols from wildfire smoke, vehicle exhaust, and industrial emissions. At less than 1/30th the width of a human hair, PM2.5 enters deep lung alveoli and the bloodstream.
+                Fine inhalable particles from wildfire smoke, vehicle exhaust, and combustion. Small enough to reach deep into the lungs during heavy breathing or exercise.
               </p>
               <div class="def-clinical-meta">
-                <div><strong>Human &amp; Pet Guidance:</strong> Ideal &lt; 12 µg/m³. When &gt; 35 µg/m³, avoid outdoor running/cardio, keep windows closed, and shorten dog walks.</div>
+                <div><strong>Guidance:</strong> Ideal `&lt; 12 µg/m³`. When `&gt; 35 µg/m³`, reduce outdoor running/cardio and keep dog walks shorter and calmer.</div>
               </div>
             </article>
 
             <!-- 7. PM10 Coarse Dust -->
             <article class="allergen-def-card" data-def-id="pm10" data-def-cat="aqi">
               <div class="def-card-head">
-                <span class="def-badge aqi-tag">ATMOS METRIC 03</span>
-                <span class="def-season">SIZE: 2.5 – 10 MICRONS (µm)</span>
+                <span class="def-badge aqi-tag">PARTICULATE</span>
+                <span class="def-season">Size: 2.5 – 10 µm</span>
               </div>
-              <h4 class="def-title">💨 PM10 Coarse Dust &amp; Bio-Particulates</h4>
+              <h4 class="def-title">💨 PM10 Coarse Dust &amp; Particulates</h4>
               <p class="def-body">
-                Coarser airborne particles including windblown soil, road grit, construction dust, and broken pollen shells. Spikes during dry, gusty weather and near busy roadways.
+                Coarser airborne particles including windblown soil, road dust, and broken pollen fragments. Often elevated on dry, gusty days near busy roads.
               </p>
               <div class="def-clinical-meta">
-                <div><strong>Human &amp; Pet Guidance:</strong> Irritates eyes, contact lenses, throat, and nasal passages. Heavier dust settles near ground level (6–24 inches high).</div>
+                <div><strong>Guidance:</strong> Can irritate eyes, throat, and nasal passages. Prefer grassy park paths over dusty roadside sidewalks when windy.</div>
               </div>
             </article>
 
             <!-- 8. Tropospheric Ozone -->
             <article class="allergen-def-card" data-def-id="ozone" data-def-cat="aqi">
               <div class="def-card-head">
-                <span class="def-badge aqi-tag">ATMOS METRIC 04</span>
-                <span class="def-season">PEAK: HOT SUNNY AFTERNOONS</span>
+                <span class="def-badge aqi-tag">GAS / SMOG</span>
+                <span class="def-season">Peak: Sunny Afternoons</span>
               </div>
-              <h4 class="def-title">☀️ Tropospheric Ground-Level Ozone (O₃)</h4>
+              <h4 class="def-title">☀️ Ground-Level Ozone (O₃)</h4>
               <p class="def-body">
-                A reactive photochemical gas formed when strong UV sunlight cooks nitrogen oxides and VOC emissions on warm afternoons. Peaks between <strong>2:00 PM and 7:00 PM</strong>.
+                A reactive gas formed when strong sunlight reacts with vehicle and industrial emissions on warm days. Typically peaks between <strong>2:00 PM and 7:00 PM</strong>.
               </p>
               <div class="def-clinical-meta">
-                <div><strong>Human &amp; Pet Guidance:</strong> Causes chest tightness, dry cough, and airway inflammation during exercise. Schedule runs and walks in the morning.</div>
+                <div><strong>Guidance:</strong> Can cause throat irritation and coughing during strenuous exercise. Schedule runs and longer dog walks for the morning hours.</div>
               </div>
             </article>
           </div>
         </div>
       </section>
 
-      <!-- ROW 5: ATMOSPHERIC SENSORS (FULL WIDTH) -->
+      <!-- ROW 5: CURRENT WEATHER DETAILS (FULL WIDTH) -->
       <section class="panel sensors-panel span-full">
         <div class="panel-header">
           <div>
-            <span class="panel-code">INSTRUMENT 05 // ATMOSPHERIC TELEMETRY SENSORS</span>
-            <h2 class="panel-title">Detailed Surface Observations &amp; Barometric Array</h2>
+            <span class="panel-code">OBSERVATIONS</span>
+            <h2 class="panel-title">Current Weather Details</h2>
           </div>
-          <span class="mono-tag" id="sensors-summary-tag">LIVE METEOROLOGICAL ARRAY</span>
+          <span class="mono-tag" id="sensors-summary-tag">✋ Tip: Test sun-baked pavement with your bare hand for 7 seconds</span>
         </div>
 
         <div class="sensor-dials-grid six-col-sensors">
-          <div class="sensor-cell" title="Probability of precipitation and expected daily accumulation">
+          <div class="sensor-cell">
             <div class="sensor-head">
-              <span class="sensor-id">PRECIPITATION</span>
-              <span class="sensor-unit">PROB</span>
+              <span class="sensor-id">Rain Chance</span>
+              <span class="sensor-unit">Today</span>
             </div>
             <strong id="metric-pop" class="sensor-reading">0%</strong>
             <div class="sensor-mini-bar"><div id="bar-pop" class="sensor-fill" style="width: 0%"></div></div>
             <span id="metric-precip-sub" class="sensor-sub">0.00 in expected today</span>
           </div>
 
-          <div class="sensor-cell" title="10-meter anemometer wind speed, bearing, and peak gusts">
+          <div class="sensor-cell">
             <div class="sensor-head">
-              <span class="sensor-id">WIND &amp; GUSTS</span>
-              <span class="sensor-unit">VEC</span>
+              <span class="sensor-id">Wind &amp; Gusts</span>
+              <span class="sensor-unit">Speed</span>
             </div>
             <strong id="metric-wind" class="sensor-reading">5 mph NW</strong>
             <span id="metric-gust-sub" class="sensor-sub">Gusts to 9 mph</span>
           </div>
 
-          <div class="sensor-cell" title="Solar ultraviolet radiation index and sun protection guidance">
+          <div class="sensor-cell">
             <div class="sensor-head">
-              <span class="sensor-id">UV INDEX</span>
-              <span class="sensor-unit">SOLAR</span>
+              <span class="sensor-id">UV Index</span>
+              <span class="sensor-unit">Sun</span>
             </div>
             <strong id="metric-uv" class="sensor-reading">3 (Mod)</strong>
             <div class="sensor-mini-bar"><div id="bar-uv" class="sensor-fill uv-fill" style="width: 30%"></div></div>
             <span id="metric-uv-sub" class="sensor-sub">Sunscreen advised midday</span>
           </div>
 
-          <div class="sensor-cell" title="Relative atmospheric moisture percentage">
+          <div class="sensor-cell">
             <div class="sensor-head">
-              <span class="sensor-id">HUMIDITY</span>
-              <span class="sensor-unit">RH%</span>
+              <span class="sensor-id">Humidity</span>
+              <span class="sensor-unit">Air</span>
             </div>
             <strong id="metric-humidity" class="sensor-reading">45%</strong>
             <div class="sensor-mini-bar"><div id="bar-hum" class="sensor-fill" style="width: 45%"></div></div>
             <span id="metric-hum-sub" class="sensor-sub">Comfortable air moisture</span>
           </div>
 
-          <div class="sensor-cell" title="Dew point temperature and horizontal visibility">
+          <div class="sensor-cell">
             <div class="sensor-head">
-              <span class="sensor-id">DEW POINT &amp; VIS</span>
-              <span class="sensor-unit">SAT</span>
+              <span class="sensor-id">Dew Point</span>
+              <span class="sensor-unit">Comfort</span>
             </div>
             <strong id="metric-dewpoint" class="sensor-reading">52°F</strong>
             <span id="metric-vis-sub" class="sensor-sub">Visibility: 10.0 mi</span>
           </div>
 
-          <div class="sensor-cell" title="Barometric surface pressure in inHg and hPa">
+          <div class="sensor-cell">
             <div class="sensor-head">
-              <span class="sensor-id">BAROMETER</span>
+              <span class="sensor-id">Pressure</span>
               <span class="sensor-unit" id="baro-unit-label">inHg</span>
             </div>
             <strong id="metric-pressure" class="sensor-reading">29.97 inHg</strong>
@@ -720,35 +735,35 @@
 
     </main>
 
-    <!-- STATION FOOTER -->
+    <!-- FOOTER -->
     <footer class="station-footer">
       <div class="footer-left">
-        <span class="mono-code">PAWCAST FIELD STATION // REV 5.0</span>
-        <span>Telemetry aggregated via Open-Meteo WMO, CAMS Air Quality, NOAA National Weather Service &amp; RainViewer Doppler Network.</span>
+        <span class="mono-code">PawCast Weather</span>
+        <span>Forecasts from Open-Meteo, CAMS Air Quality, NOAA National Weather Service &amp; RainViewer Radar. Dog &amp; allergy notes are informational only and not veterinary or medical advice.</span>
       </div>
       <div class="footer-right">
-        <span class="privacy-pill">LOCAL-FIRST MULTI-DOG PACK PERSISTENCE // ZERO EXTERNAL TRACKING</span>
+        <span class="privacy-pill">Saved cities &amp; dog profiles stored locally in your browser</span>
       </div>
     </footer>
 
   </div>
 
-  <!-- MULTI-DOG PACK ROSTER & CALIBRATION MODAL -->
-  <div id="pet-modal" class="modal-backdrop hidden">
+  <!-- ACCESSIBLE DOG PROFILE MODAL DIALOG -->
+  <div id="pet-modal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="pet-modal-title">
     <div class="calibration-dialog">
       <div class="dialog-header">
         <div>
-          <span class="panel-code">MULTI-DOG PACK CALIBRATION MODULE</span>
-          <h3>Manage Canine Pack &amp; Physiological Profiles</h3>
+          <span class="panel-code">DOG PROFILES &amp; PREFERENCES</span>
+          <h3 id="pet-modal-title">Manage Dogs &amp; Walk Preferences</h3>
         </div>
-        <button id="close-modal-btn" class="hw-icon-btn">&times;</button>
+        <button id="close-modal-btn" type="button" class="hw-icon-btn" aria-label="Close dog profile dialog">&times;</button>
       </div>
 
       <!-- Saved Dogs Roster Strip inside Modal -->
       <div class="modal-pack-roster">
         <div class="roster-bar-top">
-          <span class="mono-label">SAVED PACK ROSTER (CLICK TO EDIT OR SWITCH) //</span>
-          <button type="button" id="new-dog-modal-btn" class="waypoint-add-btn">+ NEW DOG PROFILE</button>
+          <span class="mono-label">Saved Dogs (click to switch or edit):</span>
+          <button type="button" id="new-dog-modal-btn" class="waypoint-add-btn">+ Add New Dog</button>
         </div>
         <div id="modal-dog-list" class="chips-container"></div>
       </div>
@@ -757,63 +772,63 @@
         <input type="hidden" id="dog-id" value="" />
 
         <div class="form-field">
-          <label for="dog-name">SUBJECT IDENTIFIER (DOG NAME)</label>
+          <label for="dog-name">Dog Name</label>
           <input type="text" id="dog-name" value="Max" placeholder="e.g. Max, Bella, Cooper" required />
         </div>
 
         <div class="form-field">
-          <label for="dog-size">BODY MASS &amp; THERMOREGULATION CLASS</label>
+          <label for="dog-size">Size &amp; Weight</label>
           <select id="dog-size">
-            <option value="small">Small / Toy (&lt; 20 lbs) — High surface-to-volume ratio (Cold sensitive)</option>
-            <option value="medium" selected>Medium (20 – 50 lbs) — Baseline thermal equilibrium</option>
-            <option value="large">Large / Giant (&gt; 50 lbs) — Elevated metabolic heat output</option>
+            <option value="small">Small / Toy (&lt; 20 lbs) — Gets cold faster</option>
+            <option value="medium" selected>Medium (20 – 50 lbs) — Standard comfort range</option>
+            <option value="large">Large / Giant (&gt; 50 lbs) — Warms up faster in heat</option>
           </select>
         </div>
 
         <div class="form-field">
-          <label for="dog-coat">COAT INSULATION &amp; ALBEDO</label>
+          <label for="dog-coat">Coat Type</label>
           <select id="dog-coat">
-            <option value="short">Short / Single Coat (Rapid convective heat exchange)</option>
-            <option value="double" selected>Dense / Double Coat (Husky, Shepherd, Golden — Traps pollen &amp; heat)</option>
-            <option value="hairless">Hairless / Fine Coat (High UV, allergen contact &amp; cold vulnerability)</option>
-            <option value="dark">Black / Low-Albedo Coat (Elevated solar absorption)</option>
+            <option value="short">Short / Single Coat</option>
+            <option value="double" selected>Thick / Double Coat (Husky, Shepherd, Golden, etc.)</option>
+            <option value="hairless">Hairless / Very Thin Coat (Sensitive to sun &amp; cold)</option>
+            <option value="dark">Black / Dark Coat (Absorbs more sun heat)</option>
           </select>
         </div>
 
         <div class="form-field">
-          <label for="dog-snout">CRANIOFACIAL AIRWAY MORPHOLOGY</label>
+          <label for="dog-snout">Snout Shape</label>
           <select id="dog-snout">
-            <option value="normal" selected>Mesaticephalic / Dolichocephalic (Standard evaporative panting)</option>
-            <option value="brachy">Brachycephalic / Flat-Faced (Bulldog, Pug, Frenchie — High AQI &amp; heat sensitivity)</option>
+            <option value="normal" selected>Standard / Long Snout</option>
+            <option value="brachy">Flat-Faced / Brachycephalic (Bulldog, Pug, Frenchie — Sensitive to heat &amp; AQI)</option>
           </select>
         </div>
 
         <div class="form-field">
-          <label for="dog-allergy">ATOPIC / ENVIRONMENTAL ALLERGY SENSITIVITY</label>
+          <label for="dog-allergy">Pollen &amp; Environmental Allergies</label>
           <select id="dog-allergy">
-            <option value="normal" selected>Standard Resilience (No known seasonal atopic dermatitis)</option>
-            <option value="sensitive">Allergy-Prone / Atopic (Prone to paw licking, ear infections &amp; turf rash)</option>
+            <option value="normal" selected>No Known Allergies</option>
+            <option value="sensitive">Allergy-Sensitive (Prone to itchy paws, ears, or skin)</option>
           </select>
         </div>
 
         <div class="form-field">
-          <label for="dog-age">LIFE STAGE &amp; METABOLIC RESILIENCE</label>
+          <label for="dog-age">Age Group</label>
           <select id="dog-age">
-            <option value="puppy">Juvenile / Puppy (&lt; 1 yr — Developing thermoregulation)</option>
-            <option value="adult" selected>Prime Adult (Baseline cardiovascular capacity)</option>
-            <option value="senior">Senior (&gt; 7 yrs — Reduced cardiac thermal tolerance)</option>
+            <option value="puppy">Puppy (&lt; 1 year)</option>
+            <option value="adult" selected>Adult (1 – 7 years)</option>
+            <option value="senior">Senior (7+ years)</option>
           </select>
         </div>
 
-        <!-- Export / Import Backup & Save Actions -->
+        <!-- Export Backup & Save Actions -->
         <div class="dialog-footer-split">
           <div class="config-backup-actions">
-            <button type="button" id="delete-dog-btn" class="hw-btn danger-outline" title="Remove this dog from your pack">DELETE DOG</button>
-            <button type="button" id="export-config-btn" class="hw-btn secondary" title="Download all dogs, locations &amp; settings as JSON backup">EXPORT CONFIG</button>
+            <button type="button" id="delete-dog-btn" class="hw-btn danger-outline" title="Remove this dog profile">Delete Dog</button>
+            <button type="button" id="export-config-btn" class="hw-btn secondary" title="Download your saved dogs and cities as a backup file">Export Backup</button>
           </div>
           <div class="dialog-actions">
-            <button type="button" id="cancel-modal-btn" class="hw-btn secondary">CLOSE</button>
-            <button type="submit" class="hw-btn primary">SAVE DOG PROFILE</button>
+            <button type="button" id="cancel-modal-btn" class="hw-btn secondary">Cancel</button>
+            <button type="submit" class="hw-btn primary">Save Dog</button>
           </div>
         </div>
       </form>

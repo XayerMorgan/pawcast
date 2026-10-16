@@ -122,9 +122,16 @@
     unitC: document.getElementById('unit-c'),
     petProfileBtn: document.getElementById('pet-profile-btn'),
     profileBtnLabel: document.getElementById('profile-btn-label'),
+    settingsToggleBtn: document.getElementById('settings-toggle-btn'),
+    stationSettingsDrawer: document.getElementById('station-settings-drawer'),
     soundToggleBtn: document.getElementById('sound-toggle-btn'),
     soundBtnLabel: document.getElementById('sound-btn-label'),
     acousticStatusText: document.getElementById('acoustic-status-text'),
+
+    // Weather Status & Error Banner
+    weatherStatusBanner: document.getElementById('weather-status-banner'),
+    weatherStatusText: document.getElementById('weather-status-text'),
+    weatherRetryBtn: document.getElementById('weather-retry-btn'),
 
     // Multi-Dog Pack Roster Bar
     dogRosterChips: document.getElementById('dog-roster-chips'),
@@ -284,6 +291,20 @@
       setUnits('metric');
     });
 
+    if (el.settingsToggleBtn) {
+      el.settingsToggleBtn.addEventListener('click', () => {
+        playHardwareClick(640);
+        toggleSettingsDrawer();
+      });
+    }
+
+    if (el.weatherRetryBtn) {
+      el.weatherRetryBtn.addEventListener('click', () => {
+        playHardwareClick(760);
+        fetchWeatherData(appState.location);
+      });
+    }
+
     if (el.soundToggleBtn) {
       el.soundToggleBtn.addEventListener('click', toggleWeatherAudio);
     }
@@ -369,6 +390,18 @@
       toggleRadarAnimation();
     });
 
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        if (el.petModal && !el.petModal.classList.contains('hidden')) {
+          closePetModal();
+        } else if (el.allergenHelpDrawer && !el.allergenHelpDrawer.classList.contains('hidden')) {
+          toggleAllergenHelpDrawer(false);
+        } else if (el.stationSettingsDrawer && !el.stationSettingsDrawer.classList.contains('hidden')) {
+          toggleSettingsDrawer(false);
+        }
+      }
+    });
+
     document.addEventListener('visibilitychange', () => {
       if (!document.hidden && appState.refreshIntervalMins > 0) {
         checkAndExecuteAutoRefresh();
@@ -380,6 +413,28 @@
         el.searchResults.classList.add('hidden');
       }
     });
+  }
+
+  function toggleSettingsDrawer(forceOpen) {
+    if (!el.stationSettingsDrawer) return;
+    const isHidden = el.stationSettingsDrawer.classList.contains('hidden');
+    const shouldOpen = typeof forceOpen === 'boolean' ? forceOpen : isHidden;
+
+    if (shouldOpen) {
+      el.stationSettingsDrawer.classList.remove('hidden');
+      el.stationSettingsDrawer.setAttribute('aria-hidden', 'false');
+      if (el.settingsToggleBtn) {
+        el.settingsToggleBtn.classList.add('active');
+        el.settingsToggleBtn.setAttribute('aria-expanded', 'true');
+      }
+    } else {
+      el.stationSettingsDrawer.classList.add('hidden');
+      el.stationSettingsDrawer.setAttribute('aria-hidden', 'true');
+      if (el.settingsToggleBtn) {
+        el.settingsToggleBtn.classList.remove('active');
+        el.settingsToggleBtn.setAttribute('aria-expanded', 'false');
+      }
+    }
   }
 
   function toggleAllergenHelpDrawer(forceOpen) {
@@ -395,7 +450,7 @@
         el.allergenHelpToggleBtn.setAttribute('aria-expanded', 'true');
       }
       if (el.allergenHelpBtnText) {
-        el.allergenHelpBtnText.textContent = 'HIDE GUIDE';
+        el.allergenHelpBtnText.textContent = 'Hide Guide';
       }
     } else {
       el.allergenHelpDrawer.classList.add('hidden');
@@ -405,7 +460,7 @@
         el.allergenHelpToggleBtn.setAttribute('aria-expanded', 'false');
       }
       if (el.allergenHelpBtnText) {
-        el.allergenHelpBtnText.textContent = 'ALLERGEN GUIDE';
+        el.allergenHelpBtnText.textContent = 'Allergen Guide';
       }
       document.querySelectorAll('.allergen-def-card').forEach(c => c.classList.remove('spotlight-card'));
     }
@@ -413,7 +468,9 @@
 
   function filterAllergenDefinitions(category) {
     document.querySelectorAll('.help-tab').forEach(t => {
-      t.classList.toggle('active', t.dataset.helpFilter === category);
+      const isSelected = t.dataset.helpFilter === category;
+      t.classList.toggle('active', isSelected);
+      t.setAttribute('aria-selected', isSelected ? 'true' : 'false');
     });
 
     document.querySelectorAll('.allergen-def-card').forEach(card => {
@@ -447,11 +504,13 @@
 
     appState.dogs.forEach(dog => {
       const isAct = dog.id === appState.activeDogId;
-      const chip = document.createElement('div');
+      const chip = document.createElement('button');
+      chip.type = 'button';
       chip.className = `dog-chip ${isAct ? 'active' : ''}`;
-      chip.title = `Switch telemetry calibration to ${dog.name} (${capitalize(dog.size)}, ${capitalize(dog.coat)} coat, ${dog.allergy === 'sensitive' ? 'Allergy-Sensitive' : 'Standard'})`;
+      chip.setAttribute('aria-pressed', isAct ? 'true' : 'false');
+      chip.title = `Switch active dog profile to ${dog.name} (${capitalize(dog.size)}, ${capitalize(dog.coat)} coat, ${dog.allergy === 'sensitive' ? 'Allergy-Sensitive' : 'Standard'})`;
       chip.innerHTML = `
-        <span>🐾 ${dog.name.toUpperCase()}</span>
+        <span>🐾 ${dog.name}</span>
       `;
       chip.addEventListener('click', () => {
         playHardwareClick(700);
@@ -476,9 +535,10 @@
     el.modalDogList.innerHTML = '';
 
     appState.dogs.forEach(dog => {
-      const chip = document.createElement('div');
+      const chip = document.createElement('button');
+      chip.type = 'button';
       chip.className = `dog-chip ${dog.id === editingId ? 'active' : ''}`;
-      chip.innerHTML = `<span>🐾 ${dog.name.toUpperCase()}</span>`;
+      chip.innerHTML = `<span>🐾 ${dog.name}</span>`;
       chip.addEventListener('click', () => {
         playHardwareClick(660);
         setActiveDog(dog.id);
@@ -497,6 +557,8 @@
       populateFormWithDog(dog);
     }
     el.petModal.classList.remove('hidden');
+    el.petModal.setAttribute('aria-hidden', 'false');
+    if (el.dogNameInput) el.dogNameInput.focus();
   }
 
   function populateFormWithDog(dog) {
@@ -531,6 +593,8 @@
 
   function closePetModal() {
     el.petModal.classList.add('hidden');
+    el.petModal.setAttribute('aria-hidden', 'true');
+    if (el.petProfileBtn) el.petProfileBtn.focus();
   }
 
   function handleSavePetProfile(e) {
@@ -570,6 +634,12 @@
     if (appState.dogs.length <= 1) return;
     const targetId = el.dogIdInput.value;
     if (!targetId) return;
+
+    const dogToDelete = appState.dogs.find(d => d.id === targetId);
+    const dogLabel = dogToDelete ? dogToDelete.name : 'this dog';
+    if (!window.confirm(`Remove ${dogLabel} from your saved dog profiles?`)) {
+      return;
+    }
 
     playHardwareClick(440);
     appState.dogs = appState.dogs.filter(d => d.id !== targetId);
@@ -671,15 +741,17 @@
 
     if (appState.isAudioEnabled) {
       el.soundToggleBtn.classList.add('active');
-      el.soundBtnLabel.textContent = 'AUDIO: LIVE';
+      el.soundToggleBtn.setAttribute('aria-pressed', 'true');
+      el.soundBtnLabel.textContent = 'Weather Audio: On';
       playHardwareClick(880);
       syncAmbientSoundscape();
     } else {
       el.soundToggleBtn.classList.remove('active');
-      el.soundBtnLabel.textContent = 'AUDIO: OFF';
+      el.soundToggleBtn.setAttribute('aria-pressed', 'false');
+      el.soundBtnLabel.textContent = 'Weather Audio: Off';
       stopAmbientSoundscape();
       if (el.acousticStatusText) {
-        el.acousticStatusText.textContent = 'Soundscape Muted';
+        el.acousticStatusText.textContent = 'Ambient Sound: Off';
       }
     }
   }
@@ -735,7 +807,7 @@
       filter.frequency.setValueAtTime(950, ctx.currentTime);
       filter.Q.setValueAtTime(0.7, ctx.currentTime);
       masterGain.gain.setValueAtTime(0.08, ctx.currentTime);
-      if (el.acousticStatusText) el.acousticStatusText.textContent = 'Acoustic: Rain Patter & Wind';
+      if (el.acousticStatusText) el.acousticStatusText.textContent = 'Ambient Sound: Rain & Wind';
     } else {
       filter.type = 'lowpass';
       const cutoff = Math.min(600, 160 + windKmh * 10);
@@ -743,8 +815,8 @@
       masterGain.gain.setValueAtTime(0.055, ctx.currentTime);
       if (el.acousticStatusText) {
         el.acousticStatusText.textContent = isDay
-          ? 'Acoustic: Meadow Breeze & Songbirds'
-          : 'Acoustic: Nocturnal Cricket Chorus';
+          ? 'Ambient Sound: Breeze & Birds'
+          : 'Ambient Sound: Evening Crickets';
       }
     }
 
@@ -831,7 +903,7 @@
   function resetAutoRefreshTimer() {
     clearInterval(appState.countdownTimer);
     if (appState.refreshIntervalMins <= 0) {
-      if (el.refreshCountdown) el.refreshCountdown.textContent = 'HOLD';
+      if (el.refreshCountdown) el.refreshCountdown.textContent = 'Paused';
       return;
     }
 
@@ -856,7 +928,7 @@
   function updateCountdownUI() {
     if (!el.refreshCountdown) return;
     if (appState.refreshIntervalMins <= 0) {
-      el.refreshCountdown.textContent = 'HOLD';
+      el.refreshCountdown.textContent = 'Paused';
       return;
     }
 
@@ -865,7 +937,7 @@
     const mins = Math.floor(totalSecs / 60);
     const secs = totalSecs % 60;
     const secStr = secs < 10 ? `0${secs}` : `${secs}`;
-    el.refreshCountdown.textContent = `T-${mins}:${secStr}`;
+    el.refreshCountdown.textContent = `Next: ${mins}:${secStr}`;
   }
 
   async function triggerRefresh() {
@@ -878,14 +950,14 @@
     }
 
     if (el.refreshCountdown) {
-      el.refreshCountdown.textContent = 'SYNC...';
+      el.refreshCountdown.textContent = 'Updating...';
     }
 
     try {
       await fetchWeatherData(appState.location);
       await fetchRadarFrames();
     } catch (e) {
-      console.warn('Telemetry refresh error:', e);
+      console.warn('Weather refresh error:', e);
     } finally {
       appState.isRefreshing = false;
       resetAutoRefreshTimer();
@@ -933,7 +1005,7 @@
     const zoomEl = document.getElementById('radar-zoom-level');
     if (!zoomEl || !appState.radarMap) return;
     const z = appState.radarMap.getZoom();
-    zoomEl.textContent = `ZOOM ${z}`;
+    zoomEl.textContent = `Zoom ${z}`;
     zoomEl.title = `Current map zoom: ${z} (radar supports ${MIN_RADAR_ZOOM}–${MAX_RADAR_ZOOM}; default ${DEFAULT_RADAR_ZOOM})`;
   }
 
@@ -958,7 +1030,7 @@
       }
     } catch (e) {
       console.warn('RainViewer Radar API error:', e);
-      el.radarTimestamp.textContent = 'RADAR OFFLINE';
+      el.radarTimestamp.textContent = 'Radar Unavailable';
     }
   }
 
@@ -988,8 +1060,8 @@
 
     const timeObj = new Date(frame.time * 1000);
     const isForecast = index >= (appState.radarFrames.length - 3);
-    const tagPrefix = isForecast ? 'NOWCAST' : 'DOPPLER';
-    el.radarTimestamp.textContent = `${tagPrefix} // ${timeObj.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}`;
+    const tagPrefix = isForecast ? 'Forecast' : 'Live Radar';
+    el.radarTimestamp.textContent = `${tagPrefix} · ${timeObj.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}`;
   }
 
   function toggleRadarAnimation() {
@@ -1004,7 +1076,8 @@
     if (appState.radarFrames.length === 0) return;
     appState.isRadarPlaying = true;
     el.radarPlayIcon.textContent = '⏸';
-    el.radarPlayText.textContent = 'SWEEP: ACTIVE';
+    el.radarPlayText.textContent = 'Pause Radar';
+    el.radarPlayBtn.setAttribute('aria-pressed', 'true');
 
     appState.radarAnimTimer = setInterval(() => {
       appState.radarCurrentFrameIdx = (appState.radarCurrentFrameIdx + 1) % appState.radarFrames.length;
@@ -1017,7 +1090,8 @@
     appState.isRadarPlaying = false;
     clearInterval(appState.radarAnimTimer);
     el.radarPlayIcon.textContent = '▶';
-    el.radarPlayText.textContent = 'SWEEP: PAUSED';
+    el.radarPlayText.textContent = 'Play Radar';
+    el.radarPlayBtn.setAttribute('aria-pressed', 'false');
   }
 
   function updateRadarCenter(lat, lon) {
@@ -1040,6 +1114,12 @@
       weekday: 'long', month: 'short', day: 'numeric'
     });
 
+    if (el.weatherStatusBanner && !appState.weather) {
+      el.weatherStatusBanner.classList.remove('hidden', 'error');
+      if (el.weatherStatusText) el.weatherStatusText.textContent = `Loading forecast for ${loc.name}...`;
+      if (el.weatherRetryBtn) el.weatherRetryBtn.classList.add('hidden');
+    }
+
     if (el.coordDisplay) {
       const latDir = loc.lat >= 0 ? 'N' : 'S';
       const lonDir = loc.lon >= 0 ? 'E' : 'W';
@@ -1049,7 +1129,7 @@
     if (el.nwsGovLink) {
       const govUrl = `https://forecast.weather.gov/MapClick.php?lat=${loc.lat.toFixed(4)}&lon=${loc.lon.toFixed(4)}`;
       el.nwsGovLink.href = govUrl;
-      el.nwsGovLink.title = `Open official NOAA / NWS government dispatch for ${loc.name} (${loc.lat.toFixed(2)}°, ${loc.lon.toFixed(2)}°)`;
+      el.nwsGovLink.title = `Open official Weather.gov forecast for ${loc.name} (${loc.lat.toFixed(2)}°, ${loc.lon.toFixed(2)}°)`;
     }
 
     updateRadarCenter(loc.lat, loc.lon);
@@ -1087,26 +1167,39 @@
             nwsData.current.precipMm = omData.current.precipMm || 0;
           }
           data = nwsData;
-          el.activeSourceName.textContent = 'NOAA NWS + CAMS AQI + RAINVIEWER';
+          el.activeSourceName.textContent = 'NOAA / NWS + Open-Meteo AQI + RainViewer';
         }
       }
 
       if (!data) {
         data = await omPromise;
-        el.activeSourceName.textContent = 'OPEN-METEO WMO + CAMS AQI + RAINVIEWER';
+        el.activeSourceName.textContent = 'Open-Meteo + CAMS Air Quality + RainViewer';
       }
 
       if (!data) throw new Error('All weather sources failed');
 
       appState.airQuality = await aqPromise;
       appState.weather = data;
+      if (el.weatherStatusBanner) {
+        el.weatherStatusBanner.classList.add('hidden');
+        el.weatherStatusBanner.classList.remove('error');
+      }
       renderAllWeatherData(data);
       if (appState.isAudioEnabled) {
         syncAmbientSoundscape();
       }
     } catch (err) {
       console.error('Weather fetch error:', err);
-      el.cityName.textContent = 'Telemetry Link Fault';
+      if (el.weatherStatusBanner) {
+        el.weatherStatusBanner.classList.remove('hidden');
+        el.weatherStatusBanner.classList.add('error');
+        if (el.weatherStatusText) {
+          el.weatherStatusText.textContent = `Unable to load live weather for ${loc.name}. Check your connection and try again.`;
+        }
+        if (el.weatherRetryBtn) {
+          el.weatherRetryBtn.classList.remove('hidden');
+        }
+      }
     }
   }
 
@@ -1639,8 +1732,8 @@
     el.pawSafetyDesc.textContent = safety.pawDesc;
     el.asphaltTempVal.textContent = isImp ? `${safety.surfaces.asphaltF}°F` : `${safety.surfaces.asphaltC}°C`;
     el.grassTempVal.textContent = isImp ? `${safety.surfaces.grassF}°F` : `${safety.surfaces.grassC}°C`;
-    if (el.subjectCoatVal) el.subjectCoatVal.textContent = `🐾 ${pet.name.toUpperCase()} · ${pet.coat.toUpperCase()}`;
-    if (el.weeklyPackTag) el.weeklyPackTag.textContent = `🐾 ADJUNCT: ${pet.name.toUpperCase()} (${appState.dogs.length} IN PACK)`;
+    if (el.subjectCoatVal) el.subjectCoatVal.textContent = `🐾 ${pet.name} · ${capitalize(pet.coat)} Coat`;
+    if (el.weeklyPackTag) el.weeklyPackTag.textContent = `🐾 Walk tags for: ${pet.name}`;
 
     if (el.pawThermalNeedle) {
       const clampedF = Math.max(25, Math.min(145, safety.surfaces.asphaltF));
@@ -1648,7 +1741,7 @@
       el.pawThermalNeedle.style.left = `${pct.toFixed(1)}%`;
     }
 
-    // Instrument 05: Atmospheric Sensor Dials
+    // Detailed Weather Metrics
     el.metricPop.textContent = `${cur.pop}%`;
     if (el.barPop) el.barPop.style.width = `${Math.min(100, cur.pop)}%`;
     const todayPrecipMm = todayDaily.precipSumMm || cur.precipMm || 0;
@@ -1735,7 +1828,7 @@
 
       const card = document.createElement('div');
       card.className = `week-day-card ${i === 0 ? 'is-today' : ''}`;
-      card.title = `${dayName}, ${dateSub} — ${cond.label}\nHigh: ${maxT}° | Low: ${minT}° | Rain Prob: ${d.pop}% | Max Wind: ${windVal} ${windUnit} | Peak UV: ${d.uv}\nAdjunct (${pet.name}): ${saf.pawTitle} (Peak Pavement ~${saf.surfaces.asphaltF}°F)`;
+      card.title = `${dayName}, ${dateSub} — ${cond.label}\nHigh: ${maxT}° | Low: ${minT}° | Rain Prob: ${d.pop}% | Max Wind: ${windVal} ${windUnit} | Peak UV: ${d.uv}\nWalk Check (${pet.name}): ${saf.pawTitle} (Peak Pavement ~${saf.surfaces.asphaltF}°F)`;
       card.innerHTML = `
         <div class="wk-day-top">
           <span class="wk-day-name">${dayName}</span>
@@ -1751,7 +1844,7 @@
           <span class="wk-pop" title="Precipitation Probability: ${d.pop}%">💧 ${d.pop}%</span>
           <span class="wk-wind" title="Peak Daily Wind: ${windVal} ${windUnit}">💨 ${windVal}${isImp ? 'm' : 'k'}</span>
         </div>
-        <span class="wk-paw-pill ${overallStatus}" title="Canine Adjunct (${pet.name}): ${saf.pawTitle}">${statusText}</span>
+        <span class="wk-paw-pill ${overallStatus}" title="Walk Check (${pet.name}): ${saf.pawTitle}">${statusText}</span>
       `;
       el.dailyList.appendChild(card);
     });
@@ -1828,7 +1921,7 @@
       circle.setAttribute('stroke-width', '2');
 
       const circleTitle = document.createElementNS('http://www.w3.org/2000/svg', 'title');
-      circleTitle.textContent = `${Math.round(p.val)}° // ${p.safety.heatTitle} (Pavement: ~${p.safety.surfaces.asphaltF}°F)`;
+      circleTitle.textContent = `${Math.round(p.val)}° · ${p.safety.heatTitle} (Pavement: ~${p.safety.surfaces.asphaltF}°F)`;
       circle.appendChild(circleTitle);
       svg.appendChild(circle);
 
@@ -1838,7 +1931,7 @@
         text.setAttribute('y', p.y - 10);
         text.setAttribute('fill', '#F2EFE9');
         text.setAttribute('font-family', 'JetBrains Mono, monospace');
-        text.setAttribute('font-size', '10.5');
+        text.setAttribute('font-size', '12');
         text.setAttribute('text-anchor', 'middle');
         text.textContent = `${Math.round(p.val)}°`;
         svg.appendChild(text);
@@ -1855,7 +1948,7 @@
       const overallStatus = saf.pawStatus === 'red' || saf.heatStatus === 'red' ? 'red' :
                             saf.pawStatus === 'yellow' || saf.heatStatus === 'yellow' ? 'yellow' : 'green';
 
-      const statusLabel = h.pop >= 50 ? `💧 ${h.pop}%` : (overallStatus === 'green' ? 'IDEAL' : overallStatus === 'yellow' ? 'WARM' : 'ALERT');
+      const statusLabel = h.pop >= 50 ? `💧 ${h.pop}%` : (overallStatus === 'green' ? 'Ideal' : overallStatus === 'yellow' ? 'Warm' : 'Alert');
 
       const toolTipMeaning = `${timeStr} — ${cond.label}\nTemp: ${tVal}° | Rain Prob: ${h.pop}% | Wind: ${windVal} ${isImp ? 'mph' : 'km/h'} | UV: ${h.uv}\nPavement Est: ~${saf.surfaces.asphaltF}°F (${saf.pawTitle})`;
 
@@ -1890,13 +1983,13 @@
         windows.push({
           timeStr: `${timeLabel} · ${tVal}° ${cond.emoji}`,
           status: 'best',
-          label: 'IDEAL OUTDOORS & WALK'
+          label: 'Ideal Outdoors & Walk'
         });
       } else if (isModerate) {
         windows.push({
           timeStr: `${timeLabel} · ${tVal}° ${cond.emoji}`,
           status: 'caution',
-          label: saf.pawStatus === 'yellow' ? 'SHADE / TURF ADVISED' : 'FAIR CONDITIONS'
+          label: saf.pawStatus === 'yellow' ? 'Shade / Grass Advised' : 'Fair Conditions'
         });
       }
     });
@@ -1906,7 +1999,7 @@
     if (displayWindows.length === 0) {
       el.walkWindowsGrid.innerHTML = `
         <div class="window-card caution">
-          <span class="window-time">WEATHER ADVISORY</span>
+          <span class="window-time">Weather Advisory</span>
           <span class="window-tag">Plan outdoor activities for early morning or evening hours</span>
         </div>
       `;
@@ -1942,7 +2035,7 @@
   function renderGeocodingResults(results) {
     el.searchResults.innerHTML = '';
     if (!results.length) {
-      el.searchResults.innerHTML = '<div class="search-result-item">No matching sector coordinates</div>';
+      el.searchResults.innerHTML = '<div class="search-result-item">No matching cities found</div>';
       el.searchResults.classList.remove('hidden');
       return;
     }
@@ -1977,14 +2070,14 @@
 
   function getUserGeolocation() {
     if (!navigator.geolocation) {
-      alert('Geolocation telemetry is not supported by this browser.');
+      alert('Location services are not supported by this browser.');
       return;
     }
-    el.cityName.textContent = 'Acquiring GPS...';
+    el.cityName.textContent = 'Finding location...';
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         appState.location = {
-          name: 'Local GPS Sector',
+          name: 'Current Location',
           state: '',
           country: 'GPS',
           lat: pos.coords.latitude,
@@ -1994,7 +2087,7 @@
         fetchWeatherData(appState.location);
       },
       (err) => {
-        alert('Could not acquire GPS lock: ' + err.message);
+        alert('Could not get your current location: ' + err.message);
         fetchWeatherData(appState.location);
       }
     );
@@ -2003,13 +2096,17 @@
   function updateUIPreferences() {
     if (appState.units === 'imperial') {
       el.unitF.classList.add('active');
+      el.unitF.setAttribute('aria-checked', 'true');
       el.unitC.classList.remove('active');
+      el.unitC.setAttribute('aria-checked', 'false');
     } else {
       el.unitC.classList.add('active');
+      el.unitC.setAttribute('aria-checked', 'true');
       el.unitF.classList.remove('active');
+      el.unitF.setAttribute('aria-checked', 'false');
     }
     const activeDog = getActiveDog();
-    el.profileBtnLabel.textContent = `PACK: ${activeDog.name.toUpperCase()} (${appState.dogs.length})`;
+    el.profileBtnLabel.textContent = `Dog: ${activeDog.name} (${appState.dogs.length})`;
   }
 
   function setUnits(unit) {
@@ -2025,8 +2122,8 @@
       const chip = document.createElement('div');
       chip.className = `loc-chip ${fav.name === appState.location.name ? 'active' : ''}`;
       chip.innerHTML = `
-        <span>${fav.name.toUpperCase()}</span>
-        <span class="chip-remove" data-idx="${idx}">&times;</span>
+        <span>${fav.name}</span>
+        <span class="chip-remove" role="button" tabindex="0" aria-label="Remove ${fav.name} from saved cities" data-idx="${idx}">&times;</span>
       `;
       chip.addEventListener('click', (e) => {
         playHardwareClick(680);

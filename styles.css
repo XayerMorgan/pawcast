@@ -15,10 +15,10 @@
   --border-strong: rgba(235, 230, 218, 0.22);
   --border-bevel: rgba(255, 255, 255, 0.05);
 
-  /* Editorial & Telemetry Ink Colors */
+  /* Editorial & Telemetry Ink Colors (WCAG 2.2 AA 4.5:1+ Contrast Verified) */
   --ink-primary: #F2EFE9;
-  --ink-secondary: #A9A69E;
-  --ink-muted: #6E6C66;
+  --ink-secondary: #C4C1B8;
+  --ink-muted: #9E9B91;
 
   /* Hardware Signal Colors (Braun / Field Instrument Accents) */
   --signal-amber: #E56B25;
@@ -42,6 +42,28 @@
   box-sizing: border-box;
   margin: 0;
   padding: 0;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Visible Keyboard Focus Ring (WCAG 2.4.7) */
+button:focus-visible,
+a:focus-visible,
+select:focus-visible,
+input:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--signal-amber);
+  outline-offset: 2px;
 }
 
 body {
@@ -113,16 +135,16 @@ body {
 
 .station-code {
   font-family: var(--font-mono);
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   font-weight: 700;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.08em;
   color: var(--signal-amber);
 }
 
 .station-title {
   font-family: var(--font-serif);
-  font-size: 1.25rem;
-  font-weight: 600;
+  font-size: 1.35rem;
+  font-weight: 700;
   letter-spacing: -0.02em;
   color: var(--ink-primary);
 }
@@ -131,7 +153,7 @@ body {
 .station-search-module {
   position: relative;
   flex: 1;
-  max-width: 410px;
+  max-width: 420px;
 }
 
 .search-input-housing {
@@ -142,11 +164,12 @@ body {
   border: 1px solid var(--border-hairline);
   border-radius: var(--radius-sm);
   padding: 7px 12px;
-  transition: border-color 0.2s ease;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .search-input-housing:focus-within {
   border-color: var(--signal-amber);
+  box-shadow: 0 0 0 2px rgba(229, 107, 37, 0.35);
 }
 
 .reticle-icon {
@@ -157,11 +180,14 @@ body {
 .search-input-housing input {
   background: none;
   border: none;
-  outline: none;
   color: var(--ink-primary);
   font-family: var(--font-mono);
-  font-size: 0.8rem;
+  font-size: 0.875rem;
   width: 100%;
+}
+
+.search-input-housing input:focus {
+  outline: none;
 }
 
 .search-input-housing input::placeholder {
@@ -172,8 +198,8 @@ body {
   background: var(--panel-elevated);
   border: 1px solid var(--border-hairline);
   color: var(--ink-secondary);
-  width: 26px;
-  height: 26px;
+  width: 30px;
+  height: 30px;
   border-radius: var(--radius-xs);
   display: inline-flex;
   align-items: center;
@@ -212,7 +238,7 @@ body {
   justify-content: space-between;
   align-items: center;
   border-bottom: 1px solid var(--border-hairline);
-  font-size: 0.82rem;
+  font-size: 0.875rem;
 }
 
 .search-result-item:hover {
@@ -221,7 +247,7 @@ body {
 
 .search-result-item .country {
   font-family: var(--font-mono);
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   color: var(--ink-secondary);
 }
 
@@ -240,9 +266,9 @@ body {
   border: 1px solid var(--border-strong);
   color: var(--ink-primary);
   font-family: var(--font-mono);
-  font-size: 0.72rem;
+  font-size: 0.78rem;
   font-weight: 600;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.03em;
   padding: 7px 13px;
   border-radius: var(--radius-sm);
   cursor: pointer;
@@ -252,6 +278,12 @@ body {
 .hw-pill-switch:hover {
   border-color: var(--signal-amber);
   transform: translateY(-1px);
+}
+
+.settings-switch.active {
+  background: rgba(229, 107, 37, 0.18);
+  border-color: var(--signal-amber);
+  color: #FDBA74;
 }
 
 .sound-switch.active {
@@ -311,9 +343,9 @@ body {
   border: none;
   color: var(--ink-muted);
   font-family: var(--font-mono);
-  font-size: 0.7rem;
+  font-size: 0.78rem;
   font-weight: 600;
-  padding: 5px 9px;
+  padding: 6px 11px;
   border-radius: var(--radius-xs);
   cursor: pointer;
   transition: all 0.15s ease;
@@ -326,7 +358,7 @@ body {
 }
 
 /* ==========================================================================
-   SUB-TELEMETRY BAR (WAYPOINTS + NOAA DISPATCH + AUTO-POLLING)
+   SUB-TELEMETRY BAR, OPTIONS DRAWER & STATUS BANNER
    ========================================================================== */
 .sub-telemetry-bar {
   display: flex;
@@ -338,7 +370,61 @@ body {
   border: 1px solid var(--border-hairline);
   border-radius: var(--radius-sm);
   padding: 8px 16px;
-  margin-bottom: 18px;
+  margin-bottom: 12px;
+}
+
+.settings-drawer {
+  background: var(--panel-bg);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  padding: 14px 18px;
+  margin-bottom: 14px;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.45);
+}
+
+.settings-drawer.hidden {
+  display: none;
+}
+
+.settings-drawer-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.setting-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.weather-status-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: rgba(56, 189, 248, 0.12);
+  border: 1px solid rgba(56, 189, 248, 0.4);
+  border-radius: var(--radius-sm);
+  padding: 10px 16px;
+  margin-bottom: 14px;
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  color: var(--ink-primary);
+}
+
+.weather-status-banner.error {
+  background: rgba(239, 68, 68, 0.16);
+  border-color: rgba(239, 68, 68, 0.5);
+  color: #FCA5A5;
+}
+
+.weather-status-banner.hidden,
+.weather-status-banner .hidden {
+  display: none;
 }
 
 .waypoints-group {
@@ -350,15 +436,15 @@ body {
 
 .mono-label {
   font-family: var(--font-mono);
-  font-size: 0.68rem;
+  font-size: 0.75rem;
   font-weight: 600;
   color: var(--ink-muted);
-  letter-spacing: 0.08em;
+  letter-spacing: 0.04em;
 }
 
 .mono-val {
   font-family: var(--font-mono);
-  font-size: 0.72rem;
+  font-size: 0.78rem;
   color: var(--ink-secondary);
 }
 
@@ -369,11 +455,11 @@ body {
 
 .loc-chip {
   font-family: var(--font-mono);
-  font-size: 0.72rem;
+  font-size: 0.78rem;
   background: var(--panel-bg);
   border: 1px solid var(--border-hairline);
   color: var(--ink-secondary);
-  padding: 3px 10px;
+  padding: 4px 10px;
   border-radius: var(--radius-xs);
   cursor: pointer;
   display: inline-flex;
@@ -394,8 +480,13 @@ body {
 }
 
 .chip-remove {
-  opacity: 0.55;
-  font-size: 0.85rem;
+  opacity: 0.75;
+  font-size: 0.9rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  min-height: 20px;
 }
 
 .chip-remove:hover {
@@ -406,10 +497,10 @@ body {
 .waypoint-add-btn {
   background: none;
   border: 1px dashed var(--border-strong);
-  color: var(--ink-muted);
+  color: var(--ink-secondary);
   font-family: var(--font-mono);
-  font-size: 0.68rem;
-  padding: 3px 9px;
+  font-size: 0.75rem;
+  padding: 4px 10px;
   border-radius: var(--radius-xs);
   cursor: pointer;
 }
@@ -429,14 +520,14 @@ body {
 .gov-dispatch-link {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: 6px;
   font-family: var(--font-mono);
-  font-size: 0.7rem;
+  font-size: 0.78rem;
   font-weight: 600;
   color: var(--signal-sky);
   background: rgba(56, 189, 248, 0.1);
   border: 1px solid rgba(56, 189, 248, 0.35);
-  padding: 4px 10px;
+  padding: 6px 12px;
   border-radius: var(--radius-xs);
   text-decoration: none;
   transition: all 0.18s ease;
@@ -452,9 +543,9 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  background: var(--panel-bg);
+  background: var(--panel-recessed);
   border: 1px solid var(--border-hairline);
-  padding: 3px 8px;
+  padding: 4px 10px;
   border-radius: var(--radius-xs);
 }
 
@@ -467,31 +558,31 @@ body {
 }
 
 .sync-module select,
-.aggregator-module select {
-  background: var(--panel-bg);
-  border: 1px solid var(--border-hairline);
-  color: var(--ink-secondary);
+.aggregator-module select,
+.setting-item select {
+  background: var(--panel-recessed);
+  border: 1px solid var(--border-strong);
+  color: var(--ink-primary);
   font-family: var(--font-mono);
-  font-size: 0.7rem;
-  padding: 3px 6px;
+  font-size: 0.78rem;
+  padding: 5px 8px;
   border-radius: var(--radius-xs);
-  outline: none;
   cursor: pointer;
 }
 
 .sync-module select {
   border: none;
-  padding: 0 2px;
+  padding: 2px 4px;
 }
 
 .mono-tag {
   font-family: var(--font-mono);
-  font-size: 0.68rem;
+  font-size: 0.75rem;
   font-weight: 600;
   color: var(--ink-secondary);
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid var(--border-hairline);
-  padding: 2px 7px;
+  padding: 3px 9px;
   border-radius: var(--radius-xs);
 }
 
@@ -530,9 +621,9 @@ body {
 
 .panel-code {
   font-family: var(--font-mono);
-  font-size: 0.68rem;
+  font-size: 0.75rem;
   font-weight: 700;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.08em;
   color: var(--signal-amber);
   display: block;
   margin-bottom: 3px;
@@ -636,8 +727,8 @@ body.is-night-mode .visual-backdrop {
 
 .editorial-date {
   font-family: var(--font-mono);
-  font-size: 0.74rem;
-  color: rgba(242, 239, 233, 0.8);
+  font-size: 0.78rem;
+  color: rgba(242, 239, 233, 0.88);
   margin-top: 4px;
   display: block;
 }
@@ -661,7 +752,7 @@ body.is-night-mode .visual-backdrop {
 
 .sky-condition-label {
   font-family: var(--font-mono);
-  font-size: 0.68rem;
+  font-size: 0.75rem;
   font-weight: 600;
   color: var(--ink-primary);
   margin-top: 4px;
@@ -690,7 +781,7 @@ body.is-night-mode .visual-backdrop {
   align-items: flex-end;
   gap: 3px;
   font-family: var(--font-mono);
-  font-size: 0.75rem;
+  font-size: 0.78rem;
   font-weight: 600;
 }
 
@@ -698,10 +789,10 @@ body.is-night-mode .visual-backdrop {
 .extreme-val.low { color: #93C5FD; }
 
 .acoustic-hint {
-  font-size: 0.66rem;
-  color: rgba(242, 239, 233, 0.7);
-  background: rgba(0, 0, 0, 0.45);
-  padding: 2px 7px;
+  font-size: 0.75rem;
+  color: rgba(242, 239, 233, 0.85);
+  background: rgba(0, 0, 0, 0.55);
+  padding: 2px 8px;
   border-radius: var(--radius-xs);
   margin-top: 2px;
 }
@@ -746,17 +837,17 @@ body.is-night-mode .visual-backdrop {
 
 .gauge-index {
   font-family: var(--font-mono);
-  font-size: 0.65rem;
+  font-size: 0.75rem;
   font-weight: 700;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.05em;
   color: var(--ink-muted);
 }
 
 .status-pill {
   font-family: var(--font-mono);
-  font-size: 0.65rem;
+  font-size: 0.75rem;
   font-weight: 700;
-  padding: 2px 8px;
+  padding: 3px 9px;
   border-radius: var(--radius-xs);
   background: rgba(34, 197, 94, 0.15);
   color: var(--signal-sage);
@@ -796,7 +887,7 @@ body.is-night-mode .visual-backdrop {
   display: flex;
   justify-content: space-between;
   font-family: var(--font-mono);
-  font-size: 0.6rem;
+  font-size: 0.75rem;
   color: var(--ink-muted);
   margin-bottom: 5px;
 }
@@ -862,7 +953,7 @@ body.is-night-mode .visual-backdrop {
 
 .surf-label {
   font-family: var(--font-mono);
-  font-size: 0.64rem;
+  font-size: 0.75rem;
   color: var(--ink-muted);
 }
 
@@ -914,7 +1005,7 @@ body.is-night-mode .visual-backdrop {
 
 .resp-label {
   font-family: var(--font-mono);
-  font-size: 0.58rem;
+  font-size: 0.75rem;
   color: var(--ink-muted);
 }
 
@@ -930,9 +1021,9 @@ body.is-night-mode .visual-backdrop {
 }
 
 .gauge-advisory {
-  font-size: 0.8rem;
+  font-size: 0.875rem;
   color: var(--ink-secondary);
-  line-height: 1.42;
+  line-height: 1.48;
 }
 
 /* Excursion Windows Dispatch Strip */
@@ -962,9 +1053,9 @@ body.is-night-mode .visual-backdrop {
 
 .mono-title {
   font-family: var(--font-mono);
-  font-size: 0.72rem;
+  font-size: 0.78rem;
   font-weight: 700;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.04em;
   color: var(--ink-secondary);
 }
 
@@ -980,7 +1071,7 @@ body.is-night-mode .visual-backdrop {
   background: var(--panel-bg);
   border: 1px solid var(--border-hairline);
   border-radius: var(--radius-xs);
-  padding: 5px 12px;
+  padding: 6px 12px;
   display: inline-flex;
   align-items: center;
   gap: 10px;
@@ -996,13 +1087,13 @@ body.is-night-mode .visual-backdrop {
 }
 
 .window-time {
-  font-size: 0.76rem;
+  font-size: 0.82rem;
   font-weight: 700;
   color: var(--ink-primary);
 }
 
 .window-tag {
-  font-size: 0.66rem;
+  font-size: 0.75rem;
   color: var(--ink-secondary);
 }
 
@@ -1020,7 +1111,7 @@ body.is-night-mode .visual-backdrop {
   align-items: center;
   gap: 6px;
   font-family: var(--font-mono);
-  font-size: 0.68rem;
+  font-size: 0.75rem;
   color: var(--ink-secondary);
   cursor: help;
 }
@@ -1065,7 +1156,7 @@ body.is-night-mode .visual-backdrop {
 }
 
 .hour-card {
-  min-width: 92px;
+  min-width: 96px;
   background: var(--panel-recessed);
   border: 1px solid var(--border-hairline);
   border-radius: var(--radius-sm);
@@ -1086,7 +1177,7 @@ body.is-night-mode .visual-backdrop {
 
 .hour-time {
   font-family: var(--font-mono);
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   color: var(--ink-muted);
 }
 
@@ -1104,11 +1195,11 @@ body.is-night-mode .visual-backdrop {
 
 .hour-paw-badge {
   font-family: var(--font-mono);
-  font-size: 0.62rem;
+  font-size: 0.75rem;
   font-weight: 700;
   padding: 2px 7px;
   border-radius: var(--radius-xs);
-  letter-spacing: 0.04em;
+  letter-spacing: 0.03em;
 }
 
 .hour-paw-badge.green {
@@ -1224,23 +1315,23 @@ body.is-night-mode .visual-backdrop {
 
 .dbz-label {
   font-family: var(--font-mono);
-  font-size: 0.65rem;
+  font-size: 0.75rem;
   font-weight: 700;
   color: var(--ink-secondary);
 }
 
 .dbz-bars {
   display: flex;
-  height: 14px;
+  height: 18px;
   border-radius: 2px;
   overflow: hidden;
-  width: 180px;
+  width: 210px;
 }
 
 .dbz-seg {
   flex: 1;
   font-family: var(--font-mono);
-  font-size: 0.58rem;
+  font-size: 0.75rem;
   font-weight: 700;
   display: flex;
   align-items: center;
@@ -1277,7 +1368,7 @@ body.is-night-mode .visual-backdrop {
   display: flex;
   justify-content: space-between;
   font-family: var(--font-mono);
-  font-size: 0.65rem;
+  font-size: 0.75rem;
   color: var(--ink-muted);
 }
 
@@ -1289,7 +1380,7 @@ body.is-night-mode .visual-backdrop {
 }
 
 .sensor-sub {
-  font-size: 0.7rem;
+  font-size: 0.78rem;
   color: var(--ink-muted);
 }
 
@@ -1374,15 +1465,15 @@ body.is-night-mode .visual-backdrop {
 
 .wk-day-name {
   font-family: var(--font-mono);
-  font-size: 0.74rem;
+  font-size: 0.78rem;
   font-weight: 700;
   color: var(--ink-primary);
-  letter-spacing: 0.06em;
+  letter-spacing: 0.05em;
 }
 
 .wk-day-date {
   font-family: var(--font-mono);
-  font-size: 0.58rem;
+  font-size: 0.75rem;
   color: var(--ink-muted);
 }
 
@@ -1393,7 +1484,7 @@ body.is-night-mode .visual-backdrop {
 }
 
 .wk-cond-label {
-  font-size: 0.68rem;
+  font-size: 0.75rem;
   font-weight: 500;
   color: var(--ink-secondary);
   text-align: center;
@@ -1427,7 +1518,7 @@ body.is-night-mode .visual-backdrop {
   justify-content: center;
   gap: 8px;
   font-family: var(--font-mono);
-  font-size: 0.62rem;
+  font-size: 0.75rem;
   width: 100%;
 }
 
@@ -1441,14 +1532,14 @@ body.is-night-mode .visual-backdrop {
 
 .wk-paw-pill {
   font-family: var(--font-mono);
-  font-size: 0.58rem;
+  font-size: 0.75rem;
   font-weight: 600;
   padding: 2px 6px;
   border-radius: var(--radius-xs);
   width: 100%;
   text-align: center;
   margin-top: 2px;
-  opacity: 0.9;
+  opacity: 0.95;
 }
 
 .wk-paw-pill.green {
@@ -1477,12 +1568,12 @@ body.is-night-mode .visual-backdrop {
 
 .dog-chip {
   font-family: var(--font-mono);
-  font-size: 0.72rem;
+  font-size: 0.78rem;
   font-weight: 600;
   background: var(--panel-bg);
   border: 1px solid var(--border-hairline);
   color: var(--ink-secondary);
-  padding: 3px 10px;
+  padding: 4px 10px;
   border-radius: var(--radius-xs);
   cursor: pointer;
   display: inline-flex;
@@ -1556,7 +1647,7 @@ body.is-night-mode .visual-backdrop {
   align-items: center;
   flex-wrap: wrap;
   gap: 12px;
-  font-size: 0.75rem;
+  font-size: 0.78rem;
   color: var(--ink-muted);
 }
 
@@ -1569,10 +1660,10 @@ body.is-night-mode .visual-backdrop {
 
 .privacy-pill {
   font-family: var(--font-mono);
-  font-size: 0.66rem;
+  font-size: 0.75rem;
   color: var(--signal-sage);
   border: 1px solid rgba(34, 197, 94, 0.3);
-  padding: 3px 9px;
+  padding: 4px 10px;
   border-radius: var(--radius-xs);
 }
 
@@ -1625,7 +1716,7 @@ body.is-night-mode .visual-backdrop {
 .calibration-form label {
   display: block;
   font-family: var(--font-mono);
-  font-size: 0.68rem;
+  font-size: 0.78rem;
   font-weight: 600;
   color: var(--ink-secondary);
   margin-bottom: 4px;
@@ -1638,8 +1729,8 @@ body.is-night-mode .visual-backdrop {
   border: 1px solid var(--border-strong);
   color: var(--ink-primary);
   font-family: var(--font-sans);
-  font-size: 0.84rem;
-  padding: 7px 11px;
+  font-size: 0.875rem;
+  padding: 8px 11px;
   border-radius: var(--radius-xs);
 }
 
@@ -1651,7 +1742,7 @@ body.is-night-mode .visual-backdrop {
 
 .hw-btn {
   font-family: var(--font-mono);
-  font-size: 0.72rem;
+  font-size: 0.78rem;
   font-weight: 700;
   padding: 7px 14px;
   border-radius: var(--radius-xs);
@@ -1671,7 +1762,7 @@ body.is-night-mode .visual-backdrop {
 }
 
 /* ==========================================================================
-   AEROALLERGEN, POLLEN & AIR QUALITY BIO-MONITOR (INSTRUMENT 05)
+   AEROALLERGEN, POLLEN & AIR QUALITY BIO-MONITOR
    ========================================================================== */
 .allergy-header-badges {
   display: flex;
@@ -1703,13 +1794,13 @@ body.is-night-mode .visual-backdrop {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 15px;
-  height: 15px;
+  width: 18px;
+  height: 18px;
   border-radius: 50%;
   background: rgba(234, 88, 12, 0.22);
   color: var(--signal-amber);
   font-family: var(--font-mono);
-  font-size: 0.65rem;
+  font-size: 0.75rem;
   font-weight: 700;
 }
 
@@ -1746,7 +1837,7 @@ body.is-night-mode .visual-backdrop {
   justify-content: space-between;
   align-items: center;
   font-family: var(--font-mono);
-  font-size: 0.7rem;
+  font-size: 0.78rem;
 }
 
 .allergen-name-wrap {
@@ -1761,18 +1852,19 @@ body.is-night-mode .visual-backdrop {
   font-weight: 600;
 }
 
+/* Minimum 24x24px Hit Target for WCAG 2.5.8 */
 .inline-help-trigger {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 16px;
-  height: 16px;
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
   border: 1px solid var(--border-strong);
   background: var(--panel-bg);
   color: var(--signal-amber);
   font-family: var(--font-mono);
-  font-size: 0.62rem;
+  font-size: 0.75rem;
   font-weight: 700;
   cursor: pointer;
   padding: 0;
@@ -1781,9 +1873,9 @@ body.is-night-mode .visual-backdrop {
 }
 
 .inline-help-trigger.sm {
-  width: 14px;
-  height: 14px;
-  font-size: 0.56rem;
+  width: 24px;
+  height: 24px;
+  font-size: 0.75rem;
 }
 
 .inline-help-trigger:hover,
@@ -1791,7 +1883,7 @@ body.is-night-mode .visual-backdrop {
   background: var(--signal-amber);
   color: #FFFFFF;
   border-color: var(--signal-amber);
-  transform: scale(1.1);
+  transform: scale(1.06);
 }
 
 /* Tactile Floating Help Popover on Hover / Focus */
@@ -1799,16 +1891,16 @@ body.is-night-mode .visual-backdrop {
   position: absolute;
   left: 0;
   bottom: calc(100% + 8px);
-  width: 290px;
+  width: 300px;
   background: #14171A;
   color: #F4F1EA;
   border: 1px solid var(--signal-amber);
   border-radius: var(--radius-xs);
   padding: 10px 12px;
   font-family: var(--font-sans);
-  font-size: 0.74rem;
+  font-size: 0.875rem;
   font-weight: 400;
-  line-height: 1.45;
+  line-height: 1.48;
   box-shadow: 0 14px 32px rgba(0, 0, 0, 0.78);
   opacity: 0;
   visibility: hidden;
@@ -1821,7 +1913,7 @@ body.is-night-mode .visual-backdrop {
 .help-popover strong {
   display: block;
   font-family: var(--font-mono);
-  font-size: 0.65rem;
+  font-size: 0.75rem;
   color: var(--signal-amber);
   letter-spacing: 0.04em;
   margin-bottom: 4px;
@@ -1900,7 +1992,7 @@ body.is-night-mode .visual-backdrop {
 .aqi-cell.has-help .help-popover {
   left: auto;
   right: 0;
-  width: 255px;
+  width: 270px;
 }
 
 .aqi-cell-top {
@@ -1912,7 +2004,7 @@ body.is-night-mode .visual-backdrop {
 
 .aqi-label {
   font-family: var(--font-mono);
-  font-size: 0.58rem;
+  font-size: 0.75rem;
   color: var(--ink-muted);
 }
 
@@ -1942,9 +2034,9 @@ body.is-night-mode .visual-backdrop {
 .allergy-protocol-card.status-red .derm-title { color: #FCA5A5; }
 
 .derm-desc {
-  font-size: 0.8rem;
+  font-size: 0.875rem;
   color: var(--ink-secondary);
-  line-height: 1.45;
+  line-height: 1.48;
 }
 
 .symptom-watch-row {
@@ -1956,11 +2048,11 @@ body.is-night-mode .visual-backdrop {
 
 .symptom-chip {
   font-family: var(--font-mono);
-  font-size: 0.64rem;
+  font-size: 0.75rem;
   color: var(--ink-secondary);
   background: var(--panel-bg);
   border: 1px solid var(--border-hairline);
-  padding: 3px 8px;
+  padding: 4px 9px;
   border-radius: var(--radius-xs);
   cursor: help;
 }
@@ -2022,9 +2114,9 @@ body.is-night-mode .visual-backdrop {
 
 .help-tab {
   font-family: var(--font-mono);
-  font-size: 0.66rem;
+  font-size: 0.75rem;
   font-weight: 700;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.04em;
   padding: 6px 12px;
   border-radius: var(--radius-xs);
   border: 1px solid var(--border-strong);
@@ -2082,11 +2174,11 @@ body.is-night-mode .visual-backdrop {
 
 .def-badge {
   font-family: var(--font-mono);
-  font-size: 0.56rem;
+  font-size: 0.75rem;
   font-weight: 700;
-  padding: 2px 6px;
+  padding: 2px 7px;
   border-radius: 3px;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.04em;
 }
 
 .def-badge.bio {
@@ -2103,20 +2195,20 @@ body.is-night-mode .visual-backdrop {
 
 .def-season {
   font-family: var(--font-mono);
-  font-size: 0.55rem;
+  font-size: 0.75rem;
   color: var(--ink-muted);
 }
 
 .def-title {
   font-family: var(--font-serif);
-  font-size: 0.96rem;
+  font-size: 1rem;
   font-weight: 700;
   color: var(--ink-primary);
   line-height: 1.25;
 }
 
 .def-body {
-  font-size: 0.76rem;
+  font-size: 0.875rem;
   color: var(--ink-secondary);
   line-height: 1.48;
 }
@@ -2126,9 +2218,9 @@ body.is-night-mode .visual-backdrop {
   border: 1px solid var(--border-hairline);
   border-radius: var(--radius-xs);
   padding: 8px 10px;
-  font-size: 0.7rem;
+  font-size: 0.82rem;
   color: var(--ink-secondary);
-  line-height: 1.4;
+  line-height: 1.45;
   display: flex;
   flex-direction: column;
   gap: 5px;
@@ -2137,11 +2229,11 @@ body.is-night-mode .visual-backdrop {
 .def-clinical-meta strong {
   color: var(--ink-primary);
   font-family: var(--font-mono);
-  font-size: 0.63rem;
+  font-size: 0.75rem;
 }
 
 /* ==========================================================================
-   RESPONSIVE BREAKPOINTS
+   RESPONSIVE BREAKPOINTS & REDUCED MOTION
    ========================================================================== */
 @media (max-width: 1080px) {
   .hero-station-grid,
@@ -2182,6 +2274,17 @@ body.is-night-mode .visual-backdrop {
   .six-col-sensors,
   .aqi-telemetry-strip {
     grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }
 
