@@ -1,23 +1,37 @@
 /* ==========================================================================
-   PAWCAST // METEOROLOGICAL & CANINE FIELD STATION ENGINE
+   PAWCAST // METEOROLOGICAL & CANINE FIELD STATION ENGINE (REV 5.0)
    Includes:
+   - Multi-Dog Pack Roster & Persistent Configuration Storage + JSON Export
+   - Top 7-Day Weekly Almanac & Canine Safety Outlook Ribbon
+   - Instrument 05: Aeroallergen, Pollen Spectrum & US EPA AQI Bio-Monitor
    - Procedural Web Audio API Weather Soundscape & Tactile Hardware Clicks
    - Thermodynamic Solar Irradiance Ground Conductivity Model
-   - Analog Thermal Scale Needle Positioning
-   - Live RainViewer Doppler Radar + Timestamp-Based Auto-Polling
+   - Live RainViewer Doppler Radar (Zoom 3-7) + Timestamp-Based Auto-Polling
    ========================================================================== */
 
 (function () {
   'use strict';
 
-  const DEFAULT_PET = {
-    name: 'Max',
-    size: 'medium',
-    coat: 'double',
-    snout: 'normal',
-    allergy: 'normal',
-    age: 'adult'
-  };
+  const DEFAULT_DOGS = [
+    {
+      id: 'dog_max',
+      name: 'Max',
+      size: 'medium',
+      coat: 'double',
+      snout: 'normal',
+      allergy: 'normal',
+      age: 'adult'
+    },
+    {
+      id: 'dog_bella',
+      name: 'Bella',
+      size: 'small',
+      coat: 'short',
+      snout: 'brachy',
+      allergy: 'sensitive',
+      age: 'adult'
+    }
+  ];
 
   const DEFAULT_LOCATION = {
     name: 'New York',
@@ -34,11 +48,41 @@
     { name: 'Los Angeles', country: 'United States', lat: 34.0522, lon: -118.2437 }
   ];
 
+  // Migrate legacy single pet if present
+  function initDogsPack() {
+    const savedPack = loadJSON('pawcast_dogs', null);
+    if (Array.isArray(savedPack) && savedPack.length > 0) {
+      return savedPack;
+    }
+    const legacySingle = loadJSON('pawcast_pet', null);
+    if (legacySingle && legacySingle.name) {
+      const migrated = [
+        {
+          id: 'dog_' + Date.now(),
+          name: legacySingle.name,
+          size: legacySingle.size || 'medium',
+          coat: legacySingle.coat || 'double',
+          snout: legacySingle.snout || 'normal',
+          allergy: legacySingle.allergy || 'normal',
+          age: legacySingle.age || 'adult'
+        }
+      ];
+      saveJSON('pawcast_dogs', migrated);
+      return migrated;
+    }
+    saveJSON('pawcast_dogs', DEFAULT_DOGS);
+    return DEFAULT_DOGS;
+  }
+
+  const initialDogs = initDogsPack();
+  const initialActiveId = localStorage.getItem('pawcast_active_dog_id') || initialDogs[0].id;
+
   let appState = {
     location: loadJSON('pawcast_location', DEFAULT_LOCATION),
     units: localStorage.getItem('pawcast_units') || 'imperial',
     source: localStorage.getItem('pawcast_source') || 'openmeteo',
-    pet: loadJSON('pawcast_pet', DEFAULT_PET),
+    dogs: initialDogs,
+    activeDogId: initialDogs.some(d => d.id === initialActiveId) ? initialActiveId : initialDogs[0].id,
     favorites: loadJSON('pawcast_favorites', DEFAULT_FAVORITES),
     weather: null,
     airQuality: null,
@@ -66,6 +110,10 @@
     birdChirpTimer: null
   };
 
+  function getActiveDog() {
+    return appState.dogs.find(d => d.id === appState.activeDogId) || appState.dogs[0];
+  }
+
   const el = {
     locationInput: document.getElementById('location-input'),
     searchResults: document.getElementById('search-results'),
@@ -77,6 +125,11 @@
     soundToggleBtn: document.getElementById('sound-toggle-btn'),
     soundBtnLabel: document.getElementById('sound-btn-label'),
     acousticStatusText: document.getElementById('acoustic-status-text'),
+
+    // Multi-Dog Pack Roster Bar
+    dogRosterChips: document.getElementById('dog-roster-chips'),
+    addDogQuickBtn: document.getElementById('add-dog-quick-btn'),
+    weeklyPackTag: document.getElementById('weekly-pack-tag'),
 
     favoriteChips: document.getElementById('favorite-chips'),
     addFavoriteBtn: document.getElementById('add-favorite-btn'),
@@ -116,6 +169,8 @@
     subjectCoatVal: document.getElementById('subject-coat-val'),
     heatSafetyDesc: document.getElementById('heat-safety-desc'),
 
+    // Top 7-Day Weekly Forecast Grid & Walk Windows
+    dailyList: document.getElementById('daily-list'),
     walkWindowsGrid: document.getElementById('walk-windows-grid'),
 
     // Live Radar Scope
@@ -125,10 +180,9 @@
     radarPlayText: document.getElementById('radar-play-text'),
     radarTimestamp: document.getElementById('radar-timestamp'),
 
-    // Hourly & Daily
+    // Hourly Horizon
     hourlySvg: document.getElementById('hourly-svg'),
     hourlyScroller: document.getElementById('hourly-scroller'),
-    dailyList: document.getElementById('daily-list'),
 
     // Aeroallergen & Air Quality Bio-Monitor
     aqiBadge: document.getElementById('aqi-badge'),
@@ -161,20 +215,16 @@
     metricDewpoint: document.getElementById('metric-dewpoint'),
     metricPressure: document.getElementById('metric-pressure'),
 
-    // Substrate Conductivity Lab
-    simAirTemp: document.getElementById('sim-air-temp'),
-    simAirVal: document.getElementById('sim-air-val'),
-    simSunCondition: document.getElementById('sim-sun-condition'),
-    simSurface: document.getElementById('sim-surface'),
-    simResultTemp: document.getElementById('sim-result-temp'),
-    simRiskBadge: document.getElementById('sim-risk-badge'),
-    simTimeLimit: document.getElementById('sim-time-limit'),
-
-    // Calibration Modal
+    // Multi-Dog Calibration Modal
     petModal: document.getElementById('pet-modal'),
     closeModalBtn: document.getElementById('close-modal-btn'),
     cancelModalBtn: document.getElementById('cancel-modal-btn'),
+    modalDogList: document.getElementById('modal-dog-list'),
+    newDogModalBtn: document.getElementById('new-dog-modal-btn'),
+    deleteDogBtn: document.getElementById('delete-dog-btn'),
+    exportConfigBtn: document.getElementById('export-config-btn'),
     petProfileForm: document.getElementById('pet-profile-form'),
+    dogIdInput: document.getElementById('dog-id'),
     dogNameInput: document.getElementById('dog-name'),
     dogSizeSelect: document.getElementById('dog-size'),
     dogCoatSelect: document.getElementById('dog-coat'),
@@ -186,11 +236,11 @@
   function init() {
     setupEventListeners();
     updateUIPreferences();
+    renderDogRosterChips();
     renderFavoriteChips();
     initLiveRadarMap();
     initAutoRefreshSystem();
     fetchWeatherData(appState.location);
-    initSimulator();
   }
 
   function setupEventListeners() {
@@ -236,24 +286,37 @@
       addCurrentLocationToFavorites();
     });
 
+    // Multi-Dog Pack Listeners
     el.petProfileBtn.addEventListener('click', () => {
       playHardwareClick(660);
-      openPetModal();
+      openPetModal(appState.activeDogId);
     });
+
+    if (el.addDogQuickBtn) {
+      el.addDogQuickBtn.addEventListener('click', () => {
+        playHardwareClick(780);
+        openPetModal('NEW');
+      });
+    }
+
+    if (el.newDogModalBtn) {
+      el.newDogModalBtn.addEventListener('click', () => {
+        playHardwareClick(780);
+        populateFormForNewDog();
+      });
+    }
+
+    if (el.deleteDogBtn) {
+      el.deleteDogBtn.addEventListener('click', handleDeleteDog);
+    }
+
+    if (el.exportConfigBtn) {
+      el.exportConfigBtn.addEventListener('click', handleExportConfiguration);
+    }
 
     el.closeModalBtn.addEventListener('click', closePetModal);
     el.cancelModalBtn.addEventListener('click', closePetModal);
     el.petProfileForm.addEventListener('submit', handleSavePetProfile);
-
-    el.simAirTemp.addEventListener('input', updateSimulator);
-    el.simSunCondition.addEventListener('change', () => {
-      playHardwareClick(540);
-      updateSimulator();
-    });
-    el.simSurface.addEventListener('change', () => {
-      playHardwareClick(580);
-      updateSimulator();
-    });
 
     el.radarPlayBtn.addEventListener('click', () => {
       playHardwareClick(760);
@@ -271,6 +334,177 @@
         el.searchResults.classList.add('hidden');
       }
     });
+  }
+
+  // ==========================================================================
+  // MULTI-DOG PACK ROSTER & CONFIGURATION MANAGEMENT
+  // ==========================================================================
+  function renderDogRosterChips() {
+    if (!el.dogRosterChips) return;
+    el.dogRosterChips.innerHTML = '';
+
+    appState.dogs.forEach(dog => {
+      const isAct = dog.id === appState.activeDogId;
+      const chip = document.createElement('div');
+      chip.className = `dog-chip ${isAct ? 'active' : ''}`;
+      chip.title = `Switch telemetry calibration to ${dog.name} (${capitalize(dog.size)}, ${capitalize(dog.coat)} coat, ${dog.allergy === 'sensitive' ? 'Allergy-Sensitive' : 'Standard'})`;
+      chip.innerHTML = `
+        <span>🐾 ${dog.name.toUpperCase()}</span>
+      `;
+      chip.addEventListener('click', () => {
+        playHardwareClick(700);
+        setActiveDog(dog.id);
+      });
+      el.dogRosterChips.appendChild(chip);
+    });
+  }
+
+  function setActiveDog(dogId) {
+    appState.activeDogId = dogId;
+    localStorage.setItem('pawcast_active_dog_id', dogId);
+    updateUIPreferences();
+    renderDogRosterChips();
+    if (appState.weather) {
+      renderAllWeatherData(appState.weather);
+    }
+  }
+
+  function renderModalDogList(editingId) {
+    if (!el.modalDogList) return;
+    el.modalDogList.innerHTML = '';
+
+    appState.dogs.forEach(dog => {
+      const chip = document.createElement('div');
+      chip.className = `dog-chip ${dog.id === editingId ? 'active' : ''}`;
+      chip.innerHTML = `<span>🐾 ${dog.name.toUpperCase()}</span>`;
+      chip.addEventListener('click', () => {
+        playHardwareClick(660);
+        setActiveDog(dog.id);
+        populateFormWithDog(dog);
+        renderModalDogList(dog.id);
+      });
+      el.modalDogList.appendChild(chip);
+    });
+  }
+
+  function openPetModal(targetMode) {
+    if (targetMode === 'NEW') {
+      populateFormForNewDog();
+    } else {
+      const dog = getActiveDog();
+      populateFormWithDog(dog);
+    }
+    el.petModal.classList.remove('hidden');
+  }
+
+  function populateFormWithDog(dog) {
+    el.dogIdInput.value = dog.id;
+    el.dogNameInput.value = dog.name;
+    el.dogSizeSelect.value = dog.size || 'medium';
+    el.dogCoatSelect.value = dog.coat || 'double';
+    el.dogSnoutSelect.value = dog.snout || 'normal';
+    if (el.dogAllergySelect) el.dogAllergySelect.value = dog.allergy || 'normal';
+    el.dogAgeSelect.value = dog.age || 'adult';
+    if (el.deleteDogBtn) {
+      el.deleteDogBtn.style.display = appState.dogs.length > 1 ? 'inline-flex' : 'none';
+    }
+    renderModalDogList(dog.id);
+  }
+
+  function populateFormForNewDog() {
+    el.dogIdInput.value = '';
+    el.dogNameInput.value = '';
+    el.dogNameInput.placeholder = 'Enter new dog name (e.g. Cooper, Daisy)...';
+    el.dogSizeSelect.value = 'medium';
+    el.dogCoatSelect.value = 'short';
+    el.dogSnoutSelect.value = 'normal';
+    if (el.dogAllergySelect) el.dogAllergySelect.value = 'normal';
+    el.dogAgeSelect.value = 'adult';
+    if (el.deleteDogBtn) {
+      el.deleteDogBtn.style.display = 'none';
+    }
+    renderModalDogList('');
+    el.dogNameInput.focus();
+  }
+
+  function closePetModal() {
+    el.petModal.classList.add('hidden');
+  }
+
+  function handleSavePetProfile(e) {
+    e.preventDefault();
+    playHardwareClick(860);
+
+    const existingId = el.dogIdInput.value;
+    const nameVal = el.dogNameInput.value.trim() || 'My Dog';
+    const updatedDog = {
+      id: existingId || ('dog_' + Date.now()),
+      name: nameVal,
+      size: el.dogSizeSelect.value,
+      coat: el.dogCoatSelect.value,
+      snout: el.dogSnoutSelect.value,
+      allergy: el.dogAllergySelect ? el.dogAllergySelect.value : 'normal',
+      age: el.dogAgeSelect.value
+    };
+
+    const idx = appState.dogs.findIndex(d => d.id === existingId);
+    if (idx >= 0) {
+      appState.dogs[idx] = updatedDog;
+    } else {
+      appState.dogs.push(updatedDog);
+    }
+
+    appState.activeDogId = updatedDog.id;
+    saveJSON('pawcast_dogs', appState.dogs);
+    localStorage.setItem('pawcast_active_dog_id', appState.activeDogId);
+
+    updateUIPreferences();
+    renderDogRosterChips();
+    closePetModal();
+    if (appState.weather) renderAllWeatherData(appState.weather);
+  }
+
+  function handleDeleteDog() {
+    if (appState.dogs.length <= 1) return;
+    const targetId = el.dogIdInput.value;
+    if (!targetId) return;
+
+    playHardwareClick(440);
+    appState.dogs = appState.dogs.filter(d => d.id !== targetId);
+    appState.activeDogId = appState.dogs[0].id;
+
+    saveJSON('pawcast_dogs', appState.dogs);
+    localStorage.setItem('pawcast_active_dog_id', appState.activeDogId);
+
+    updateUIPreferences();
+    renderDogRosterChips();
+    populateFormWithDog(getActiveDog());
+    if (appState.weather) renderAllWeatherData(appState.weather);
+  }
+
+  function handleExportConfiguration() {
+    playHardwareClick(900);
+    const configPayload = {
+      version: '5.0',
+      exportedAt: new Date().toISOString(),
+      dogs: appState.dogs,
+      activeDogId: appState.activeDogId,
+      favorites: appState.favorites,
+      location: appState.location,
+      units: appState.units,
+      source: appState.source,
+      refreshIntervalMins: appState.refreshIntervalMins
+    };
+
+    const blob = new Blob([JSON.stringify(configPayload, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `pawcast_pack_config_${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   }
 
   // ==========================================================================
@@ -357,7 +591,7 @@
       try {
         if (node.stop) node.stop();
         if (node.disconnect) node.disconnect();
-      } catch (e) { /* ignore already stopped */ }
+      } catch (e) { /* ignore */ }
     });
     appState.activeNodes = [];
   }
@@ -374,7 +608,6 @@
     const isDay = cur.isDay;
     const windKmh = cur.windKmh || 8;
 
-    // Create 3 seconds of Pink/Brownian Noise Buffer for natural wind/rain texture
     const bufferSize = ctx.sampleRate * 3;
     const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
     const output = noiseBuffer.getChannelData(0);
@@ -396,14 +629,12 @@
     const isRain = code >= 51 && code <= 99;
 
     if (isRain) {
-      // Rain Patter: Bandpass filtered noise
       filter.type = 'bandpass';
       filter.frequency.setValueAtTime(950, ctx.currentTime);
       filter.Q.setValueAtTime(0.7, ctx.currentTime);
       masterGain.gain.setValueAtTime(0.08, ctx.currentTime);
       if (el.acousticStatusText) el.acousticStatusText.textContent = 'Acoustic: Rain Patter & Wind';
     } else {
-      // Soft Breeze through trees: Lowpass filtered noise modulated by wind speed
       filter.type = 'lowpass';
       const cutoff = Math.min(600, 160 + windKmh * 10);
       filter.frequency.setValueAtTime(cutoff, ctx.currentTime);
@@ -421,7 +652,6 @@
     noiseSource.start();
     appState.activeNodes.push(noiseSource, filter, masterGain);
 
-    // Add Periodic Bio-Acoustic Touches (Daytime songbird notes or Nighttime crickets)
     if (!isRain) {
       appState.birdChirpTimer = setInterval(() => {
         if (!appState.isAudioEnabled || document.hidden) return;
@@ -766,20 +996,17 @@
     const rh = curWeather.humidity || 50;
     const windMph = (curWeather.windKmh || 8) * 0.621371;
     const isRaining = curWeather.weatherCode >= 51 && curWeather.weatherCode <= 82;
-    const month = new Date().getMonth(); // 0 = Jan .. 9 = Oct .. 11 = Dec
+    const month = new Date().getMonth();
     const isNorthern = lat >= 0;
     const adjMonth = isNorthern ? month : (month + 6) % 12;
 
-    // Rain washout factor: active precipitation scrubs airborne pollen but boosts fungal spores
     const rainWashout = isRaining ? 0.35 : 1.0;
     const windDispersion = Math.min(1.35, 0.8 + (windMph / 25));
 
-    // 1. Grass Pollen (0 - 10 scale)
     let grassScore = 1.2;
     if (aqData && typeof aqData.grass_pollen === 'number' && aqData.grass_pollen !== null) {
       grassScore = Math.min(10, (aqData.grass_pollen / 60) * 10);
     } else {
-      // Phenological model: peaks May-July (months 4,5,6), moderate in warm Sept/Oct
       let seasonalBase = 1.0;
       if (adjMonth >= 4 && adjMonth <= 6) seasonalBase = 6.8;
       else if (adjMonth === 3 || adjMonth === 7) seasonalBase = 4.5;
@@ -788,7 +1015,6 @@
       grassScore = seasonalBase * tempFactor * windDispersion * rainWashout;
     }
 
-    // 2. Tree Pollen (0 - 10 scale)
     let treeScore = 1.0;
     const rawTree = aqData && (aqData.birch_pollen !== null || aqData.alder_pollen !== null)
       ? (aqData.birch_pollen || 0) + (aqData.alder_pollen || 0) + (aqData.olive_pollen || 0)
@@ -796,16 +1022,14 @@
     if (rawTree !== null) {
       treeScore = Math.min(10, (rawTree / 120) * 10);
     } else {
-      // Peaks Feb-May (months 1,2,3,4)
       let seasonalBase = 0.8;
       if (adjMonth >= 2 && adjMonth <= 4) seasonalBase = 7.4;
       else if (adjMonth === 1 || adjMonth === 5) seasonalBase = 4.2;
-      else if (adjMonth === 9) seasonalBase = 1.5; // Autumn cedar/elm minor
+      else if (adjMonth === 9) seasonalBase = 1.5;
       const tempFactor = tempF < 36 ? 0.1 : 1.0;
       treeScore = seasonalBase * tempFactor * windDispersion * rainWashout;
     }
 
-    // 3. Ragweed & Herbaceous Weeds (0 - 10 scale)
     let weedScore = 1.5;
     const rawWeed = aqData && (aqData.ragweed_pollen !== null || aqData.mugwort_pollen !== null)
       ? (aqData.ragweed_pollen || 0) + (aqData.mugwort_pollen || 0)
@@ -813,7 +1037,6 @@
     if (rawWeed !== null) {
       weedScore = Math.min(10, (rawWeed / 80) * 10);
     } else {
-      // Peaks Aug-Oct (months 7,8,9) until first hard frost
       let seasonalBase = 1.0;
       if (adjMonth >= 7 && adjMonth <= 9) seasonalBase = 6.9;
       else if (adjMonth === 6 || adjMonth === 10) seasonalBase = 3.8;
@@ -821,8 +1044,6 @@
       weedScore = seasonalBase * frostKill * windDispersion * rainWashout;
     }
 
-    // 4. Fungal Mold & Damp Leaf Spores (0 - 10 scale)
-    // Driven by relative humidity, dew point, warm/cool dampness & decaying vegetation
     let moldScore = 1.8;
     const humidityFactor = rh >= 80 ? 2.1 : rh >= 65 ? 1.45 : rh <= 35 ? 0.5 : 0.9;
     const autumnLeafFactor = (adjMonth >= 8 && adjMonth <= 10) ? 1.4 : 1.0;
@@ -854,7 +1075,7 @@
 
   function renderAllergyTelemetry(curWeather) {
     if (!el.pollenGrassVal) return;
-    const pet = appState.pet;
+    const pet = getActiveDog();
     const profile = computeAeroallergenProfile(curWeather, appState.airQuality, appState.location.lat);
 
     const setChannelUI = (valEl, barEl, score) => {
@@ -877,7 +1098,6 @@
     setChannelUI(el.pollenWeedVal, el.pollenWeedBar, profile.weedScore);
     setChannelUI(el.pollenMoldVal, el.pollenMoldBar, profile.moldScore);
 
-    // Populate Air Quality Cells
     el.aqiNumVal.textContent = `${profile.usAqi}`;
     el.pm25Val.textContent = `${profile.pm25} µg/m³`;
     el.pm10Val.textContent = `${profile.pm10} µg/m³`;
@@ -889,7 +1109,6 @@
     else if (profile.usAqi > 50) aqiCat = 'MODERATE';
     el.aqiBadge.textContent = `US AQI: ${profile.usAqi} (${aqiCat})`;
 
-    // Determine Dominant Canine Allergy Risk & Grooming Protocol
     const maxPollen = Math.max(profile.grassScore, profile.treeScore, profile.weedScore, profile.moldScore);
     const isAtopicDog = pet.allergy === 'sensitive';
     const isBrachy = pet.snout === 'brachy';
@@ -999,13 +1218,13 @@
   async function fetchNWSData(lat, lon) {
     try {
       const pointRes = await fetch(`https://api.weather.gov/points/${lat.toFixed(4)},${lon.toFixed(4)}`, {
-        headers: { 'User-Agent': 'PawCastFieldStation/4.2' }
+        headers: { 'User-Agent': 'PawCastFieldStation/5.0' }
       });
       if (!pointRes.ok) return null;
       const pointData = await pointRes.json();
 
       const hRes = await fetch(pointData.properties.forecastHourly, {
-        headers: { 'User-Agent': 'PawCastFieldStation/4.2' }
+        headers: { 'User-Agent': 'PawCastFieldStation/5.0' }
       });
       if (!hRes.ok) return null;
       const hData = await hRes.json();
@@ -1086,19 +1305,19 @@
   function calculateDualSafetyIndex(tempC, humidity, windKmh, isDay = true, uv = 3) {
     const tempF = (tempC * 9 / 5) + 32;
     const windMph = windKmh * 0.621371;
-    const pet = appState.pet;
+    const pet = getActiveDog();
     const surfaces = calculateSurfaceTemps(tempF, isDay, uv, windMph);
 
     let pawStatus = 'green';
     let pawPill = 'NOMINAL';
     let pawTitle = 'SAFE ON ALL SUBSTRATES';
-    let pawDesc = `Asphalt is ~${surfaces.asphaltF}°F. ${!isDay ? 'Nocturnal radiative cooling has dissipated solar heat.' : 'Safe conductive contact on sidewalks & turf.'}`;
+    let pawDesc = `Asphalt is ~${surfaces.asphaltF}°F. ${!isDay ? 'Nocturnal radiative cooling has dissipated solar heat.' : `Safe conductive contact on sidewalks & turf for ${pet.name}.`}`;
 
     if (surfaces.asphaltF >= 125) {
       pawStatus = 'red';
       pawPill = 'HAZARD';
       pawTitle = 'ASPHALT PAW BURN HAZARD';
-      pawDesc = `Blacktop is ~${surfaces.asphaltF}°F under solar load! Keratin pad burns occur in <60s. Route strictly over natural turf (~${surfaces.grassF}°F) or fit booties.`;
+      pawDesc = `Blacktop is ~${surfaces.asphaltF}°F under solar load! Keratin pad burns occur in <60s. Route ${pet.name} strictly over natural turf (~${surfaces.grassF}°F) or fit booties.`;
     } else if (surfaces.asphaltF >= 105) {
       pawStatus = 'yellow';
       pawPill = 'CAUTION';
@@ -1116,7 +1335,7 @@
         pawStatus = 'yellow';
         pawPill = 'COLD CAUTION';
         pawTitle = 'CHILLY SUBSTRATE & SALT';
-        pawDesc = `Near-freezing ground. Rinse paw pads after excursion to remove road salt crystals.`;
+        pawDesc = `Near-freezing ground. Rinse ${pet.name}'s paw pads after excursion to remove road salt crystals.`;
       }
     }
 
@@ -1124,6 +1343,7 @@
     if (pet.snout === 'brachy') heatSensitivityOffset += 5;
     if (pet.coat === 'double' || pet.coat === 'dark') heatSensitivityOffset += 3;
     if (pet.size === 'small') heatSensitivityOffset += 2;
+    if (pet.age === 'senior' || pet.age === 'puppy') heatSensitivityOffset += 2;
 
     const heatIndexF = tempF + (humidity > 60 ? (humidity - 60) * 0.15 : 0);
     const adjustedHeatIndex = heatIndexF + heatSensitivityOffset;
@@ -1131,18 +1351,18 @@
     let heatStatus = 'green';
     let heatPill = 'OPTIMAL';
     let heatTitle = 'LOW RESPIRATORY LOAD';
-    let heatDesc = `Efficient evaporative cooling for ${pet.name}. Maintain standard water access.`;
+    let heatDesc = `Efficient evaporative cooling for ${pet.name} (${capitalize(pet.coat)} coat). Maintain standard water access.`;
 
     if (adjustedHeatIndex >= 93) {
       heatStatus = 'red';
       heatPill = 'CRITICAL LOAD';
       heatTitle = 'HIGH HEATSTROKE DANGER';
-      heatDesc = `Thermal index ${Math.round(heatIndexF)}°F imposes severe panting strain on ${pet.name} (${capitalize(pet.coat)} coat). Restrict to brief shade relief.`;
+      heatDesc = `Thermal index ${Math.round(heatIndexF)}°F imposes severe panting strain on ${pet.name} (${capitalize(pet.coat)} coat${pet.snout === 'brachy' ? ', Brachycephalic airway' : ''}). Restrict to brief shade relief.`;
     } else if (adjustedHeatIndex >= 82) {
       heatStatus = 'yellow';
       heatPill = 'ELEVATED';
       heatTitle = 'MODERATE THERMAL STRESS';
-      heatDesc = `Warm humidity load (${Math.round(tempF)}°F). Schedule water stops and avoid high-exertion sprinting.`;
+      heatDesc = `Warm humidity load (${Math.round(tempF)}°F) for ${pet.name}. Schedule water stops and avoid high-exertion sprinting.`;
     }
 
     return {
@@ -1166,9 +1386,8 @@
   function renderAllWeatherData(data) {
     const isImp = appState.units === 'imperial';
     const cur = data.current;
-    const pet = appState.pet;
+    const pet = getActiveDog();
 
-    // Toggle Day / Night Field Station Illustration Backdrop
     document.body.classList.toggle('is-night-mode', !cur.isDay);
 
     const mainTemp = isImp ? Math.round((cur.tempC * 9 / 5) + 32) : Math.round(cur.tempC);
@@ -1200,7 +1419,6 @@
     el.asphaltTempVal.textContent = isImp ? `${safety.surfaces.asphaltF}°F` : `${safety.surfaces.asphaltC}°C`;
     el.grassTempVal.textContent = isImp ? `${safety.surfaces.grassF}°F` : `${safety.surfaces.grassC}°C`;
 
-    // Position Analog Thermal Needle (maps 25°F .. 145°F -> 4% .. 96%)
     if (el.pawThermalNeedle) {
       const clampedF = Math.max(25, Math.min(145, safety.surfaces.asphaltF));
       const pct = ((clampedF - 25) / (145 - 25)) * 92 + 4;
@@ -1214,7 +1432,8 @@
     el.heatSafetyDesc.textContent = safety.heatDesc;
     el.feelsLikeVal.textContent = `${feelsTemp}${unitSym}`;
     el.humidityVal.textContent = `${cur.humidity}%`;
-    if (el.subjectCoatVal) el.subjectCoatVal.textContent = pet.coat.toUpperCase();
+    if (el.subjectCoatVal) el.subjectCoatVal.textContent = `${pet.name.toUpperCase()} (${pet.coat.toUpperCase()})`;
+    if (el.weeklyPackTag) el.weeklyPackTag.textContent = `CALIBRATED FOR: ${pet.name.toUpperCase()} (${appState.dogs.length} IN PACK)`;
 
     // Atmospheric Sensor Dials
     el.metricPop.textContent = `${cur.pop}%`;
@@ -1229,13 +1448,44 @@
     el.metricDewpoint.textContent = `${dewDisp}${unitSym}`;
     el.metricPressure.textContent = `${Math.round(cur.pressure)} hPa`;
 
+    renderDailyForecast(data.daily);
     renderWalkWindows(data.hourly);
     renderHourlyForecast(data.hourly);
-    renderDailyForecast(data.daily);
     renderAllergyTelemetry(cur);
+  }
 
-    el.simAirTemp.value = Math.round((cur.tempC * 9 / 5) + 32);
-    updateSimulator();
+  // Render Top 7-Day Weekly Almanac Ribbon
+  function renderDailyForecast(daily) {
+    const isImp = appState.units === 'imperial';
+    const pet = getActiveDog();
+    el.dailyList.innerHTML = '';
+
+    daily.slice(0, 7).forEach((d, i) => {
+      const dayName = i === 0 ? 'TODAY' : d.date.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase();
+      const cond = getWeatherConditionInfo(d.weatherCode, true);
+      const maxT = isImp ? Math.round((d.maxTempC * 9 / 5) + 32) : Math.round(d.maxTempC);
+      const minT = isImp ? Math.round((d.minTempC * 9 / 5) + 32) : Math.round(d.minTempC);
+
+      const saf = calculateDualSafetyIndex(d.maxTempC, 50, 10, true, d.uv);
+      const overallStatus = saf.pawStatus === 'red' || saf.heatStatus === 'red' ? 'red' :
+                            saf.pawStatus === 'yellow' || saf.heatStatus === 'yellow' ? 'yellow' : 'green';
+      const statusText = overallStatus === 'green' ? '🐾 SAFE' : overallStatus === 'yellow' ? '⚠️ CAUT' : '🔥 HZRD';
+
+      const card = document.createElement('div');
+      card.className = `week-day-card ${i === 0 ? 'is-today' : ''}`;
+      card.title = `${dayName} (${cond.label})\nHigh: ${maxT}° | Low: ${minT}° | Precip: ${d.pop}%\nPeak Asphalt Est: ~${saf.surfaces.asphaltF}°F\n${pet.name}'s Outlook: ${saf.pawTitle}`;
+      card.innerHTML = `
+        <span class="wk-day-name">${dayName}</span>
+        <span class="wk-day-emoji" title="${cond.label}: ${cond.detail}">${cond.emoji}</span>
+        <div class="wk-temp-pair">
+          <span class="wk-high">${maxT}°</span>
+          <span class="wk-low">${minT}°</span>
+        </div>
+        <span class="wk-pop" title="Precipitation Probability: ${d.pop}%">🌧️ ${d.pop}%</span>
+        <span class="wk-paw-pill ${overallStatus}" title="${saf.pawTitle} (Peak Asphalt ~${saf.surfaces.asphaltF}°F)">${statusText}</span>
+      `;
+      el.dailyList.appendChild(card);
+    });
   }
 
   function renderHourlyForecast(hourly) {
@@ -1261,7 +1511,6 @@
       points.push({ x, y, val, pop: h.pop, safety: saf });
     });
 
-    // Precipitation Probability Bars
     points.forEach(p => {
       if (p.pop > 0) {
         const barH = (p.pop / 100) * 58;
@@ -1280,7 +1529,6 @@
       }
     });
 
-    // Smooth Cubic Bezier Temperature Curve
     let pathD = `M ${points[0].x} ${points[0].y}`;
     for (let i = 0; i < points.length - 1; i++) {
       const p1 = points[i];
@@ -1328,7 +1576,6 @@
       }
     });
 
-    // Tactile Hourly Cards with Hover Symbol Breakdown
     hourly.forEach(h => {
       const tVal = isImp ? Math.round((h.tempC * 9 / 5) + 32) : Math.round(h.tempC);
       const cond = getWeatherConditionInfo(h.weatherCode, h.isDay);
@@ -1360,50 +1607,6 @@
         <span class="hour-paw-badge ${overallStatus}" title="${pawToolTipMeaning}">${statusLabel}</span>
       `;
       el.hourlyScroller.appendChild(card);
-    });
-  }
-
-  function renderDailyForecast(daily) {
-    const isImp = appState.units === 'imperial';
-    el.dailyList.innerHTML = '';
-
-    const allMax = daily.map(d => isImp ? (d.maxTempC * 9 / 5) + 32 : d.maxTempC);
-    const allMin = daily.map(d => isImp ? (d.minTempC * 9 / 5) + 32 : d.minTempC);
-    const minGlobe = Math.min(...allMin);
-    const maxGlobe = Math.max(...allMax);
-    const globRange = maxGlobe - minGlobe || 1;
-
-    daily.forEach((d, i) => {
-      const dayName = i === 0 ? 'TODAY' : d.date.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase();
-      const cond = getWeatherConditionInfo(d.weatherCode, true);
-      const maxT = isImp ? Math.round((d.maxTempC * 9 / 5) + 32) : Math.round(d.maxTempC);
-      const minT = isImp ? Math.round((d.minTempC * 9 / 5) + 32) : Math.round(d.minTempC);
-
-      const leftPct = ((minT - minGlobe) / globRange) * 100;
-      const widthPct = Math.max(10, ((maxT - minT) / globRange) * 100);
-
-      const saf = calculateDualSafetyIndex(d.maxTempC, 50, 10, true, d.uv);
-      const overallStatus = saf.pawStatus === 'red' || saf.heatStatus === 'red' ? 'red' :
-                            saf.pawStatus === 'yellow' || saf.heatStatus === 'yellow' ? 'yellow' : 'green';
-      const statusText = overallStatus === 'green' ? 'NOMINAL' : overallStatus === 'yellow' ? 'CAUTION' : 'HAZARD';
-
-      const row = document.createElement('div');
-      row.className = 'day-row';
-      row.title = `${dayName}: ${cond.label}. Max: ${maxT}°, Min: ${minT}°. Precip: ${d.pop}%. Peak Status: ${statusText}`;
-      row.innerHTML = `
-        <span class="day-name">${dayName}</span>
-        <span class="day-emoji" title="${cond.label}: ${cond.detail}">${cond.emoji}</span>
-        <div class="temp-bar-container">
-          <span class="day-low-text">${minT}°</span>
-          <div class="temp-bar-bg">
-            <div class="temp-bar-fill" style="left: ${leftPct}%; width: ${widthPct}%;"></div>
-          </div>
-          <span class="day-high-text">${maxT}°</span>
-        </div>
-        <span class="day-pop" title="Precipitation Probability: ${d.pop}%">${d.pop}%</span>
-        <span class="day-paw-status ${overallStatus}" title="Peak Daytime Canine Status: ${statusText}">${statusText}</span>
-      `;
-      el.dailyList.appendChild(row);
     });
   }
 
@@ -1456,48 +1659,7 @@
   }
 
   // ==========================================================================
-  // SUBSTRATE CONDUCTIVITY LAB SIMULATOR
-  // ==========================================================================
-  function initSimulator() {
-    updateSimulator();
-  }
-
-  function updateSimulator() {
-    const airF = parseInt(el.simAirTemp.value, 10);
-    const sunType = el.simSunCondition.value;
-    const surfaceType = el.simSurface.value;
-
-    el.simAirVal.textContent = `${airF}°F`;
-
-    let baseAdd = 42;
-    if (sunType === 'partial-shade') baseAdd = 20;
-    if (sunType === 'full-shade') baseAdd = 0;
-
-    let surfaceMult = 1.0;
-    if (surfaceType === 'concrete') surfaceMult = 0.78;
-    if (surfaceType === 'sand') surfaceMult = 0.90;
-    if (surfaceType === 'grass') surfaceMult = -0.06;
-
-    const resF = Math.round(airF + (baseAdd * surfaceMult));
-    el.simResultTemp.textContent = `${resF}°F`;
-
-    if (resF >= 125) {
-      el.simRiskBadge.className = 'chamber-verdict danger';
-      el.simRiskBadge.textContent = 'CRITICAL PAW BURN HAZARD';
-      el.simTimeLimit.innerHTML = 'Epidermal pad blistering can occur in <strong>under 60 seconds</strong>. Reroute onto natural turf.';
-    } else if (resF >= 105) {
-      el.simRiskBadge.className = 'chamber-verdict caution';
-      el.simRiskBadge.textContent = 'ELEVATED CONDUCTIVE HEAT';
-      el.simTimeLimit.innerHTML = 'Substrate is uncomfortable for prolonged standing. Limit contact to 10–15 minutes.';
-    } else {
-      el.simRiskBadge.className = 'chamber-verdict safe';
-      el.simRiskBadge.textContent = 'NOMINAL SUBSTRATE TEMP';
-      el.simTimeLimit.innerHTML = 'Safe thermal equilibrium for canine paw pads across extended excursions.';
-    }
-  }
-
-  // ==========================================================================
-  // GEOCODING, GPS, UNITS & SUBJECT PROFILE CALIBRATION
+  // GEOCODING, GPS, UNITS & FAVORITES
   // ==========================================================================
   async function fetchGeocoding(query) {
     try {
@@ -1579,45 +1741,14 @@
       el.unitC.classList.add('active');
       el.unitF.classList.remove('active');
     }
-    el.profileBtnLabel.textContent = `SUBJECT: ${appState.pet.name.toUpperCase()}`;
+    const activeDog = getActiveDog();
+    el.profileBtnLabel.textContent = `PACK: ${activeDog.name.toUpperCase()} (${appState.dogs.length})`;
   }
 
   function setUnits(unit) {
     appState.units = unit;
     localStorage.setItem('pawcast_units', unit);
     updateUIPreferences();
-    if (appState.weather) renderAllWeatherData(appState.weather);
-  }
-
-  function openPetModal() {
-    const pet = appState.pet;
-    el.dogNameInput.value = pet.name;
-    el.dogSizeSelect.value = pet.size;
-    el.dogCoatSelect.value = pet.coat;
-    el.dogSnoutSelect.value = pet.snout;
-    if (el.dogAllergySelect) el.dogAllergySelect.value = pet.allergy || 'normal';
-    el.dogAgeSelect.value = pet.age;
-    el.petModal.classList.remove('hidden');
-  }
-
-  function closePetModal() {
-    el.petModal.classList.add('hidden');
-  }
-
-  function handleSavePetProfile(e) {
-    e.preventDefault();
-    playHardwareClick(860);
-    appState.pet = {
-      name: el.dogNameInput.value.trim() || 'Max',
-      size: el.dogSizeSelect.value,
-      coat: el.dogCoatSelect.value,
-      snout: el.dogSnoutSelect.value,
-      allergy: el.dogAllergySelect ? el.dogAllergySelect.value : 'normal',
-      age: el.dogAgeSelect.value
-    };
-    saveJSON('pawcast_pet', appState.pet);
-    updateUIPreferences();
-    closePetModal();
     if (appState.weather) renderAllWeatherData(appState.weather);
   }
 

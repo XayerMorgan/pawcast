@@ -1294,264 +1294,200 @@ body.is-night-mode .visual-backdrop {
   background: var(--signal-amber);
 }
 
-/* 7-Day Almanac Table */
-.almanac-table {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.day-row {
-  display: grid;
-  grid-template-columns: 78px 32px 1fr 64px 86px;
-  align-items: center;
-  gap: 10px;
-  background: var(--panel-recessed);
-  border: 1px solid var(--border-hairline);
-  border-radius: var(--radius-sm);
-  padding: 9px 14px;
-}
-
-.day-name {
-  font-family: var(--font-mono);
-  font-size: 0.78rem;
-  font-weight: 600;
-  color: var(--ink-primary);
-}
-
-.day-emoji {
-  font-size: 1.15rem;
-  cursor: help;
-}
-
-.temp-bar-container {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.day-low-text,
-.day-high-text {
-  font-family: var(--font-mono);
-  font-size: 0.74rem;
-  width: 28px;
-}
-
-.day-low-text {
-  color: var(--ink-muted);
-  text-align: right;
-}
-
-.day-high-text {
-  color: var(--ink-primary);
-  font-weight: 700;
-}
-
-.temp-bar-bg {
-  flex: 1;
-  height: 5px;
-  background: var(--panel-bg);
-  border-radius: 3px;
-  position: relative;
-  overflow: hidden;
-}
-
-.temp-bar-fill {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  background: linear-gradient(90deg, var(--signal-sky), var(--signal-amber));
-  border-radius: 3px;
-}
-
-.day-pop {
-  font-family: var(--font-mono);
-  font-size: 0.72rem;
-  color: var(--signal-sky);
-  text-align: right;
-}
-
-.day-paw-status {
-  font-family: var(--font-mono);
-  font-size: 0.64rem;
-  font-weight: 700;
-  padding: 3px 6px;
-  border-radius: var(--radius-xs);
-  text-align: center;
-}
-
-.day-paw-status.green {
-  background: rgba(34, 197, 94, 0.14);
-  color: var(--signal-sage);
-}
-.day-paw-status.yellow {
-  background: rgba(234, 179, 8, 0.14);
-  color: var(--signal-ochre);
-}
-.day-paw-status.red {
-  background: rgba(239, 68, 68, 0.16);
-  color: var(--signal-crimson);
+.six-col-sensors {
+  grid-template-columns: repeat(6, 1fr);
 }
 
 /* ==========================================================================
-   SUBSTRATE CONDUCTIVITY LAB (SIMULATOR)
+   TOP 7-DAY WEEKLY ALMANAC RIBBON (INSIDE HERO STATION PANEL)
    ========================================================================== */
-.lab-workbench {
-  display: grid;
-  grid-template-columns: 1.35fr 1fr;
-  gap: 22px;
-  margin-bottom: 18px;
-}
-
-.lab-brief {
-  font-size: 0.85rem;
-  color: var(--ink-secondary);
-  margin-bottom: 16px;
-}
-
-.control-row {
-  margin-bottom: 16px;
-}
-
-.control-label-line {
-  display: flex;
-  justify-content: space-between;
-  font-family: var(--font-mono);
-  font-size: 0.72rem;
-  font-weight: 600;
-  color: var(--ink-secondary);
-  margin-bottom: 6px;
-}
-
-.mono-readout {
-  color: var(--signal-amber);
-  font-weight: 700;
-}
-
-.tactile-slider {
-  width: 100%;
-  accent-color: var(--signal-amber);
-  cursor: pointer;
-}
-
-.slider-ticks {
-  display: flex;
-  justify-content: space-between;
-  font-family: var(--font-mono);
-  font-size: 0.62rem;
-  color: var(--ink-muted);
-  margin-top: 4px;
-}
-
-.control-split {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 14px;
-}
-
-.control-group label {
-  display: block;
-  font-family: var(--font-mono);
-  font-size: 0.68rem;
-  color: var(--ink-muted);
-  margin-bottom: 6px;
-}
-
-.hw-select {
-  width: 100%;
+.top-weekly-almanac-block {
   background: var(--panel-recessed);
-  border: 1px solid var(--border-strong);
-  color: var(--ink-primary);
-  font-family: var(--font-sans);
-  font-size: 0.82rem;
-  padding: 8px 10px;
-  border-radius: var(--radius-xs);
-  outline: none;
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+  margin-bottom: 14px;
 }
 
-.lab-readout-chamber {
-  background: var(--panel-recessed);
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius-md);
-  padding: 20px;
+.weekly-block-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.weekly-top-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 10px;
+}
+
+.week-day-card {
+  background: var(--panel-bg);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-sm);
+  padding: 11px 10px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  text-align: center;
+  gap: 5px;
+  transition: all 0.16s ease;
+  cursor: pointer;
 }
 
-.chamber-label {
-  font-family: var(--font-mono);
-  font-size: 0.66rem;
-  letter-spacing: 0.08em;
-  color: var(--ink-muted);
-  margin-bottom: 4px;
+.week-day-card:hover {
+  border-color: var(--signal-amber);
+  transform: translateY(-2px);
+  background: var(--panel-elevated);
 }
 
-.chamber-big-temp {
-  font-family: var(--font-serif);
-  font-size: 3.2rem;
-  font-weight: 700;
-  color: var(--ink-primary);
-  line-height: 1;
-  margin-bottom: 10px;
+.week-day-card.is-today {
+  border-color: rgba(229, 107, 37, 0.55);
+  background: linear-gradient(180deg, rgba(229, 107, 37, 0.09) 0%, var(--panel-bg) 100%);
 }
 
-.chamber-verdict {
+.wk-day-name {
   font-family: var(--font-mono);
   font-size: 0.72rem;
   font-weight: 700;
-  padding: 4px 12px;
+  color: var(--ink-primary);
+  letter-spacing: 0.06em;
+}
+
+.wk-day-emoji {
+  font-size: 1.45rem;
+  line-height: 1.1;
+  margin: 2px 0;
+}
+
+.wk-temp-pair {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-family: var(--font-mono);
+}
+
+.wk-high {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--ink-primary);
+}
+
+.wk-low {
+  font-size: 0.76rem;
+  color: var(--ink-muted);
+}
+
+.wk-pop {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  color: var(--signal-sky);
+}
+
+.wk-paw-pill {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  font-weight: 700;
+  padding: 2px 7px;
   border-radius: var(--radius-xs);
+  width: 100%;
+  text-align: center;
+  margin-top: 2px;
+}
+
+.wk-paw-pill.green {
+  background: rgba(34, 197, 94, 0.14);
+  color: var(--signal-sage);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.wk-paw-pill.yellow {
+  background: rgba(234, 179, 8, 0.14);
+  color: var(--signal-ochre);
+  border: 1px solid rgba(234, 179, 8, 0.35);
+}
+
+.wk-paw-pill.red {
+  background: rgba(239, 68, 68, 0.16);
+  color: var(--signal-crimson);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+}
+
+/* Multi-Dog Pack Switcher & Modal Roster */
+.pack-switcher-group {
+  border-right: 1px solid var(--border-hairline);
+  padding-right: 12px;
+}
+
+.dog-chip {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 600;
+  background: var(--panel-bg);
+  border: 1px solid var(--border-hairline);
+  color: var(--ink-secondary);
+  padding: 3px 10px;
+  border-radius: var(--radius-xs);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s ease;
+}
+
+.dog-chip:hover {
+  border-color: var(--ink-secondary);
+  color: var(--ink-primary);
+}
+
+.dog-chip.active {
+  background: rgba(34, 197, 94, 0.14);
+  border-color: var(--signal-sage);
+  color: #86EFAC;
+}
+
+.modal-pack-roster {
+  background: var(--panel-recessed);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  margin-bottom: 16px;
+}
+
+.roster-bar-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   margin-bottom: 8px;
 }
 
-.chamber-verdict.safe {
-  background: rgba(34, 197, 94, 0.16);
-  color: var(--signal-sage);
-  border: 1px solid rgba(34, 197, 94, 0.4);
-}
-.chamber-verdict.caution {
-  background: rgba(234, 179, 8, 0.16);
-  color: var(--signal-ochre);
-  border: 1px solid rgba(234, 179, 8, 0.4);
-}
-.chamber-verdict.danger {
-  background: rgba(239, 68, 68, 0.18);
-  color: var(--signal-crimson);
-  border: 1px solid rgba(239, 68, 68, 0.45);
-}
-
-.chamber-notes {
-  font-size: 0.78rem;
-  color: var(--ink-secondary);
-}
-
-.field-protocol-banner {
+.dialog-footer-split {
   display: flex;
+  justify-content: space-between;
   align-items: center;
-  gap: 16px;
-  background: rgba(229, 107, 37, 0.08);
-  border: 1px solid rgba(229, 107, 37, 0.3);
-  border-radius: var(--radius-sm);
-  padding: 12px 16px;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 20px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border-hairline);
 }
 
-.protocol-stamp {
-  font-family: var(--font-mono);
-  font-size: 0.68rem;
-  font-weight: 700;
-  color: #FDBA74;
-  background: rgba(229, 107, 37, 0.2);
-  padding: 4px 10px;
-  border-radius: var(--radius-xs);
-  white-space: nowrap;
+.config-backup-actions {
+  display: flex;
+  gap: 8px;
 }
 
-.field-protocol-banner p {
-  font-size: 0.82rem;
-  color: var(--ink-primary);
+.hw-btn.danger-outline {
+  background: rgba(239, 68, 68, 0.1);
+  color: #FCA5A5;
+  border-color: rgba(239, 68, 68, 0.4);
+}
+
+.hw-btn.danger-outline:hover {
+  background: rgba(239, 68, 68, 0.25);
+  color: #FFF;
 }
 
 /* ==========================================================================
@@ -1609,7 +1545,7 @@ body.is-night-mode .visual-backdrop {
   border-top: 3px solid var(--signal-amber);
   border-radius: var(--radius-md);
   width: 100%;
-  max-width: 520px;
+  max-width: 560px;
   padding: 22px 26px;
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.85);
 }
@@ -1619,7 +1555,7 @@ body.is-night-mode .visual-backdrop {
   justify-content: space-between;
   align-items: flex-start;
   padding-bottom: 12px;
-  margin-bottom: 16px;
+  margin-bottom: 14px;
   border-bottom: 1px solid var(--border-hairline);
 }
 
@@ -1629,7 +1565,7 @@ body.is-night-mode .visual-backdrop {
 }
 
 .calibration-form .form-field {
-  margin-bottom: 14px;
+  margin-bottom: 12px;
 }
 
 .calibration-form label {
@@ -1638,7 +1574,7 @@ body.is-night-mode .visual-backdrop {
   font-size: 0.68rem;
   font-weight: 600;
   color: var(--ink-secondary);
-  margin-bottom: 5px;
+  margin-bottom: 4px;
 }
 
 .calibration-form input,
@@ -1648,8 +1584,8 @@ body.is-night-mode .visual-backdrop {
   border: 1px solid var(--border-strong);
   color: var(--ink-primary);
   font-family: var(--font-sans);
-  font-size: 0.85rem;
-  padding: 8px 12px;
+  font-size: 0.84rem;
+  padding: 7px 11px;
   border-radius: var(--radius-xs);
 }
 
@@ -1657,14 +1593,13 @@ body.is-night-mode .visual-backdrop {
   display: flex;
   justify-content: flex-end;
   gap: 10px;
-  margin-top: 20px;
 }
 
 .hw-btn {
   font-family: var(--font-mono);
-  font-size: 0.74rem;
+  font-size: 0.72rem;
   font-weight: 700;
-  padding: 8px 16px;
+  padding: 7px 14px;
   border-radius: var(--radius-xs);
   cursor: pointer;
   border: 1px solid var(--border-strong);
@@ -1849,10 +1784,16 @@ body.is-night-mode .visual-backdrop {
 /* ==========================================================================
    RESPONSIVE BREAKPOINTS
    ========================================================================== */
-@media (max-width: 1040px) {
+@media (max-width: 1080px) {
   .hero-station-grid,
   .allergy-monitor-grid {
     grid-template-columns: 1fr;
+  }
+  .weekly-top-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  .six-col-sensors {
+    grid-template-columns: repeat(3, 1fr);
   }
   .instrument-deck {
     grid-template-columns: 1fr;
@@ -1871,22 +1812,12 @@ body.is-night-mode .visual-backdrop {
 }
 
 @media (max-width: 720px) {
-  .telemetry-gauges-col,
-  .lab-workbench,
-  .control-split {
+  .telemetry-gauges-col {
     grid-template-columns: 1fr;
   }
+  .weekly-top-grid,
+  .six-col-sensors,
   .aqi-telemetry-strip {
     grid-template-columns: repeat(2, 1fr);
-  }
-  .day-row {
-    grid-template-columns: 68px 28px 1fr 56px;
-  }
-  .day-paw-status {
-    display: none;
-  }
-  .field-protocol-banner {
-    flex-direction: column;
-    align-items: flex-start;
   }
 }

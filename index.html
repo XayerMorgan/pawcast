@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>PAWCAST // Meteorological & Canine Field Station</title>
-  <meta name="description" content="Precision Meteorological & Canine Ground-Thermodynamics Instrument. Live Doppler Radar, Solar Irradiance Surface Telemetry, and Acoustic Field Audio." />
+  <meta name="description" content="Precision Meteorological & Multi-Dog Ground-Thermodynamics Instrument. Weekly Almanac, Live Doppler Radar, Aeroallergen Bio-Monitor, and Acoustic Field Audio." />
   <link rel="icon" href="pawcast_logo.png" type="image/png" />
   
   <!-- Editorial & Technical Typography: Fraunces (Serif), Plus Jakarta Sans (Humanist), JetBrains Mono (Telemetry) -->
@@ -55,7 +55,7 @@
         <div id="search-results" class="search-results-dropdown hidden"></div>
       </div>
 
-      <!-- Hardware Switches: Acoustic Monitor, Units, Canine Subject Profile -->
+      <!-- Hardware Switches: Acoustic Monitor, Units, Canine Pack Roster Manager -->
       <div class="hardware-switches">
         <!-- Acoustic Weather Soundscape Toggle -->
         <button id="sound-toggle-btn" class="hw-pill-switch sound-switch" title="Toggle Live Ambient Weather Soundscape & Tactile Audio">
@@ -71,19 +71,24 @@
           <button id="unit-c" class="rocker-btn" data-unit="metric">°C / KMH</button>
         </div>
 
-        <!-- Canine Subject Calibration -->
-        <button id="pet-profile-btn" class="hw-pill-switch subject-switch" title="Calibrate Canine Subject Profile">
-          <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2.2" fill="none">
-            <circle cx="12" cy="12" r="3"></circle>
-            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-          </svg>
-          <span id="profile-btn-label">SUBJECT: MAX</span>
+        <!-- Canine Pack Roster & Calibration Button -->
+        <button id="pet-profile-btn" class="hw-pill-switch subject-switch" title="Manage Canine Pack Roster & Calibrate Profiles">
+          <span class="paw-glyph">🐾</span>
+          <span id="profile-btn-label">PACK: MAX</span>
         </button>
       </div>
     </header>
 
-    <!-- SUB-HEADER: SAVED WAYPOINTS & TELEMETRY FEED CONTROLS -->
+    <!-- SUB-HEADER: MULTI-DOG PACK ROSTER + SAVED WAYPOINTS + TELEMETRY FEED CONTROLS -->
     <div class="sub-telemetry-bar">
+      <!-- Multi-Dog Pack Switcher Strip -->
+      <div class="waypoints-group pack-switcher-group">
+        <span class="mono-label">ACTIVE DOG //</span>
+        <div id="dog-roster-chips" class="chips-container"></div>
+        <button id="add-dog-quick-btn" class="waypoint-add-btn" title="Add another dog to your pack">+ ADD DOG</button>
+      </div>
+
+      <!-- Saved Location Waypoints -->
       <div class="waypoints-group">
         <span class="mono-label">WAYPOINTS //</span>
         <div id="favorite-chips" class="chips-container"></div>
@@ -134,7 +139,7 @@
     <!-- MAIN INSTRUMENT DECK -->
     <main class="instrument-deck">
 
-      <!-- ROW 1: FIELD STATION HERO + THERMODYNAMIC PAW & RESPIRATORY GAUGES -->
+      <!-- ROW 1: FIELD STATION HERO + THERMODYNAMIC PAW & RESPIRATORY GAUGES + TOP 7-DAY WEEKLY RIBBON -->
       <section class="panel hero-station-panel span-full">
         <div class="hero-station-grid">
           
@@ -213,7 +218,7 @@
             <!-- Gauge 2: Canine Respiratory & Heatstroke Load -->
             <div class="instrument-gauge" id="box-heat-safety">
               <div class="gauge-top-bar">
-                <span class="gauge-index">GAUGE 02 // CANINE RESPIRATORY & THERMAL LOAD</span>
+                <span class="gauge-index">GAUGE 02 // CANINE RESPIRATORY &amp; THERMAL LOAD</span>
                 <span class="status-pill" id="heat-status-pill">LOW LOAD</span>
               </div>
 
@@ -229,8 +234,8 @@
                   <strong id="humidity-val" class="resp-val">45%</strong>
                 </div>
                 <div class="resp-cell" title="Active canine subject morphological profile">
-                  <span class="resp-label">SUBJECT COAT</span>
-                  <strong id="subject-coat-val" class="resp-val">DOUBLE</strong>
+                  <span class="resp-label">ACTIVE SUBJECT</span>
+                  <strong id="subject-coat-val" class="resp-val">MAX</strong>
                 </div>
               </div>
 
@@ -240,11 +245,23 @@
           </div>
         </div>
 
-        <!-- Bottom Strip: Optimal Excursion Windows -->
+        <!-- TOP 7-DAY WEEKLY FORECAST & CANINE OUTLOOK RIBBON (AT THE TOP) -->
+        <div class="top-weekly-almanac-block">
+          <div class="weekly-block-header">
+            <div class="dispatch-label">
+              <span class="pulse-dot"></span>
+              <span class="mono-title">7-DAY WEEKLY ALMANAC &amp; CANINE SAFETY OUTLOOK //</span>
+            </div>
+            <span class="mono-tag" id="weekly-pack-tag">CALIBRATED FOR: MAX</span>
+          </div>
+          <div class="weekly-top-grid" id="daily-list"></div>
+        </div>
+
+        <!-- Optimal Excursion Windows Strip -->
         <div class="excursion-dispatch-strip">
           <div class="dispatch-label">
-            <span class="pulse-dot"></span>
-            <span class="mono-title">OPTIMAL EXCURSION WINDOWS (24H) //</span>
+            <span class="pulse-dot amber"></span>
+            <span class="mono-title">TODAY'S OPTIMAL EXCURSION WINDOWS //</span>
           </div>
           <div id="walk-windows-grid" class="windows-ribbon"></div>
         </div>
@@ -255,14 +272,14 @@
         <div class="panel-header">
           <div>
             <span class="panel-code">INSTRUMENT 03 // 24-HOUR TELEMETRY HORIZON</span>
-            <h2 class="panel-title">Temperature Curve, Precipitation & Ground Safety Matrix</h2>
+            <h2 class="panel-title">Hourly Temperature Curve, Precipitation &amp; Ground Safety Matrix</h2>
           </div>
           <div class="horizon-legend">
             <span class="leg-chip" title="Ambient air temperature curve"><i class="swatch temp"></i> Air Temp</span>
             <span class="leg-chip" title="Precipitation probability"><i class="swatch rain"></i> Precip %</span>
-            <span class="leg-chip" title="Safe ground & respiratory conditions"><i class="swatch safe"></i> Nominal (Green)</span>
+            <span class="leg-chip" title="Safe ground &amp; respiratory conditions"><i class="swatch safe"></i> Nominal (Green)</span>
             <span class="leg-chip" title="Elevated asphalt heat or cold caution"><i class="swatch warn"></i> Caution (Amber)</span>
-            <span class="leg-chip" title="Critical paw burn (>125°F) or heatstroke hazard"><i class="swatch danger"></i> Hazard (Crimson)</span>
+            <span class="leg-chip" title="Critical paw burn (&gt;125°F) or heatstroke hazard"><i class="swatch danger"></i> Hazard (Crimson)</span>
           </div>
         </div>
 
@@ -280,7 +297,7 @@
         <div class="panel-header">
           <div>
             <span class="panel-code">INSTRUMENT 04 // PRECIPITATION DOPPLER SCOPE</span>
-            <h2 class="panel-title">Live Weather Radar & Storm Vector Tracking</h2>
+            <h2 class="panel-title">Live Weather Radar &amp; Storm Vector Tracking</h2>
           </div>
           <div class="radar-scope-controls">
             <button id="radar-play-btn" class="hw-pill-switch radar-play-switch">
@@ -313,7 +330,7 @@
         </div>
       </section>
 
-      <!-- ROW 4: AEROALLERGEN, POLLEN & AIR QUALITY BIO-MONITOR (NEW INSTRUMENT 05) -->
+      <!-- ROW 4: AEROALLERGEN, POLLEN & AIR QUALITY BIO-MONITOR (INSTRUMENT 05) -->
       <section class="panel allergy-panel span-full">
         <div class="panel-header">
           <div>
@@ -409,16 +426,17 @@
         </div>
       </section>
 
-      <!-- ROW 5: ATMOSPHERIC SENSORS (LEFT) + 7-DAY ALMANAC (RIGHT) -->
-      <section class="panel sensors-panel">
+      <!-- ROW 5: ATMOSPHERIC SENSORS (FULL WIDTH) -->
+      <section class="panel sensors-panel span-full">
         <div class="panel-header">
           <div>
             <span class="panel-code">INSTRUMENT 06 // ATMOSPHERIC SENSORS</span>
-            <h2 class="panel-title">Local Station Telemetry</h2>
+            <h2 class="panel-title">Local Station Telemetry &amp; Field Protocol</h2>
           </div>
+          <span class="mono-tag">✋ 7-SECOND FIELD RULE: TEST PAVEMENT WITH BARE HAND BEFORE WALKING</span>
         </div>
 
-        <div class="sensor-dials-grid">
+        <div class="sensor-dials-grid six-col-sensors">
           <div class="sensor-cell" title="Probability of measurable precipitation in current hour">
             <div class="sensor-head">
               <span class="sensor-id">PRECIP PROB</span>
@@ -428,7 +446,7 @@
             <div class="sensor-mini-bar"><div id="bar-pop" class="sensor-fill" style="width: 0%"></div></div>
           </div>
 
-          <div class="sensor-cell" title="10-meter anemometer wind speed & vector">
+          <div class="sensor-cell" title="10-meter anemometer wind speed &amp; vector">
             <div class="sensor-head">
               <span class="sensor-id">ANEMOMETER</span>
               <span class="sensor-unit">VEC</span>
@@ -475,110 +493,46 @@
         </div>
       </section>
 
-      <!-- 7-DAY OUTLOOK ALMANAC -->
-      <section class="panel almanac-panel">
-        <div class="panel-header">
-          <div>
-            <span class="panel-code">INSTRUMENT 07 // 7-DAY ALMANAC</span>
-            <h2 class="panel-title">Weekly Thermal Range &amp; Canine Suitability</h2>
-          </div>
-        </div>
-
-        <div class="almanac-table" id="daily-list"></div>
-      </section>
-
-      <!-- ROW 6: THERMODYNAMIC SUBSTRATE SIMULATOR & 7-SECOND FIELD PROTOCOL -->
-      <section class="panel simulator-panel span-full">
-        <div class="panel-header">
-          <div>
-            <span class="panel-code">INSTRUMENT 08 // SUBSTRATE CONDUCTIVITY LAB</span>
-            <h2 class="panel-title">Interactive Ground Surface Heat Simulator</h2>
-          </div>
-          <span class="mono-tag">SOLAR ABSORPTION MODEL v2.4</span>
-        </div>
-
-        <div class="lab-workbench">
-          <div class="lab-controls">
-            <p class="lab-brief">
-              Low-albedo substrates like blacktop asphalt absorb shortwave solar radiation and can exceed ambient air temperatures by <strong>+40°F to +55°F</strong>. Adjust parameters below to model conductive paw pad thermal transfer:
-            </p>
-            
-            <div class="control-row">
-              <div class="control-label-line">
-                <label for="sim-air-temp">AMBIENT AIR TEMPERATURE</label>
-                <span id="sim-air-val" class="mono-readout">87°F</span>
-              </div>
-              <input type="range" id="sim-air-temp" class="tactile-slider" min="40" max="115" value="87" />
-              <div class="slider-ticks">
-                <span>40°F</span><span>65°F</span><span>85°F</span><span>100°F</span><span>115°F</span>
-              </div>
-            </div>
-
-            <div class="control-split">
-              <div class="control-group">
-                <label for="sim-sun-condition">SOLAR IRRADIANCE / SKY COVER</label>
-                <select id="sim-sun-condition" class="hw-select">
-                  <option value="full-sun">Direct Zenith Sun (Peak Shortwave Load)</option>
-                  <option value="partial-shade">Scattered Cumulus / Filtered Shade</option>
-                  <option value="full-shade">Full Canopy Shade / Nighttime Radiative Cool</option>
-                </select>
-              </div>
-
-              <div class="control-group">
-                <label for="sim-surface">GROUND SUBSTRATE MATERIAL</label>
-                <select id="sim-surface" class="hw-select">
-                  <option value="asphalt">Blacktop Asphalt (0.05 Albedo — Peak Retention)</option>
-                  <option value="concrete">Cured Concrete Sidewalk (0.30 Albedo)</option>
-                  <option value="sand">Dry Quartz Beach Sand (High Surface Conductance)</option>
-                  <option value="grass">Living Turf / Natural Grass (Transpirational Cooling)</option>
-                </select>
-              </div>
-            </div>
-          </div>
-
-          <div class="lab-readout-chamber" id="calc-result-box">
-            <span class="chamber-label">COMPUTED SUBSTRATE TEMPERATURE</span>
-            <span id="sim-result-temp" class="chamber-big-temp">128°F</span>
-            <div id="sim-risk-badge" class="chamber-verdict danger">CRITICAL PAW BURN HAZARD</div>
-            <p id="sim-time-limit" class="chamber-notes">Epidermal thermal damage can occur in under 60 seconds of continuous contact.</p>
-          </div>
-        </div>
-
-        <!-- Field Manual Protocol Note -->
-        <div class="field-protocol-banner">
-          <div class="protocol-stamp">FIELD PROTOCOL // 7-SECOND RULE</div>
-          <p>Place the dorsum (back) of your bare hand flat against the pavement for <strong>7 full seconds</strong>. If conductive heat forces withdrawal, the surface exceeds safe canine keratin pad thresholds.</p>
-        </div>
-      </section>
-
     </main>
 
     <!-- STATION FOOTER -->
     <footer class="station-footer">
       <div class="footer-left">
-        <span class="mono-code">PAWCAST FIELD STATION // REV 4.5</span>
+        <span class="mono-code">PAWCAST FIELD STATION // REV 5.0</span>
         <span>Telemetry aggregated via Open-Meteo WMO, CAMS Air Quality, NOAA National Weather Service &amp; RainViewer Doppler Network.</span>
       </div>
       <div class="footer-right">
-        <span class="privacy-pill">LOCAL-FIRST ARCHITECTURE // ZERO EXTERNAL TRACKING</span>
+        <span class="privacy-pill">LOCAL-FIRST MULTI-DOG PACK PERSISTENCE // ZERO EXTERNAL TRACKING</span>
       </div>
     </footer>
 
   </div>
 
-  <!-- CANINE SUBJECT CALIBRATION MODAL -->
+  <!-- MULTI-DOG PACK ROSTER & CALIBRATION MODAL -->
   <div id="pet-modal" class="modal-backdrop hidden">
     <div class="calibration-dialog">
       <div class="dialog-header">
         <div>
-          <span class="panel-code">CALIBRATION MODULE</span>
-          <h3>Canine Subject Physiological Profile</h3>
+          <span class="panel-code">MULTI-DOG PACK CALIBRATION MODULE</span>
+          <h3>Manage Canine Pack &amp; Physiological Profiles</h3>
         </div>
         <button id="close-modal-btn" class="hw-icon-btn">&times;</button>
       </div>
+
+      <!-- Saved Dogs Roster Strip inside Modal -->
+      <div class="modal-pack-roster">
+        <div class="roster-bar-top">
+          <span class="mono-label">SAVED PACK ROSTER (CLICK TO EDIT OR SWITCH) //</span>
+          <button type="button" id="new-dog-modal-btn" class="waypoint-add-btn">+ NEW DOG PROFILE</button>
+        </div>
+        <div id="modal-dog-list" class="chips-container"></div>
+      </div>
+
       <form id="pet-profile-form" class="calibration-form">
+        <input type="hidden" id="dog-id" value="" />
+
         <div class="form-field">
-          <label for="dog-name">SUBJECT IDENTIFIER (NAME)</label>
+          <label for="dog-name">SUBJECT IDENTIFIER (DOG NAME)</label>
           <input type="text" id="dog-name" value="Max" placeholder="e.g. Max, Bella, Cooper" required />
         </div>
 
@@ -626,9 +580,16 @@
           </select>
         </div>
 
-        <div class="dialog-actions">
-          <button type="button" id="cancel-modal-btn" class="hw-btn secondary">CANCEL</button>
-          <button type="submit" class="hw-btn primary">COMMIT CALIBRATION</button>
+        <!-- Export / Import Backup & Save Actions -->
+        <div class="dialog-footer-split">
+          <div class="config-backup-actions">
+            <button type="button" id="delete-dog-btn" class="hw-btn danger-outline" title="Remove this dog from your pack">DELETE DOG</button>
+            <button type="button" id="export-config-btn" class="hw-btn secondary" title="Download all dogs, locations &amp; settings as JSON backup">EXPORT CONFIG</button>
+          </div>
+          <div class="dialog-actions">
+            <button type="button" id="cancel-modal-btn" class="hw-btn secondary">CLOSE</button>
+            <button type="submit" class="hw-btn primary">SAVE DOG PROFILE</button>
+          </div>
         </div>
       </form>
     </div>
