@@ -184,6 +184,13 @@
                   <span class="acoustic-hint" id="acoustic-status-text">Live Weather</span>
                 </div>
               </div>
+
+              <!-- Real-Time Allergy & Air Quality Readout inside the Hero Weather Box -->
+              <div class="hero-realtime-allergy-bar" id="hero-realtime-allergy-bar" role="button" tabindex="0" aria-label="View detailed pollen, allergy, and air quality report" title="Click to view full Pollen, Allergy &amp; Air Quality breakdown">
+                <span id="hero-allergy-pill" class="hero-allergy-pill green">🌿 Allergy: Low (--/10)</span>
+                <span id="hero-dominant-pollen" class="hero-allergy-meta">Top: Checking...</span>
+                <span id="hero-aqi-pill" class="hero-aqi-chip">🌬️ AQI --</span>
+              </div>
             </div>
           </div>
 
@@ -213,16 +220,16 @@
                   <strong id="hero-wind-val" class="resp-val">-- mph</strong>
                 </div>
                 <div class="resp-cell">
+                  <span class="resp-label">Allergy &amp; Pollen</span>
+                  <strong id="hero-allergy-summary-val" class="resp-val">Low (--/10)</strong>
+                </div>
+                <div class="resp-cell">
+                  <span class="resp-label">Air Quality (AQI)</span>
+                  <strong id="hero-aqi-summary-val" class="resp-val">AQI -- (Good)</strong>
+                </div>
+                <div class="resp-cell">
                   <span class="resp-label">Sunrise / Sunset</span>
                   <strong id="hero-sun-val" class="resp-val">-- / --</strong>
-                </div>
-                <div class="resp-cell">
-                  <span class="resp-label">Visibility</span>
-                  <strong id="hero-vis-val" class="resp-val">10.0 mi</strong>
-                </div>
-                <div class="resp-cell">
-                  <span class="resp-label">Moon Phase</span>
-                  <strong id="hero-moon-val" class="resp-val">🌔 Gibbous</strong>
                 </div>
               </div>
 
@@ -275,14 +282,14 @@
           </div>
         </div>
 
-        <!-- TOP 7-DAY WEATHER FORECAST -->
+        <!-- TOP 7-DAY WEATHER & ALLERGY FORECAST -->
         <div class="top-weekly-almanac-block">
           <div class="weekly-block-header">
             <div class="dispatch-label">
               <span class="pulse-dot" aria-hidden="true"></span>
-              <span class="mono-title">7-Day Weather Forecast</span>
+              <span class="mono-title">7-Day Weather, Allergy &amp; Walk Forecast</span>
             </div>
-            <span class="mono-tag" id="weekly-pack-tag">🐾 Walk tags for: Max</span>
+            <span class="mono-tag" id="weekly-pack-tag">🌿 Daily Pollen &amp; 🐾 Walk tags for: Max</span>
           </div>
           <div class="weekly-top-grid" id="daily-list"></div>
         </div>
@@ -361,7 +368,7 @@
       </section>
 
       <!-- ROW 4: AIR QUALITY, POLLEN & ALLERGY FORECAST -->
-      <section class="panel allergy-panel span-full">
+      <section id="allergy-monitor-panel" class="panel allergy-panel span-full">
         <div class="panel-header">
           <div>
             <span class="panel-code">AIR QUALITY &amp; ALLERGENS</span>

@@ -797,6 +797,68 @@ body.is-night-mode .visual-backdrop {
   margin-top: 2px;
 }
 
+/* Real-Time Allergy & AQI Strip inside Hero Weather Box */
+.hero-realtime-allergy-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  background: rgba(13, 15, 17, 0.78);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  margin-top: -12px;
+  cursor: pointer;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.hero-realtime-allergy-bar:hover {
+  border-color: var(--signal-amber);
+  background: rgba(18, 21, 24, 0.9);
+}
+
+.hero-allergy-pill {
+  font-family: var(--font-mono);
+  font-size: 0.76rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: var(--radius-xs);
+  background: rgba(34, 197, 94, 0.16);
+  color: #86EFAC;
+  border: 1px solid rgba(34, 197, 94, 0.38);
+}
+
+.hero-allergy-pill.yellow {
+  background: rgba(234, 179, 8, 0.18);
+  color: #FDE047;
+  border-color: rgba(234, 179, 8, 0.42);
+}
+
+.hero-allergy-pill.red {
+  background: rgba(239, 68, 68, 0.2);
+  color: #FCA5A5;
+  border-color: rgba(239, 68, 68, 0.48);
+}
+
+.hero-allergy-meta {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--ink-secondary);
+}
+
+.hero-aqi-chip {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--signal-sky);
+  background: rgba(56, 189, 248, 0.12);
+  border: 1px solid rgba(56, 189, 248, 0.32);
+  padding: 2px 8px;
+  border-radius: var(--radius-xs);
+}
+
 /* Right Column: Dual Precision Gauges */
 .telemetry-gauges-col {
   display: grid;
@@ -1530,6 +1592,7 @@ body.is-night-mode .visual-backdrop {
   color: var(--ink-muted);
 }
 
+.wk-allergy-pill,
 .wk-paw-pill {
   font-family: var(--font-mono);
   font-size: 0.75rem;
@@ -1540,20 +1603,26 @@ body.is-night-mode .visual-backdrop {
   text-align: center;
   margin-top: 2px;
   opacity: 0.95;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
+.wk-allergy-pill.green,
 .wk-paw-pill.green {
   background: rgba(34, 197, 94, 0.11);
   color: var(--signal-sage);
   border: 1px solid rgba(34, 197, 94, 0.25);
 }
 
+.wk-allergy-pill.yellow,
 .wk-paw-pill.yellow {
   background: rgba(234, 179, 8, 0.12);
   color: var(--signal-ochre);
   border: 1px solid rgba(234, 179, 8, 0.3);
 }
 
+.wk-allergy-pill.red,
 .wk-paw-pill.red {
   background: rgba(239, 68, 68, 0.14);
   color: var(--signal-crimson);

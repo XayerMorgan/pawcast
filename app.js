@@ -158,6 +158,10 @@
     tempLow: document.getElementById('temp-low'),
     weatherConditionText: document.getElementById('weather-condition-text'),
     weatherMainEmoji: document.getElementById('weather-main-emoji'),
+    heroRealtimeAllergyBar: document.getElementById('hero-realtime-allergy-bar'),
+    heroAllergyPill: document.getElementById('hero-allergy-pill'),
+    heroDominantPollen: document.getElementById('hero-dominant-pollen'),
+    heroAqiPill: document.getElementById('hero-aqi-pill'),
 
     // Dual Precision Gauges
     boxPawSafety: document.getElementById('box-paw-safety'),
@@ -174,6 +178,8 @@
     feelsLikeVal: document.getElementById('feels-like-val'),
     humidityVal: document.getElementById('humidity-val'),
     heroWindVal: document.getElementById('hero-wind-val'),
+    heroAllergySummaryVal: document.getElementById('hero-allergy-summary-val'),
+    heroAqiSummaryVal: document.getElementById('hero-aqi-summary-val'),
     heroSunVal: document.getElementById('hero-sun-val'),
     heroVisVal: document.getElementById('hero-vis-val'),
     heroMoonVal: document.getElementById('hero-moon-val'),
@@ -366,6 +372,21 @@
       el.closeAllergenHelpBtn.addEventListener('click', () => {
         playHardwareClick(560);
         toggleAllergenHelpDrawer(false);
+      });
+    }
+
+    if (el.heroRealtimeAllergyBar) {
+      const jumpToAllergySection = () => {
+        playHardwareClick(680);
+        const panel = document.getElementById('allergy-monitor-panel');
+        if (panel) panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      };
+      el.heroRealtimeAllergyBar.addEventListener('click', jumpToAllergySection);
+      el.heroRealtimeAllergyBar.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          jumpToAllergySection();
+        }
       });
     }
 
@@ -1205,27 +1226,55 @@
 
   async function fetchAirQualityData(lat, lon) {
     try {
-      const url = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lon}&current=us_aqi,pm10,pm2_5,ozone,dust,grass_pollen,birch_pollen,ragweed_pollen,alder_pollen,mugwort_pollen,olive_pollen&timezone=auto`;
+      const url = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lon}&current=us_aqi,pm10,pm2_5,ozone,dust,grass_pollen,birch_pollen,ragweed_pollen,alder_pollen,mugwort_pollen,olive_pollen&hourly=us_aqi,grass_pollen,birch_pollen,ragweed_pollen,alder_pollen,mugwort_pollen,olive_pollen&forecast_days=7&timezone=auto`;
       const res = await fetch(url);
       if (!res.ok) return null;
       const raw = await res.json();
-      return raw.current || null;
+      const current = raw.current || {};
+      const dailyByDate = {};
+      if (raw.hourly && Array.isArray(raw.hourly.time)) {
+        raw.hourly.time.forEach((isoStr, idx) => {
+          const dayKey = isoStr.slice(0, 10);
+          if (!dailyByDate[dayKey]) {
+            dailyByDate[dayKey] = {
+              us_aqi: null,
+              grass_pollen: null,
+              birch_pollen: null,
+              ragweed_pollen: null,
+              alder_pollen: null,
+              mugwort_pollen: null,
+              olive_pollen: null
+            };
+          }
+          const bucket = dailyByDate[dayKey];
+          ['us_aqi', 'grass_pollen', 'birch_pollen', 'ragweed_pollen', 'alder_pollen', 'mugwort_pollen', 'olive_pollen'].forEach(k => {
+            const val = raw.hourly[k] ? raw.hourly[k][idx] : null;
+            if (typeof val === 'number' && !isNaN(val)) {
+              bucket[k] = bucket[k] === null ? val : Math.max(bucket[k], val);
+            }
+          });
+        });
+      }
+      current._dailyByDate = dailyByDate;
+      return current;
     } catch (e) {
       console.warn('Air quality fetch warning:', e);
       return null;
     }
   }
 
-  function computeAeroallergenProfile(curWeather, aqData, lat) {
+  function computeAeroallergenProfile(curWeather, aqData, lat, targetDate = new Date()) {
     const tempF = (curWeather.tempC * 9 / 5) + 32;
     const rh = curWeather.humidity || 50;
     const windMph = (curWeather.windKmh || 8) * 0.621371;
-    const isRaining = curWeather.weatherCode >= 51 && curWeather.weatherCode <= 82;
-    const month = new Date().getMonth();
+    const pop = typeof curWeather.pop === 'number' ? curWeather.pop : 0;
+    const isRaining = (curWeather.weatherCode >= 51 && curWeather.weatherCode <= 82) || pop >= 65;
+    const dateObj = targetDate instanceof Date ? targetDate : new Date(targetDate);
+    const month = dateObj.getMonth();
     const isNorthern = lat >= 0;
     const adjMonth = isNorthern ? month : (month + 6) % 12;
 
-    const rainWashout = isRaining ? 0.35 : 1.0;
+    const rainWashout = isRaining ? 0.35 : (pop >= 40 ? 0.72 : 1.0);
     const windDispersion = Math.min(1.35, 0.8 + (windMph / 25));
 
     let grassScore = 1.2;
@@ -1241,7 +1290,7 @@
     }
 
     let treeScore = 1.0;
-    const rawTree = aqData && (aqData.birch_pollen !== null || aqData.alder_pollen !== null)
+    const rawTree = aqData && (aqData.birch_pollen !== null && aqData.birch_pollen !== undefined || aqData.alder_pollen !== null && aqData.alder_pollen !== undefined)
       ? (aqData.birch_pollen || 0) + (aqData.alder_pollen || 0) + (aqData.olive_pollen || 0)
       : null;
     if (rawTree !== null) {
@@ -1256,7 +1305,7 @@
     }
 
     let weedScore = 1.5;
-    const rawWeed = aqData && (aqData.ragweed_pollen !== null || aqData.mugwort_pollen !== null)
+    const rawWeed = aqData && (aqData.ragweed_pollen !== null && aqData.ragweed_pollen !== undefined || aqData.mugwort_pollen !== null && aqData.mugwort_pollen !== undefined)
       ? (aqData.ragweed_pollen || 0) + (aqData.mugwort_pollen || 0)
       : null;
     if (rawWeed !== null) {
@@ -1272,7 +1321,7 @@
     let moldScore = 1.8;
     const humidityFactor = rh >= 80 ? 2.1 : rh >= 65 ? 1.45 : rh <= 35 ? 0.5 : 0.9;
     const autumnLeafFactor = (adjMonth >= 8 && adjMonth <= 10) ? 1.4 : 1.0;
-    const rainBoost = isRaining ? 1.35 : 1.0;
+    const rainBoost = isRaining ? 1.35 : (pop >= 45 ? 1.15 : 1.0);
     const freezeFactor = tempF < 32 ? 0.15 : 1.0;
     moldScore = Math.min(10, 2.2 * humidityFactor * autumnLeafFactor * rainBoost * freezeFactor);
 
@@ -1280,6 +1329,25 @@
     treeScore = Math.max(0.2, Math.min(10, Number(treeScore.toFixed(1))));
     weedScore = Math.max(0.2, Math.min(10, Number(weedScore.toFixed(1))));
     moldScore = Math.max(0.2, Math.min(10, Number(moldScore.toFixed(1))));
+
+    const channels = [
+      { name: 'Grass', score: grassScore },
+      { name: 'Tree', score: treeScore },
+      { name: 'Weed', score: weedScore },
+      { name: 'Mold', score: moldScore }
+    ];
+    channels.sort((a, b) => b.score - a.score);
+    const dominant = channels[0];
+    const maxScore = dominant.score;
+    let tier = 'Low';
+    let statusClass = 'green';
+    if (maxScore >= 6.5) {
+      tier = 'High';
+      statusClass = 'red';
+    } else if (maxScore >= 3.5) {
+      tier = 'Mod';
+      statusClass = 'yellow';
+    }
 
     const usAqi = (aqData && typeof aqData.us_aqi === 'number') ? Math.round(aqData.us_aqi) : 34;
     const pm25 = (aqData && typeof aqData.pm2_5 === 'number') ? aqData.pm2_5.toFixed(1) : '7.2';
@@ -1291,6 +1359,10 @@
       treeScore,
       weedScore,
       moldScore,
+      maxScore,
+      dominantName: dominant.name,
+      tier,
+      statusClass,
       usAqi,
       pm25,
       pm10,
@@ -1342,6 +1414,7 @@
 
     let overallStatus = 'green';
     let badgeLabel = 'ALLERGY RISK: LOW';
+    let shortRiskLabel = 'Low';
     let verdictTitle = 'CLEAN AIR & LOW SEASONAL POLLEN';
     let verdictDesc = `Air quality is ${aqiCat.toLowerCase()} (AQI ${profile.usAqi}) with minimal airborne pollen. Ideal conditions for outdoor exercise, yard work, and walking ${pet.name}.`;
     let sinusLabel = '🌬️ Sinus / Hay Fever: Low';
@@ -1351,6 +1424,7 @@
     if (effectivePollenRisk >= 6.8 || effectiveAqiRisk >= 115) {
       overallStatus = 'red';
       badgeLabel = 'ALLERGY RISK: HIGH';
+      shortRiskLabel = 'High';
       verdictTitle = 'ELEVATED POLLEN & PARTICULATE ADVISORY';
       verdictDesc = `High seasonal aeroallergen or particulate load detected. Allergy sufferers may experience sinus congestion; limit prolonged afternoon cardio and wipe ${pet.name}'s paws/coat after walks.`;
       sinusLabel = '🌬️ Sinus / Hay Fever: High';
@@ -1359,11 +1433,32 @@
     } else if (effectivePollenRisk >= 3.8 || effectiveAqiRisk >= 65) {
       overallStatus = 'yellow';
       badgeLabel = 'ALLERGY RISK: MODERATE';
+      shortRiskLabel = 'Moderate';
       verdictTitle = 'MODERATE SEASONAL POLLEN & SPORE ACTIVITY';
       verdictDesc = `Moderate airborne pollen and mold spores present. Sensitive individuals may notice mild hay fever symptoms on breezy afternoons. Quick paw rinse advised for ${pet.name} after grassy walks.`;
       sinusLabel = '🌬️ Sinus / Hay Fever: Moderate';
       exerciseLabel = '🏃 Outdoor Exercise: Good';
       canineLabel = `🐾 ${pet.name}: Rinse Paws if Itchy`;
+    }
+
+    // Update Real-Time Weather Box Allergy Bar & Today's Weather Summary
+    if (el.heroAllergyPill) {
+      el.heroAllergyPill.textContent = `🌿 Allergy: ${shortRiskLabel} (${profile.maxScore.toFixed(1)}/10)`;
+      el.heroAllergyPill.className = `hero-allergy-pill ${overallStatus === 'green' ? '' : overallStatus}`.trim();
+    }
+    if (el.heroDominantPollen) {
+      el.heroDominantPollen.textContent = `Top: ${profile.dominantName} (${profile.maxScore.toFixed(1)})`;
+    }
+    if (el.heroAqiPill) {
+      const aqiShort = profile.usAqi <= 50 ? 'Good' : profile.usAqi <= 100 ? 'Mod' : 'High';
+      el.heroAqiPill.textContent = `AQI ${profile.usAqi} · ${aqiShort}`;
+    }
+    if (el.heroAllergySummaryVal) {
+      el.heroAllergySummaryVal.textContent = `${shortRiskLabel} · ${profile.dominantName} (${profile.maxScore.toFixed(1)}/10)`;
+    }
+    if (el.heroAqiSummaryVal) {
+      const aqiFriendly = profile.usAqi <= 50 ? 'Good' : profile.usAqi <= 100 ? 'Moderate' : 'Elevated';
+      el.heroAqiSummaryVal.textContent = `US AQI ${profile.usAqi} (${aqiFriendly})`;
     }
 
     el.allergyOverallBadge.textContent = badgeLabel;
@@ -1826,9 +1921,39 @@
         statusText = '🐾 Wet Walk';
       }
 
+      // Compute daily allergy & pollen forecast for Today and future days
+      const yyyy = d.date.getFullYear();
+      const mm = String(d.date.getMonth() + 1).padStart(2, '0');
+      const dd = String(d.date.getDate()).padStart(2, '0');
+      const dayIsoKey = `${yyyy}-${mm}-${dd}`;
+      const dailyAqBucket = (appState.airQuality && appState.airQuality._dailyByDate && appState.airQuality._dailyByDate[dayIsoKey])
+        ? appState.airQuality._dailyByDate[dayIsoKey]
+        : (i === 0 ? appState.airQuality : null);
+      const estHumidity = d.pop >= 65 ? 78 : d.pop >= 35 ? 62 : 48;
+      const dayAllergy = computeAeroallergenProfile({
+        tempC: d.maxTempC,
+        humidity: estHumidity,
+        windKmh: d.maxWindKmh || 12,
+        weatherCode: d.weatherCode,
+        pop: d.pop
+      }, dailyAqBucket, appState.location.lat, d.date);
+
+      const isAtopicDog = pet.allergy === 'sensitive';
+      const adjDayPollenScore = Math.min(10, dayAllergy.maxScore + (isAtopicDog ? 1.0 : 0));
+      let allergyStatus = dayAllergy.statusClass;
+      let allergyTier = dayAllergy.tier;
+      if (adjDayPollenScore >= 6.5) {
+        allergyStatus = 'red';
+        allergyTier = 'High';
+      } else if (adjDayPollenScore >= 3.5) {
+        allergyStatus = 'yellow';
+        allergyTier = 'Mod';
+      }
+      const allergyTooltip = `Allergy Forecast: ${allergyTier} (${dayAllergy.maxScore.toFixed(1)}/10) — Top: ${dayAllergy.dominantName} | Grass ${dayAllergy.grassScore} · Tree ${dayAllergy.treeScore} · Weed ${dayAllergy.weedScore} · Mold ${dayAllergy.moldScore}`;
+
       const card = document.createElement('div');
       card.className = `week-day-card ${i === 0 ? 'is-today' : ''}`;
-      card.title = `${dayName}, ${dateSub} — ${cond.label}\nHigh: ${maxT}° | Low: ${minT}° | Rain Prob: ${d.pop}% | Max Wind: ${windVal} ${windUnit} | Peak UV: ${d.uv}\nWalk Check (${pet.name}): ${saf.pawTitle} (Peak Pavement ~${saf.surfaces.asphaltF}°F)`;
+      card.title = `${dayName}, ${dateSub} — ${cond.label}\nHigh: ${maxT}° | Low: ${minT}° | Rain Prob: ${d.pop}% | Max Wind: ${windVal} ${windUnit} | Peak UV: ${d.uv}\n${allergyTooltip}\nWalk Check (${pet.name}): ${saf.pawTitle} (Peak Pavement ~${saf.surfaces.asphaltF}°F)`;
       card.innerHTML = `
         <div class="wk-day-top">
           <span class="wk-day-name">${dayName}</span>
@@ -1844,6 +1969,7 @@
           <span class="wk-pop" title="Precipitation Probability: ${d.pop}%">💧 ${d.pop}%</span>
           <span class="wk-wind" title="Peak Daily Wind: ${windVal} ${windUnit}">💨 ${windVal}${isImp ? 'm' : 'k'}</span>
         </div>
+        <span class="wk-allergy-pill ${allergyStatus}" title="${allergyTooltip}">🌿 ${allergyTier} · ${dayAllergy.dominantName}</span>
         <span class="wk-paw-pill ${overallStatus}" title="Walk Check (${pet.name}): ${saf.pawTitle}">${statusText}</span>
       `;
       el.dailyList.appendChild(card);
