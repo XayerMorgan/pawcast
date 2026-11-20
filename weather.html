@@ -6,12 +6,12 @@
   <title>PawCast — Weather, Radar, Air Quality &amp; Dog Walk Forecast</title>
   <meta name="description" content="Local weather forecast, rolling 7-day outlook, live Doppler radar, EPA air quality &amp; pollen tracker, and dog walk pavement safety guide." />
   <link rel="icon" href="pawcast_logo.png" type="image/png" />
-  
+
   <!-- Editorial & Technical Typography: Fraunces (Serif), Plus Jakarta Sans (Humanist), JetBrains Mono (Telemetry) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..800;1,9..144,400..600&family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-  
+
   <!-- Leaflet CSS for Live Weather Radar -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
 
@@ -19,23 +19,32 @@
 </head>
 <body class="theme-default">
 
+  <!-- Keyboard Skip Link (WCAG 2.4.1) -->
+  <a href="#main-content" class="skip-link">Skip to weather forecast</a>
+
   <!-- Subtle Tactile Paper / Anodized Grain Overlay -->
   <div class="grain-overlay" aria-hidden="true"></div>
 
   <!-- Main Application Container -->
   <div class="station-chassis">
 
-    <!-- TOP HEADER: SLIMMED TO CORE CONTROLS (Brand, Search, Units, Dogs, Settings) -->
+    <!-- TOP HEADER: Brand, Search Combobox, Units, Refresh, Dogs, Options -->
     <header class="telemetry-header">
-      <div class="station-id-block">
-        <div class="station-mark">
-          <span class="led-indicator active" id="station-led" aria-hidden="true"></span>
-          <span class="station-code">LOCAL WEATHER &amp; WALK GUIDE</span>
+      <div class="station-brand-wrap">
+        <img src="pawcast_logo.png" alt="" class="station-logo-mark" width="40" height="40" aria-hidden="true" />
+        <div class="station-id-block">
+          <div class="station-mark">
+            <span class="led-indicator active" id="station-led" aria-hidden="true"></span>
+            <span class="station-code">LOCAL WEATHER &amp; WALK GUIDE</span>
+          </div>
+          <div class="station-title-row">
+            <h1 class="station-title">PawCast</h1>
+            <span id="last-updated-tag" class="updated-chip" title="Last weather update time">Syncing…</span>
+          </div>
         </div>
-        <h1 class="station-title">PawCast</h1>
       </div>
 
-      <!-- Location Search & GPS -->
+      <!-- Location Search Combobox & GPS -->
       <div class="station-search-module">
         <div class="search-input-housing">
           <label for="location-input" class="sr-only">Search city or postal code</label>
@@ -43,7 +52,20 @@
             <circle cx="11" cy="11" r="8"></circle>
             <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
           </svg>
-          <input type="text" id="location-input" placeholder="Search city or postal code..." autocomplete="off" />
+          <input
+            type="text"
+            id="location-input"
+            role="combobox"
+            aria-autocomplete="list"
+            aria-expanded="false"
+            aria-controls="search-results"
+            aria-activedescendant=""
+            placeholder="Search city or postal code..."
+            autocomplete="off"
+          />
+          <button id="clear-search-btn" class="hw-icon-btn clear-btn hidden" type="button" aria-label="Clear search text" title="Clear search">
+            &times;
+          </button>
           <button id="geo-btn" class="hw-icon-btn" type="button" aria-label="Use my current GPS location" title="Use my current GPS location">
             <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" aria-hidden="true">
               <polygon points="3 11 22 2 13 21 11 13 3 11"></polygon>
@@ -53,7 +75,7 @@
         <div id="search-results" class="search-results-dropdown hidden" role="listbox" aria-label="City search suggestions"></div>
       </div>
 
-      <!-- Core Header Controls: Units, Dogs, and Settings Overflow -->
+      <!-- Core Header Controls -->
       <div class="hardware-switches">
         <!-- Accessible Unit Toggle Switch -->
         <div class="hw-rocker" id="unit-toggle" role="radiogroup" aria-label="Temperature and wind speed units">
@@ -61,13 +83,22 @@
           <button id="unit-c" type="button" class="rocker-btn" role="radio" aria-checked="false" data-unit="metric">°C / km/h</button>
         </div>
 
+        <!-- Quick Refresh Button in Header -->
+        <button id="header-refresh-btn" type="button" class="hw-icon-btn header-sync-btn" aria-label="Refresh weather data now" title="Refresh weather &amp; radar now">
+          <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2.2" fill="none" aria-hidden="true">
+            <polyline points="23 4 23 10 17 10"></polyline>
+            <polyline points="1 20 1 14 7 14"></polyline>
+            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+          </svg>
+        </button>
+
         <!-- Dogs Profile Button -->
         <button id="pet-profile-btn" type="button" class="hw-pill-switch subject-switch" title="Manage your dogs and customize walk safety settings">
           <span class="paw-glyph" aria-hidden="true">🐾</span>
           <span id="profile-btn-label">Dog: Max</span>
         </button>
 
-        <!-- Settings & Data Options Toggle (Houses Audio, Polling, Source, Weather.gov) -->
+        <!-- Settings & Data Options Toggle -->
         <button id="settings-toggle-btn" type="button" class="hw-pill-switch settings-switch" aria-expanded="false" aria-controls="station-settings-drawer" title="Open data source, auto-refresh, and audio settings">
           <span aria-hidden="true">⚙️</span>
           <span>Options</span>
@@ -75,7 +106,7 @@
       </div>
     </header>
 
-    <!-- COLLAPSIBLE OPTIONS & DATA SETTINGS DRAWER (Keeps header uncluttered) -->
+    <!-- COLLAPSIBLE OPTIONS & DATA SETTINGS DRAWER -->
     <div id="station-settings-drawer" class="settings-drawer hidden" aria-hidden="true">
       <div class="settings-drawer-inner">
         <div class="setting-item">
@@ -119,8 +150,8 @@
         </div>
 
         <div class="setting-item">
-          <a id="nws-gov-link" href="https://forecast.weather.gov" target="_blank" rel="noopener" class="gov-dispatch-link" title="Open official National Weather Service forecast for this location">
-            <span>Official Weather.gov Forecast</span>
+          <a id="nws-gov-link" href="https://forecast.weather.gov" target="_blank" rel="noopener noreferrer" class="gov-dispatch-link" title="Open official National Weather Service forecast for this location">
+            <span>Official Weather.gov</span>
             <svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" stroke-width="2.5" fill="none" aria-hidden="true">
               <line x1="7" y1="17" x2="17" y2="7"></line>
               <polyline points="7 7 17 7 17 17"></polyline>
@@ -145,29 +176,40 @@
       </div>
     </div>
 
+    <!-- STICKY SECTION JUMP NAV (Fast wayfinding on desktop & mobile) -->
+    <nav class="station-quick-nav" aria-label="Forecast sections">
+      <a href="#section-overview" class="quick-nav-link active" data-section="section-overview">Overview</a>
+      <a href="#section-forecast" class="quick-nav-link" data-section="section-forecast">7-Day</a>
+      <a href="#section-hourly" class="quick-nav-link" data-section="section-hourly">24-Hour</a>
+      <a href="#section-radar" class="quick-nav-link" data-section="section-radar">Radar</a>
+      <a href="#allergy-monitor-panel" class="quick-nav-link" data-section="allergy-monitor-panel">Air &amp; Pollen</a>
+      <a href="#section-details" class="quick-nav-link" data-section="section-details">Details</a>
+    </nav>
+
     <!-- MAIN CONTENT -->
-    <main class="instrument-deck">
+    <main id="main-content" class="instrument-deck" tabindex="-1">
 
       <!-- Status Banner for Loading & Network Errors -->
-      <div id="weather-status-banner" class="weather-status-banner hidden" role="status" aria-live="polite">
+      <div id="weather-status-banner" class="weather-status-banner hidden span-full" role="status" aria-live="polite">
         <span id="weather-status-text">Updating local weather forecast...</span>
         <button id="weather-retry-btn" type="button" class="hw-btn secondary sm-btn hidden">Retry Now</button>
       </div>
 
       <!-- ROW 1: CURRENT WEATHER HERO + 7-DAY FORECAST -->
-      <section class="panel hero-station-panel span-full">
+      <section id="section-overview" class="panel hero-station-panel span-full">
         <div class="hero-station-grid">
-          
+
           <!-- Left Column: Current Temperature & Sky Visual -->
           <div class="station-visual-card" id="station-visual-card">
             <div class="visual-backdrop" id="visual-backdrop"></div>
             <div class="visual-scrim"></div>
-            
+
             <div class="visual-content">
               <div class="sector-header">
                 <div class="sector-title-wrap">
                   <span class="mono-tag coord-badge" id="coord-display">40.71°N, 74.01°W</span>
                   <h2 id="city-name" class="editorial-city">Loading Weather...</h2>
+                  <span id="city-region" class="editorial-region"></span>
                   <span id="current-date" class="editorial-date">Today</span>
                 </div>
                 <div class="sky-badge-wrap">
@@ -177,27 +219,35 @@
               </div>
 
               <div class="primary-temp-readout">
-                <span id="current-temp" class="editorial-big-temp">--°</span>
+                <div class="temp-primary-cluster">
+                  <span id="current-temp" class="editorial-big-temp">--°</span>
+                  <span id="hero-feels-inline" class="hero-feels-chip">Feels --°</span>
+                </div>
                 <div class="temp-extremes-stack">
                   <span id="temp-high" class="extreme-val high">High --°</span>
                   <span id="temp-low" class="extreme-val low">Low --°</span>
-                  <span class="acoustic-hint" id="acoustic-status-text">Live Weather</span>
+                  <span class="acoustic-hint" id="acoustic-status-text">Live Station</span>
                 </div>
               </div>
 
-              <!-- Real-Time Allergy & Air Quality Readout inside the Hero Weather Box -->
-              <div class="hero-realtime-allergy-bar" id="hero-realtime-allergy-bar" role="button" tabindex="0" aria-label="View detailed pollen, allergy, and air quality report" title="Click to view full Pollen, Allergy &amp; Air Quality breakdown">
-                <span id="hero-allergy-pill" class="hero-allergy-pill green">🌿 Allergy: Low (--/10)</span>
-                <span id="hero-dominant-pollen" class="hero-allergy-meta">Top: Checking...</span>
-                <span id="hero-aqi-pill" class="hero-aqi-chip">🌬️ AQI --</span>
-              </div>
+              <!-- Real-Time Allergy & Air Quality Button inside the Hero Weather Box -->
+              <button type="button" class="hero-realtime-allergy-bar" id="hero-realtime-allergy-bar" aria-label="Jump to detailed pollen, allergy, and air quality report" title="Jump to full Pollen, Allergy &amp; Air Quality breakdown">
+                <span class="hero-allergy-left">
+                  <span id="hero-allergy-pill" class="hero-allergy-pill">🌿 Allergy: Low (--/10)</span>
+                  <span id="hero-dominant-pollen" class="hero-allergy-meta">Top: Checking...</span>
+                </span>
+                <span class="hero-allergy-right">
+                  <span id="hero-aqi-pill" class="hero-aqi-chip">AQI --</span>
+                  <span class="hero-jump-arrow" aria-hidden="true">→</span>
+                </span>
+              </button>
             </div>
           </div>
 
           <!-- Right Column: Today's Weather Summary (Card 1) + Dog Walk & Pavement Check (Card 2) -->
           <div class="telemetry-gauges-col">
-            
-            <!-- Card 1: Today's Weather Summary -->
+
+            <!-- Card 1: Today's Weather Summary (Non-redundant, complete almanac) -->
             <div class="instrument-gauge" id="box-heat-safety">
               <div class="gauge-top-bar">
                 <span class="gauge-index">TODAY'S WEATHER SUMMARY</span>
@@ -220,16 +270,16 @@
                   <strong id="hero-wind-val" class="resp-val">-- mph</strong>
                 </div>
                 <div class="resp-cell">
-                  <span class="resp-label">Allergy &amp; Pollen</span>
-                  <strong id="hero-allergy-summary-val" class="resp-val">Low (--/10)</strong>
-                </div>
-                <div class="resp-cell">
-                  <span class="resp-label">Air Quality (AQI)</span>
-                  <strong id="hero-aqi-summary-val" class="resp-val">AQI -- (Good)</strong>
-                </div>
-                <div class="resp-cell">
                   <span class="resp-label">Sunrise / Sunset</span>
                   <strong id="hero-sun-val" class="resp-val">-- / --</strong>
+                </div>
+                <div class="resp-cell">
+                  <span class="resp-label">Visibility</span>
+                  <strong id="hero-vis-val" class="resp-val">-- mi</strong>
+                </div>
+                <div class="resp-cell">
+                  <span class="resp-label">Moon Phase</span>
+                  <strong id="hero-moon-val" class="resp-val">--</strong>
                 </div>
               </div>
 
@@ -248,15 +298,15 @@
                 <span id="subject-coat-val" class="mono-tag">🐾 Max</span>
               </div>
 
-              <!-- Pavement Temperature Scale -->
+              <!-- Pavement Temperature Scale (Dynamically updates °F / °C) -->
               <div class="thermal-scale-wrap">
                 <div class="thermal-scale-labels">
-                  <span>32°F Freeze</span>
-                  <span>85°F Ideal</span>
-                  <span>105°F Warm</span>
-                  <span>125°F+ Hot</span>
+                  <span id="scale-lbl-freeze">32°F Freeze</span>
+                  <span id="scale-lbl-ideal">85°F Ideal</span>
+                  <span id="scale-lbl-warm">105°F Warm</span>
+                  <span id="scale-lbl-hot">125°F+ Hot</span>
                 </div>
-                <div class="thermal-track">
+                <div class="thermal-track" role="img" id="paw-thermal-track" aria-label="Estimated pavement temperature gauge">
                   <div class="thermal-zones"></div>
                   <div class="thermal-needle" id="paw-thermal-needle" style="left: 42%;">
                     <span class="needle-head"></span>
@@ -277,70 +327,105 @@
               </div>
 
               <p id="paw-safety-desc" class="gauge-advisory">Pavement and grass temperatures are comfortable for walking.</p>
+
+              <!-- Tailored Walk Readiness Checklist -->
+              <div id="walk-checklist-row" class="walk-checklist-row" aria-label="Recommended walk gear and actions"></div>
+
+              <!-- Cross-Pack Alert Banner (shown if another saved dog has stricter risk) -->
+              <button type="button" id="pack-advisory-banner" class="pack-advisory-banner hidden"></button>
             </div>
 
           </div>
         </div>
 
         <!-- TOP 7-DAY WEATHER & ALLERGY FORECAST -->
-        <div class="top-weekly-almanac-block">
+        <div id="section-forecast" class="top-weekly-almanac-block">
           <div class="weekly-block-header">
             <div class="dispatch-label">
               <span class="pulse-dot" aria-hidden="true"></span>
               <span class="mono-title">7-Day Weather, Allergy &amp; Walk Forecast</span>
+              <span class="hint-subtext">Select any day for details</span>
             </div>
             <span class="mono-tag" id="weekly-pack-tag">🌿 Daily Pollen &amp; 🐾 Walk tags for: Max</span>
           </div>
           <div class="weekly-top-grid" id="daily-list"></div>
+
+          <!-- Interactive Selected Day Detail Drawer -->
+          <div id="day-detail-drawer" class="day-detail-drawer hidden" aria-live="polite"></div>
         </div>
 
         <!-- Best Hours to Walk Today Strip -->
         <div class="excursion-dispatch-strip">
           <div class="dispatch-label">
             <span class="pulse-dot amber" aria-hidden="true"></span>
-            <span class="mono-title">Best Hours Outdoors Today:</span>
+            <span class="mono-title">Best Hours Today:</span>
           </div>
           <div id="walk-windows-grid" class="windows-ribbon"></div>
         </div>
       </section>
 
       <!-- ROW 2: 24-HOUR FORECAST -->
-      <section class="panel horizon-panel span-full">
+      <section id="section-hourly" class="panel horizon-panel span-full">
         <div class="panel-header">
           <div>
             <span class="panel-code">HOURLY OUTLOOK</span>
-            <h2 class="panel-title">24-Hour Temperature, Rain Chance &amp; Wind Forecast</h2>
+            <h2 class="panel-title">24-Hour Temperature, Rain Chance &amp; Walk Safety</h2>
           </div>
           <div class="horizon-legend">
             <span class="leg-chip"><i class="swatch temp" aria-hidden="true"></i> Temperature</span>
-            <span class="leg-chip"><i class="swatch rain" aria-hidden="true"></i> Rain Chance %</span>
-            <span class="leg-chip"><i class="swatch safe" aria-hidden="true"></i> Ideal (Green)</span>
-            <span class="leg-chip"><i class="swatch warn" aria-hidden="true"></i> Caution (Amber)</span>
-            <span class="leg-chip"><i class="swatch danger" aria-hidden="true"></i> Alert (Red)</span>
+            <span class="leg-chip"><i class="swatch rain" aria-hidden="true"></i> Rain %</span>
+            <span class="leg-chip"><i class="swatch safe" aria-hidden="true"></i> Ideal</span>
+            <span class="leg-chip"><i class="swatch warn" aria-hidden="true"></i> Caution</span>
+            <span class="leg-chip"><i class="swatch danger" aria-hidden="true"></i> Alert</span>
           </div>
         </div>
 
-        <!-- Hourly SVG Graph -->
+        <!-- Hourly SVG Graph (Undistorted aspect ratio + interactive nodes) -->
         <div class="svg-telemetry-frame" id="svg-chart-container">
-          <svg id="hourly-svg" class="hourly-svg" viewBox="0 0 1000 200" preserveAspectRatio="none" role="img" aria-label="24-hour temperature and precipitation chart"></svg>
+          <svg id="hourly-svg" class="hourly-svg" viewBox="0 0 1000 205" preserveAspectRatio="xMidYMid meet" role="img" aria-label="24-hour temperature and precipitation chart"></svg>
         </div>
 
-        <!-- Hourly Cards Strip -->
-        <div class="hourly-strip" id="hourly-scroller"></div>
+        <!-- Selected Hour Telemetry Inspector Bar -->
+        <div id="hour-inspector-bar" class="hour-inspector-bar" aria-live="polite">
+          <div class="hour-inspector-primary">
+            <span id="insp-time" class="insp-time-badge">NOW</span>
+            <span id="insp-cond" class="insp-cond-text">Select an hour to inspect surface &amp; air conditions</span>
+          </div>
+          <div class="hour-inspector-metrics">
+            <span class="insp-metric"><span class="insp-k">Air</span> <strong id="insp-air">--°</strong></span>
+            <span class="insp-metric"><span class="insp-k">Feels</span> <strong id="insp-feels">--°</strong></span>
+            <span class="insp-metric"><span class="insp-k">Pavement</span> <strong id="insp-pavement">--°</strong></span>
+            <span class="insp-metric"><span class="insp-k">Rain</span> <strong id="insp-rain">--%</strong></span>
+            <span class="insp-metric"><span class="insp-k">Wind</span> <strong id="insp-wind">--</strong></span>
+            <span class="insp-metric"><span class="insp-k">UV</span> <strong id="insp-uv">--</strong></span>
+          </div>
+        </div>
+
+        <!-- Hourly Cards Strip with Scroll Controls -->
+        <div class="hourly-strip-shell">
+          <button type="button" id="hourly-scroll-left" class="strip-scroll-btn left" aria-label="Scroll hourly forecast earlier" title="Scroll earlier">‹</button>
+          <div class="hourly-strip" id="hourly-scroller"></div>
+          <button type="button" id="hourly-scroll-right" class="strip-scroll-btn right" aria-label="Scroll hourly forecast later" title="Scroll later">›</button>
+        </div>
       </section>
 
       <!-- ROW 3: LIVE WEATHER RADAR -->
-      <section class="panel radar-scope-panel span-full">
+      <section id="section-radar" class="panel radar-scope-panel span-full">
         <div class="panel-header">
           <div>
             <span class="panel-code">LIVE DOPPLER RADAR</span>
             <h2 class="panel-title">Precipitation Radar &amp; Storm Tracker</h2>
           </div>
           <div class="radar-scope-controls">
-            <button id="radar-play-btn" type="button" class="hw-pill-switch radar-play-switch">
-              <span id="radar-play-icon" aria-hidden="true">▶</span>
-              <span id="radar-play-text">Play Radar</span>
-            </button>
+            <div class="radar-transport-group">
+              <button id="radar-prev-btn" type="button" class="hw-icon-btn" aria-label="Previous radar frame" title="Previous frame">⏮</button>
+              <button id="radar-play-btn" type="button" class="hw-pill-switch radar-play-switch" aria-pressed="false">
+                <span id="radar-play-icon" aria-hidden="true">▶</span>
+                <span id="radar-play-text">Play Radar</span>
+              </button>
+              <button id="radar-next-btn" type="button" class="hw-icon-btn" aria-label="Next radar frame" title="Next frame">⏭</button>
+              <button id="radar-recenter-btn" type="button" class="hw-icon-btn" aria-label="Re-center radar on current city" title="Re-center on city">⌖</button>
+            </div>
             <span id="radar-zoom-level" class="mono-tag radar-zoom-tag">Zoom 7</span>
             <span id="radar-timestamp" class="mono-tag radar-clock">Loading radar...</span>
           </div>
@@ -365,6 +450,13 @@
             </div>
           </div>
         </div>
+
+        <!-- Interactive Radar Frame Timeline Scrubber -->
+        <div class="radar-timeline-bar">
+          <span class="mono-label">Timeline:</span>
+          <input type="range" id="radar-scrubber" class="radar-scrubber" min="0" max="10" value="0" aria-label="Scrub radar time frames" disabled />
+          <span id="radar-frame-counter" class="mono-tag">Frame --/--</span>
+        </div>
       </section>
 
       <!-- ROW 4: AIR QUALITY, POLLEN & ALLERGY FORECAST -->
@@ -375,6 +467,7 @@
             <h2 class="panel-title">Pollen Levels, EPA Air Quality Index &amp; Allergy Guide</h2>
           </div>
           <div class="allergy-header-badges">
+            <span id="allergy-data-source-tag" class="mono-tag source-tag">CAMS / Seasonal</span>
             <span id="aqi-badge" class="mono-tag aqi-pill">US AQI: --</span>
             <span id="allergy-overall-badge" class="status-pill">Allergy Risk: Low</span>
             <button id="allergen-help-toggle-btn" class="hw-pill-switch allergen-help-btn" type="button" aria-expanded="false" aria-controls="allergen-help-drawer">
@@ -583,7 +676,7 @@
               </div>
               <h4 class="def-title">🌾 Ragweed &amp; Weeds (<em>Ambrosia, Mugwort</em>)</h4>
               <p class="def-body">
-                Fine, wind-dispersed pollen produced by late-summer and autumn weeds. Remains a leading seasonal allergen across North America until temperatures drop below freezing (`≤32°F`).
+                Fine, wind-dispersed pollen produced by late-summer and autumn weeds. Remains a leading seasonal allergen across North America until temperatures drop below freezing (<code>≤32°F / 0°C</code>).
               </p>
               <div class="def-clinical-meta">
                 <div><strong>Human Impact:</strong> Primary driver of late-summer and fall hay fever and sinus pressure.</div>
@@ -599,7 +692,7 @@
               </div>
               <h4 class="def-title">🍄 Mold &amp; Damp Spores (<em>Alternaria, Cladosporium</em>)</h4>
               <p class="def-body">
-                Unlike plant pollens that wash out during rain, fungal spores thrive in high humidity (`&gt;65%`), damp soil, shaded mulch, and decaying autumn leaves.
+                Unlike plant pollens that wash out during rain, fungal spores thrive in high humidity (<code>&gt;65%</code>), damp soil, shaded mulch, and decaying autumn leaves.
               </p>
               <div class="def-clinical-meta">
                 <div><strong>Human Impact:</strong> Can trigger sinus congestion and respiratory irritation after rainstorms or while raking wet leaves.</div>
@@ -633,7 +726,7 @@
                 Fine inhalable particles from wildfire smoke, vehicle exhaust, and combustion. Small enough to reach deep into the lungs during heavy breathing or exercise.
               </p>
               <div class="def-clinical-meta">
-                <div><strong>Guidance:</strong> Ideal `&lt; 12 µg/m³`. When `&gt; 35 µg/m³`, reduce outdoor running/cardio and keep dog walks shorter and calmer.</div>
+                <div><strong>Guidance:</strong> Ideal <code>&lt; 12 µg/m³</code>. When <code>&gt; 35 µg/m³</code>, reduce outdoor running/cardio and keep dog walks shorter and calmer.</div>
               </div>
             </article>
 
@@ -671,7 +764,7 @@
       </section>
 
       <!-- ROW 5: CURRENT WEATHER DETAILS (FULL WIDTH) -->
-      <section class="panel sensors-panel span-full">
+      <section id="section-details" class="panel sensors-panel span-full">
         <div class="panel-header">
           <div>
             <span class="panel-code">OBSERVATIONS</span>
@@ -756,7 +849,7 @@
   </div>
 
   <!-- ACCESSIBLE DOG PROFILE MODAL DIALOG -->
-  <div id="pet-modal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="pet-modal-title">
+  <div id="pet-modal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="pet-modal-title">
     <div class="calibration-dialog">
       <div class="dialog-header">
         <div>
@@ -775,12 +868,26 @@
         <div id="modal-dog-list" class="chips-container"></div>
       </div>
 
+      <!-- Live Sensitivity Impact Preview -->
+      <div id="dog-sensitivity-preview" class="dog-sensitivity-preview" aria-live="polite"></div>
+
       <form id="pet-profile-form" class="calibration-form">
         <input type="hidden" id="dog-id" value="" />
 
-        <div class="form-field">
-          <label for="dog-name">Dog Name</label>
-          <input type="text" id="dog-name" value="Max" placeholder="e.g. Max, Bella, Cooper" required />
+        <div class="form-grid-two">
+          <div class="form-field">
+            <label for="dog-name">Dog Name</label>
+            <input type="text" id="dog-name" value="Max" placeholder="e.g. Max, Bella, Cooper" required />
+          </div>
+
+          <div class="form-field">
+            <label for="dog-age">Age Group</label>
+            <select id="dog-age">
+              <option value="puppy">Puppy (&lt; 1 year)</option>
+              <option value="adult" selected>Adult (1 – 7 years)</option>
+              <option value="senior">Senior (7+ years)</option>
+            </select>
+          </div>
         </div>
 
         <div class="form-field">
@@ -818,20 +925,13 @@
           </select>
         </div>
 
-        <div class="form-field">
-          <label for="dog-age">Age Group</label>
-          <select id="dog-age">
-            <option value="puppy">Puppy (&lt; 1 year)</option>
-            <option value="adult" selected>Adult (1 – 7 years)</option>
-            <option value="senior">Senior (7+ years)</option>
-          </select>
-        </div>
-
-        <!-- Export Backup & Save Actions -->
+        <!-- Export / Import Backup & Save Actions -->
         <div class="dialog-footer-split">
           <div class="config-backup-actions">
-            <button type="button" id="delete-dog-btn" class="hw-btn danger-outline" title="Remove this dog profile">Delete Dog</button>
-            <button type="button" id="export-config-btn" class="hw-btn secondary" title="Download your saved dogs and cities as a backup file">Export Backup</button>
+            <button type="button" id="delete-dog-btn" class="hw-btn danger-outline" title="Remove this dog profile">Delete</button>
+            <button type="button" id="export-config-btn" class="hw-btn secondary" title="Download saved dogs and cities as a JSON backup">Export</button>
+            <button type="button" id="import-config-btn" class="hw-btn secondary" title="Restore saved dogs and cities from a JSON backup">Import</button>
+            <input type="file" id="import-config-file" accept=".json,application/json" class="sr-only" aria-label="Import backup JSON file" />
           </div>
           <div class="dialog-actions">
             <button type="button" id="cancel-modal-btn" class="hw-btn secondary">Cancel</button>
@@ -841,6 +941,9 @@
       </form>
     </div>
   </div>
+
+  <!-- NON-BLOCKING TOAST NOTIFICATION STACK (Supports Undo!) -->
+  <div id="toast-container" class="toast-container" role="status" aria-live="polite" aria-atomic="true"></div>
 
   <!-- Leaflet JS CDN -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
