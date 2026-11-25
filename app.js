@@ -294,6 +294,12 @@
     refreshCountdown: document.getElementById('refresh-countdown'),
 
     // Hero Field Station Window
+    quickVerdictStrip: document.getElementById('quick-verdict-strip'),
+    verdictKicker: document.getElementById('verdict-kicker'),
+    verdictHeadline: document.getElementById('verdict-headline'),
+    verdictPillAir: document.getElementById('verdict-pill-air'),
+    verdictPillPavement: document.getElementById('verdict-pill-pavement'),
+    verdictPillWindow: document.getElementById('verdict-pill-window'),
     coordDisplay: document.getElementById('coord-display'),
     cityName: document.getElementById('city-name'),
     cityRegion: document.getElementById('city-region'),
@@ -860,6 +866,14 @@
       el.closeAllergenHelpBtn.addEventListener('click', () => {
         playHardwareClick(560);
         toggleAllergenHelpDrawer(false);
+      });
+    }
+
+    if (el.verdictPillWindow) {
+      el.verdictPillWindow.addEventListener('click', () => {
+        playHardwareClick(680);
+        const strip = document.getElementById('walk-windows-grid');
+        if (strip) strip.scrollIntoView({ behavior: 'smooth', block: 'center' });
       });
     }
 
@@ -2005,6 +2019,12 @@
   function renderNoData(reasonText) {
     appState.weather = null;
     appState.todayAllergyProfile = null;
+    if (el.quickVerdictStrip) el.quickVerdictStrip.className = 'quick-verdict-strip status-unknown';
+    if (el.verdictKicker) el.verdictKicker.textContent = `RIGHT NOW FOR ${getActiveDog().name.toUpperCase()}`;
+    if (el.verdictHeadline) el.verdictHeadline.textContent = 'Walk check unavailable — use the 7-second hand test';
+    if (el.verdictPillAir) el.verdictPillAir.textContent = 'Air —';
+    if (el.verdictPillPavement) el.verdictPillPavement.textContent = 'Pavement —';
+    if (el.verdictPillWindow) el.verdictPillWindow.textContent = 'Best Window: —';
     if (el.currentTemp) el.currentTemp.textContent = '—';
     if (el.heroFeelsInline) el.heroFeelsInline.textContent = 'Feels —';
     if (el.tempHigh) el.tempHigh.textContent = 'HIGH —';
@@ -2821,8 +2841,47 @@
     }
 
     renderDailyForecast(data.daily);
-    renderWalkWindows(data.hourly);
+    const bestWindowLabel = renderWalkWindows(data.hourly);
+    renderQuickVerdictStrip(cur, safety, pet, bestWindowLabel);
     renderHourlyForecast(data.hourly);
+  }
+
+  function renderQuickVerdictStrip(cur, safety, pet, bestWindowLabel) {
+    if (!el.quickVerdictStrip) return;
+    const worst = statusRank(safety.pawStatus) >= statusRank(safety.heatStatus)
+      ? safety.pawStatus
+      : safety.heatStatus;
+    el.quickVerdictStrip.className = `quick-verdict-strip status-${worst}`;
+
+    if (el.verdictKicker) {
+      el.verdictKicker.textContent = `RIGHT NOW FOR ${pet.name.toUpperCase()} · ${getLocationDisplayName(appState.location).toUpperCase()}`;
+    }
+    if (el.verdictHeadline) {
+      if (safety.pawStatus === 'red') {
+        el.verdictHeadline.textContent = safety.tempF < 20
+          ? `Frigid ground — keep ${pet.name}'s walk brief with booties`
+          : `Hot asphalt — avoid pavement, stick to shade & grass`;
+      } else if (safety.heatStatus === 'red') {
+        el.verdictHeadline.textContent = `Heat advisory — short shaded walks & water for ${pet.name}`;
+      } else if (safety.pawStatus === 'yellow') {
+        el.verdictHeadline.textContent = safety.tempF < 32
+          ? `Frosty ground — wipe ${pet.name}'s paws after walking`
+          : `Warm pavement — prefer grassy strips for ${pet.name}`;
+      } else if (safety.heatStatus === 'yellow') {
+        el.verdictHeadline.textContent = `Warm outdoors — bring water for ${pet.name}`;
+      } else {
+        el.verdictHeadline.textContent = `Good to walk ${pet.name} now — surfaces & air look comfortable`;
+      }
+    }
+    if (el.verdictPillAir) {
+      el.verdictPillAir.textContent = `Air ${fmtTempC(cur.tempC, true)}`;
+    }
+    if (el.verdictPillPavement) {
+      el.verdictPillPavement.textContent = `Pavement ~${fmtTempF(safety.surfaces.asphaltF, true)}`;
+    }
+    if (el.verdictPillWindow) {
+      el.verdictPillWindow.textContent = `Best Window: ${bestWindowLabel || 'See 24-Hr'}`;
+    }
   }
 
   function renderWalkChecklist(cur, safety, pet, allergyResult) {
@@ -3395,13 +3454,14 @@
       const saf = calculateDualSafetyIndex(h.tempC, h.humidity, h.windKmh, h.isDay, h.uv);
       const tVal = isImp ? Math.round((h.tempC * 9 / 5) + 32) : Math.round(h.tempC);
       const cond = getWeatherConditionInfo(h.weatherCode, h.isDay);
-      const timeLabel = idx === 0 ? 'NOW' : h.time.toLocaleTimeString('en-US', { hour: 'numeric', hour12: true });
+      const timeLabel = idx === 0 ? 'NOW' : (h.hourLabel || h.time.toLocaleTimeString('en-US', { hour: 'numeric', hour12: true }));
       const isOverallSafe = saf.pawStatus === 'green' && saf.heatStatus === 'green' && h.pop < 40;
       const isModerate = (saf.pawStatus === 'yellow' || h.pop < 55) && saf.heatStatus !== 'red';
 
       if (isOverallSafe) {
         windows.push({
           idx,
+          shortLabel: timeLabel,
           timeStr: `${timeLabel} · ${tVal}° ${cond.emoji}`,
           status: 'best',
           label: 'Ideal Outdoors & Walk'
@@ -3409,6 +3469,7 @@
       } else if (isModerate) {
         windows.push({
           idx,
+          shortLabel: timeLabel,
           timeStr: `${timeLabel} · ${tVal}° ${cond.emoji}`,
           status: 'caution',
           label: saf.pawStatus === 'yellow' ? 'Shade / Grass Advised' : 'Fair Conditions'
@@ -3424,7 +3485,7 @@
           <span class="window-tag">Plan outdoor activities for early morning or evening hours</span>
         </div>
       `;
-      return;
+      return 'Early AM / Evening';
     }
 
     displayWindows.forEach(w => {
@@ -3442,6 +3503,9 @@
       });
       el.walkWindowsGrid.appendChild(btn);
     });
+
+    const firstBest = displayWindows.find(w => w.status === 'best') || displayWindows[0];
+    return firstBest ? firstBest.shortLabel : 'See 24-Hr';
   }
 
   // ==========================================================================

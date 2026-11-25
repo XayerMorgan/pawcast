@@ -176,17 +176,17 @@
     <!-- QUICK SWITCHER BAR: SAVED CITIES & DOG PROFILES -->
     <nav class="sub-telemetry-bar" aria-label="Saved cities and dog profiles">
       <div class="waypoints-group">
-        <span class="mono-label">Saved Cities:</span>
+        <span class="mono-label">Cities:</span>
         <div id="favorite-chips" class="chips-container"></div>
-        <button id="add-favorite-btn" type="button" class="waypoint-add-btn" title="Save current city to quick list">+ Save City</button>
-        <button id="manage-locations-btn" type="button" class="waypoint-manage-btn" title="Create, edit, or delete saved locations">Manage</button>
+        <button id="add-favorite-btn" type="button" class="waypoint-add-btn" title="Save current city to quick list">+ Save</button>
+        <button id="manage-locations-btn" type="button" class="waypoint-manage-btn" aria-label="Manage saved cities" title="Create, edit, or delete saved locations">⚙</button>
       </div>
 
       <div class="waypoints-group pack-switcher-group">
-        <span class="mono-label">My Dogs:</span>
+        <span class="mono-label">Dogs:</span>
         <div id="dog-roster-chips" class="chips-container"></div>
-        <button id="add-dog-quick-btn" type="button" class="waypoint-add-btn" title="Add another dog profile">+ Add Dog</button>
-        <button id="manage-dogs-btn" type="button" class="waypoint-manage-btn" title="Edit or delete saved dog profiles">Manage</button>
+        <button id="add-dog-quick-btn" type="button" class="waypoint-add-btn" title="Add another dog profile">+ Dog</button>
+        <button id="manage-dogs-btn" type="button" class="waypoint-manage-btn" aria-label="Manage dog profiles" title="Edit or delete saved dog profiles">⚙</button>
       </div>
     </nav>
 
@@ -209,8 +209,25 @@
         <button id="weather-retry-btn" type="button" class="hw-btn secondary sm-btn hidden">Retry Now</button>
       </div>
 
-      <!-- ROW 1: CURRENT WEATHER HERO + 7-DAY FORECAST -->
+      <!-- ROW 1: INSTANT WALK VERDICT + CURRENT WEATHER HERO + 7-DAY FORECAST -->
       <section id="section-overview" class="panel hero-station-panel span-full">
+
+        <!-- INSTANT 1-GLANCE WALK VERDICT STRIP (Good Info First!) -->
+        <div id="quick-verdict-strip" class="quick-verdict-strip status-unknown" role="region" aria-label="Instant dog walk verdict">
+          <div class="verdict-lead">
+            <span id="verdict-led" class="verdict-led" aria-hidden="true"></span>
+            <div class="verdict-copy">
+              <span id="verdict-kicker" class="verdict-kicker">RIGHT NOW FOR MAX</span>
+              <strong id="verdict-headline" class="verdict-headline">Checking walk conditions…</strong>
+            </div>
+          </div>
+          <div class="verdict-pills">
+            <span id="verdict-pill-air" class="verdict-metric-pill">Air —</span>
+            <span id="verdict-pill-pavement" class="verdict-metric-pill">Pavement —</span>
+            <button type="button" id="verdict-pill-window" class="verdict-metric-pill verdict-window-btn" title="Jump to best walk hours">Best Window: —</button>
+          </div>
+        </div>
+
         <div class="hero-station-grid">
 
           <!-- Left Column: Current Temperature & Sky Visual -->
@@ -258,49 +275,10 @@
             </div>
           </div>
 
-          <!-- Right Column: Today's Weather Summary (Card 1) + Dog Walk & Pavement Check (Card 2) -->
+          <!-- Right Column: Dog Walk & Pavement Check FIRST (Core Value) + Today's Weather Summary -->
           <div class="telemetry-gauges-col">
 
-            <!-- Card 1: Today's Weather Summary (Non-redundant, complete almanac) -->
-            <div class="instrument-gauge status-unknown" id="box-heat-safety">
-              <div class="gauge-top-bar">
-                <span class="gauge-index">TODAY'S WEATHER SUMMARY</span>
-                <span class="status-pill status-unknown" id="heat-status-pill">LOADING</span>
-              </div>
-
-              <h3 id="heat-status-title" class="gauge-verdict">Loading Weather Summary…</h3>
-
-              <div class="almanac-metrics-grid">
-                <div class="resp-cell">
-                  <span class="resp-label">Feels Like</span>
-                  <strong id="feels-like-val" class="resp-val">—</strong>
-                </div>
-                <div class="resp-cell">
-                  <span class="resp-label">Humidity &amp; Dew</span>
-                  <strong id="humidity-val" class="resp-val">—</strong>
-                </div>
-                <div class="resp-cell">
-                  <span class="resp-label">Wind &amp; Gusts</span>
-                  <strong id="hero-wind-val" class="resp-val">—</strong>
-                </div>
-                <div class="resp-cell">
-                  <span class="resp-label">Sunrise / Sunset</span>
-                  <strong id="hero-sun-val" class="resp-val">—</strong>
-                </div>
-                <div class="resp-cell">
-                  <span class="resp-label">Visibility</span>
-                  <strong id="hero-vis-val" class="resp-val">—</strong>
-                </div>
-                <div class="resp-cell">
-                  <span class="resp-label">Moon Phase</span>
-                  <strong id="hero-moon-val" class="resp-val">—</strong>
-                </div>
-              </div>
-
-              <p id="heat-safety-desc" class="gauge-advisory">Fetching current conditions…</p>
-            </div>
-
-            <!-- Card 2: Dog Walk & Pavement Check -->
+            <!-- Card 1: Dog Walk & Pavement Check (Good Info First!) -->
             <div class="instrument-gauge status-unknown" id="box-paw-safety">
               <div class="gauge-top-bar">
                 <span class="gauge-index">DOG WALK &amp; PAVEMENT CHECK</span>
@@ -357,7 +335,55 @@
               </details>
             </div>
 
+            <!-- Card 2: Today's Weather Summary (Non-redundant, complete almanac) -->
+            <div class="instrument-gauge status-unknown" id="box-heat-safety">
+              <div class="gauge-top-bar">
+                <span class="gauge-index">TODAY'S WEATHER SUMMARY</span>
+                <span class="status-pill status-unknown" id="heat-status-pill">LOADING</span>
+              </div>
+
+              <h3 id="heat-status-title" class="gauge-verdict">Loading Weather Summary…</h3>
+
+              <div class="almanac-metrics-grid">
+                <div class="resp-cell">
+                  <span class="resp-label">Feels Like</span>
+                  <strong id="feels-like-val" class="resp-val">—</strong>
+                </div>
+                <div class="resp-cell">
+                  <span class="resp-label">Humidity &amp; Dew</span>
+                  <strong id="humidity-val" class="resp-val">—</strong>
+                </div>
+                <div class="resp-cell">
+                  <span class="resp-label">Wind &amp; Gusts</span>
+                  <strong id="hero-wind-val" class="resp-val">—</strong>
+                </div>
+                <div class="resp-cell">
+                  <span class="resp-label">Sunrise / Sunset</span>
+                  <strong id="hero-sun-val" class="resp-val">—</strong>
+                </div>
+                <div class="resp-cell">
+                  <span class="resp-label">Visibility</span>
+                  <strong id="hero-vis-val" class="resp-val">—</strong>
+                </div>
+                <div class="resp-cell">
+                  <span class="resp-label">Moon Phase</span>
+                  <strong id="hero-moon-val" class="resp-val">—</strong>
+                </div>
+              </div>
+
+              <p id="heat-safety-desc" class="gauge-advisory">Fetching current conditions…</p>
+            </div>
+
           </div>
+        </div>
+
+        <!-- Best Hours to Walk Today Strip (Right beneath Hero + Pavement Check!) -->
+        <div class="excursion-dispatch-strip">
+          <div class="dispatch-label">
+            <span class="pulse-dot amber" aria-hidden="true"></span>
+            <span class="mono-title">Best Walk Hours Today:</span>
+          </div>
+          <div id="walk-windows-grid" class="windows-ribbon" tabindex="0" role="region" aria-label="Best walk hours today"></div>
         </div>
 
         <!-- TOP 7-DAY WEATHER & ALLERGY FORECAST -->
@@ -374,15 +400,6 @@
 
           <!-- Interactive Selected Day Detail Drawer -->
           <div id="day-detail-drawer" class="day-detail-drawer hidden" aria-live="polite"></div>
-        </div>
-
-        <!-- Best Hours to Walk Today Strip -->
-        <div class="excursion-dispatch-strip">
-          <div class="dispatch-label">
-            <span class="pulse-dot amber" aria-hidden="true"></span>
-            <span class="mono-title">Best Hours Today:</span>
-          </div>
-          <div id="walk-windows-grid" class="windows-ribbon" tabindex="0" role="region" aria-label="Best walk hours today"></div>
         </div>
       </section>
 

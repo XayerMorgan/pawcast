@@ -3485,3 +3485,177 @@ body.is-night-mode .visual-backdrop {
   color: var(--signal-sky-soft);
   text-decoration: underline;
 }
+
+
+/* ==========================================================================
+   GOOD INFO FIRST // WALK VERDICT STRIP & TACTILE INSTRUMENT POLISH
+   ========================================================================== */
+
+/* Instant 1-Glance Walk Verdict Strip (Above the Fold) */
+.quick-verdict-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px 18px;
+  padding: 13px 16px;
+  margin-bottom: 16px;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(180deg, rgba(30, 34, 38, 0.94) 0%, rgba(20, 23, 27, 0.96) 100%);
+  border: 1px solid var(--border-strong);
+  border-left: 4px solid var(--ink-muted);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 8px 24px rgba(0, 0, 0, 0.28);
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.quick-verdict-strip.status-green {
+  border-left-color: var(--signal-sage);
+  background: linear-gradient(90deg, rgba(34, 197, 94, 0.12) 0%, rgba(22, 26, 30, 0.96) 42%);
+}
+
+.quick-verdict-strip.status-yellow {
+  border-left-color: var(--signal-ochre);
+  background: linear-gradient(90deg, rgba(234, 179, 8, 0.13) 0%, rgba(22, 26, 30, 0.96) 42%);
+}
+
+.quick-verdict-strip.status-red {
+  border-left-color: var(--signal-crimson);
+  background: linear-gradient(90deg, rgba(239, 68, 68, 0.14) 0%, rgba(22, 26, 30, 0.96) 42%);
+}
+
+.verdict-lead {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.verdict-led {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: var(--ink-muted);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.06);
+}
+
+.quick-verdict-strip.status-green .verdict-led {
+  background: var(--signal-sage);
+  box-shadow: 0 0 10px rgba(34, 197, 94, 0.7), 0 0 0 3px rgba(34, 197, 94, 0.18);
+}
+
+.quick-verdict-strip.status-yellow .verdict-led {
+  background: var(--signal-ochre);
+  box-shadow: 0 0 10px rgba(234, 179, 8, 0.7), 0 0 0 3px rgba(234, 179, 8, 0.18);
+}
+
+.quick-verdict-strip.status-red .verdict-led {
+  background: var(--signal-crimson);
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.75), 0 0 0 3px rgba(239, 68, 68, 0.2);
+}
+
+.verdict-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.verdict-kicker {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+}
+
+.verdict-headline {
+  font-family: var(--font-serif);
+  font-size: 1.08rem;
+  font-weight: 600;
+  color: var(--ink-primary);
+  line-height: 1.25;
+}
+
+.verdict-pills {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.verdict-metric-pill {
+  font-family: var(--font-mono);
+  font-size: 0.76rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-primary);
+  background: rgba(13, 15, 17, 0.72);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-xs);
+  padding: 5px 10px;
+  white-space: nowrap;
+}
+
+.verdict-window-btn {
+  cursor: pointer;
+  border-color: rgba(229, 107, 37, 0.45);
+  color: #FDBA74;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.verdict-window-btn:hover {
+  background: rgba(229, 107, 37, 0.18);
+  border-color: var(--signal-amber);
+  color: var(--ink-primary);
+}
+
+/* Machined Tactile Surface Polish & Tabular Numerals */
+.panel,
+.instrument-gauge {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.editorial-big-temp,
+.resp-val,
+.surf-mono-val,
+.sensor-reading,
+.aqi-val,
+.wk-high,
+.wk-low {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Tighter Sub-Bar & Quick Nav for Less Overhead Above the Fold */
+.sub-telemetry-bar {
+  padding: 7px 12px;
+  gap: 8px 14px;
+}
+
+.station-quick-nav {
+  margin-bottom: 14px;
+}
+
+.excursion-dispatch-strip {
+  margin-top: 16px;
+  margin-bottom: 18px;
+}
+
+@media (max-width: 720px) {
+  .telemetry-header {
+    padding: 10px 12px;
+    gap: 10px;
+  }
+  .quick-verdict-strip {
+    padding: 11px 12px;
+    gap: 10px;
+  }
+  .verdict-headline {
+    font-size: 0.98rem;
+  }
+  .verdict-metric-pill {
+    font-size: 0.72rem;
+    padding: 4px 8px;
+  }
+}
