@@ -701,6 +701,26 @@ code {
   color: var(--ink-primary);
 }
 
+.chip-edit-btn {
+  background: transparent;
+  border: none;
+  border-left: 1px solid rgba(255, 255, 255, 0.06);
+  color: var(--ink-muted);
+  font-size: 0.82rem;
+  min-width: 26px;
+  min-height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: color 0.15s ease, background 0.15s ease;
+}
+
+.chip-edit-btn:hover {
+  color: var(--signal-amber);
+  background: rgba(229, 107, 37, 0.14);
+}
+
 .chip-remove-btn {
   background: transparent;
   border: none;
@@ -719,6 +739,26 @@ code {
 .chip-remove-btn:hover {
   color: var(--signal-crimson-soft);
   background: rgba(239, 68, 68, 0.16);
+}
+
+.waypoint-manage-btn {
+  background: var(--panel-bg);
+  border: 1px solid var(--border-hairline);
+  color: var(--ink-secondary);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  padding: 5px 10px;
+  min-height: 28px;
+  border-radius: var(--radius-xs);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.waypoint-manage-btn:hover {
+  color: var(--ink-primary);
+  border-color: var(--signal-amber);
+  background: rgba(229, 107, 37, 0.12);
 }
 
 .waypoint-add-btn {
@@ -886,6 +926,7 @@ code {
   position: absolute;
   inset: 0;
   background-image: url('field_station_day.jpg');
+  background-image: image-set(url('field_station_day.webp') type('image/webp'), url('field_station_day.jpg') type('image/jpeg'));
   background-size: cover;
   background-position: center 45%;
   transition: transform 0.8s ease, filter 0.6s ease;
@@ -894,6 +935,7 @@ code {
 
 body.is-night-mode .visual-backdrop {
   background-image: url('field_station_night.jpg');
+  background-image: image-set(url('field_station_night.webp') type('image/webp'), url('field_station_night.jpg') type('image/jpeg'));
 }
 
 .station-visual-card:hover .visual-backdrop {
@@ -2257,6 +2299,49 @@ body.is-night-mode .visual-backdrop {
   padding-left: 12px;
 }
 
+.dog-chip-group {
+  display: inline-flex;
+  align-items: stretch;
+  background: var(--panel-bg);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-xs);
+  overflow: hidden;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.dog-chip-group:hover {
+  border-color: var(--ink-secondary);
+}
+
+.dog-chip-group.active {
+  background: #13261B;
+  border-color: var(--signal-sage);
+}
+
+.dog-chip-select {
+  background: transparent;
+  border: none;
+  color: var(--ink-secondary);
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 5px 8px 5px 10px;
+  min-height: 28px;
+  cursor: pointer;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.dog-chip-group.active .dog-chip-select {
+  color: var(--signal-sage-soft);
+}
+
+.dog-chip-select:hover {
+  color: var(--ink-primary);
+}
+
 .dog-chip {
   font-family: var(--font-mono);
   font-size: 0.78rem;
@@ -2387,9 +2472,93 @@ body.is-night-mode .visual-backdrop {
   border-color: rgba(239, 68, 68, 0.45);
 }
 
-.hw-btn.danger-outline:hover {
+.hw-btn.danger-outline:hover:not(:disabled) {
   background: var(--signal-crimson-deep);
   color: #FFFFFF;
+}
+
+.hw-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.footer-right {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.portable-save-switch {
+  border-color: rgba(34, 197, 94, 0.45);
+}
+
+.portable-save-switch:hover {
+  border-color: var(--signal-sage);
+  background: #13261B;
+}
+
+.loc-lookup-box {
+  position: relative;
+  margin-bottom: 14px;
+}
+
+.loc-lookup-row {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+}
+
+.loc-lookup-row input {
+  flex: 1;
+  min-width: 0;
+  background: var(--panel-recessed);
+  border: 1px solid var(--border-strong);
+  color: var(--ink-primary);
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  padding: 8px 11px;
+  border-radius: var(--radius-xs);
+}
+
+.loc-lookup-results {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: var(--panel-elevated);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.72);
+  z-index: 50;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.loc-lookup-results.hidden {
+  display: none;
+}
+
+.checkbox-field {
+  margin-top: 4px;
+}
+
+.checkbox-label {
+  display: inline-flex !important;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  color: var(--ink-primary) !important;
+  font-family: var(--font-sans) !important;
+  font-size: 0.84rem !important;
+  font-weight: 500 !important;
+}
+
+.checkbox-label input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--signal-amber);
+  cursor: pointer;
 }
 
 /* ==========================================================================
@@ -3141,4 +3310,178 @@ body.is-night-mode .visual-backdrop {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+
+/* ==========================================================================
+   ARIA UX & WCAG 2.2 AA REFINEMENTS (F01, F02, F03, F04, F07, F15-F17, F21)
+   ========================================================================== */
+
+/* F01 / F02: Prevent CSS Grid Horizontal Blow-Out & Mobile Dialog Clipping */
+.instrument-deck {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+}
+@media (max-width: 1080px) {
+  .instrument-deck {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.panel,
+.hero-station-grid > *,
+.telemetry-gauges-col > * {
+  min-width: 0;
+}
+.hero-station-grid {
+  grid-template-columns: minmax(0, 440px) minmax(0, 1fr);
+}
+@media (max-width: 1080px) {
+  .hero-station-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.weekly-top-grid {
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  min-height: 180px;
+}
+@media (max-width: 1080px) {
+  .weekly-top-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+@media (max-width: 720px) {
+  .weekly-top-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+.almanac-metrics-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+@media (max-width: 720px) {
+  .almanac-metrics-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .waypoints-group {
+    flex-wrap: wrap;
+    overflow-x: visible;
+  }
+  .chips-container {
+    flex-wrap: wrap;
+  }
+}
+.resp-val {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+  overflow-wrap: anywhere;
+}
+.resp-label {
+  white-space: normal;
+}
+.dispatch-label {
+  flex-wrap: wrap;
+  white-space: normal;
+}
+.calibration-dialog {
+  max-width: min(580px, calc(100vw - 32px));
+}
+
+/* F21: Reserve Hero Space to Minimize CLS */
+.station-visual-card {
+  min-height: 310px;
+}
+
+/* F16: Strengthen Contrast Over Daytime Hero Illustration & Radar Severe Legend */
+.visual-scrim {
+  background: linear-gradient(180deg, rgba(13, 15, 17, 0.72) 0%, rgba(13, 15, 17, 0.56) 45%, rgba(13, 15, 17, 0.88) 100%);
+}
+.editorial-date {
+  display: inline-block;
+  background: rgba(13, 15, 17, 0.68);
+  padding: 2px 8px;
+  border-radius: var(--radius-xs);
+  color: #F2EFE9;
+}
+.extreme-val.high,
+.extreme-val.low {
+  background: rgba(13, 15, 17, 0.74);
+  padding: 2px 8px;
+  border-radius: var(--radius-xs);
+}
+.extreme-val.high {
+  color: #FECACA;
+}
+.extreme-val.low {
+  color: #BFDBFE;
+}
+.dbz-seg.extreme {
+  background: #B91C1C;
+  color: #FFFFFF;
+}
+
+/* F15 / F17: Accessible Scroll Strip Focus Rings & Minimum Target Sizes */
+.hourly-strip:focus-visible,
+.windows-ribbon:focus-visible {
+  outline: 2px solid var(--signal-amber);
+  outline-offset: 2px;
+  border-radius: var(--radius-xs);
+}
+.inline-help-trigger {
+  min-width: 24px;
+  min-height: 24px;
+}
+@media (pointer: coarse) {
+  .chip-remove-btn,
+  .chip-edit-btn,
+  .inline-help-trigger {
+    min-width: 36px;
+    min-height: 36px;
+  }
+}
+
+/* F03 / F04: Neutral NO DATA / Unavailable Styling */
+.instrument-gauge.status-unknown {
+  border-top-color: var(--ink-muted);
+}
+.instrument-gauge.status-unknown .status-pill,
+.status-pill.status-unknown {
+  background: #23272C;
+  color: var(--ink-secondary);
+  border-color: var(--border-strong);
+}
+.aqi-cell.is-unavailable .aqi-val {
+  color: var(--ink-muted);
+}
+
+/* F07: Collapsible Pavement Method & Source Citations */
+.pavement-method-note {
+  margin-top: 10px;
+  border-top: 1px solid var(--border-hairline);
+  padding-top: 8px;
+  font-size: 0.76rem;
+  color: var(--ink-secondary);
+}
+.pavement-method-note summary {
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  color: var(--ink-secondary);
+  list-style: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.pavement-method-note summary::-webkit-details-marker {
+  display: none;
+}
+.pavement-method-note summary:hover {
+  color: var(--ink-primary);
+}
+.pavement-method-body {
+  margin-top: 6px;
+  line-height: 1.5;
+  color: var(--ink-secondary);
+}
+.pavement-method-body a {
+  color: var(--signal-sky-soft);
+  text-decoration: underline;
 }

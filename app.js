@@ -18,6 +18,7 @@
     {
       id: 'dog_max',
       name: 'Max',
+      breed: '',
       size: 'medium',
       coat: 'double',
       snout: 'normal',
@@ -27,6 +28,7 @@
     {
       id: 'dog_bella',
       name: 'Bella',
+      breed: '',
       size: 'small',
       coat: 'short',
       snout: 'brachy',
@@ -36,6 +38,8 @@
   ];
 
   const DEFAULT_LOCATION = {
+    id: 'loc_nyc',
+    label: '',
     name: 'New York',
     state: 'New York',
     country: 'United States',
@@ -44,61 +48,183 @@
   };
 
   const DEFAULT_FAVORITES = [
-    { name: 'New York', state: 'New York', country: 'United States', lat: 40.7128, lon: -74.0060 },
-    { name: 'London', state: 'England', country: 'United Kingdom', lat: 51.5074, lon: -0.1278 },
-    { name: 'Tokyo', state: 'Tokyo', country: 'Japan', lat: 35.6762, lon: 139.6503 },
-    { name: 'Los Angeles', state: 'California', country: 'United States', lat: 34.0522, lon: -118.2437 }
+    { id: 'loc_nyc', label: '', name: 'New York', state: 'New York', country: 'United States', lat: 40.7128, lon: -74.0060 },
+    { id: 'loc_lon', label: '', name: 'London', state: 'England', country: 'United Kingdom', lat: 51.5074, lon: -0.1278 },
+    { id: 'loc_tok', label: '', name: 'Tokyo', state: 'Tokyo', country: 'Japan', lat: 35.6762, lon: 139.6503 },
+    { id: 'loc_lax', label: '', name: 'Los Angeles', state: 'California', country: 'United States', lat: 34.0522, lon: -118.2437 }
   ];
 
-  function initDogsPack() {
+  const EMBEDDED_STATE_SCRIPT_ID = 'pawcast-embedded-state';
+  let pristineDocumentHtml = null;
+
+  function normalizeDog(d, idx = 0) {
+    if (!d || typeof d.name !== 'string' || !d.name.trim()) return null;
+    return {
+      id: typeof d.id === 'string' && d.id ? d.id : `dog_${Date.now()}_${idx}`,
+      name: d.name.trim().slice(0, 40),
+      breed: typeof d.breed === 'string' ? d.breed.trim().slice(0, 80) : '',
+      size: ['small', 'medium', 'large'].includes(d.size) ? d.size : 'medium',
+      coat: ['short', 'double', 'hairless', 'dark'].includes(d.coat) ? d.coat : 'short',
+      snout: ['normal', 'brachy'].includes(d.snout) ? d.snout : 'normal',
+      allergy: ['normal', 'sensitive'].includes(d.allergy) ? d.allergy : 'normal',
+      age: ['puppy', 'adult', 'senior'].includes(d.age) ? d.age : 'adult'
+    };
+  }
+
+  function normalizeLocation(loc, idx = 0) {
+    if (!loc || typeof loc.name !== 'string' || !loc.name.trim()) return null;
+    const lat = Number(loc.lat);
+    const lon = Number(loc.lon);
+    if (!Number.isFinite(lat) || !Number.isFinite(lon) || lat < -90 || lat > 90 || lon < -180 || lon > 180) {
+      return null;
+    }
+    return {
+      id: typeof loc.id === 'string' && loc.id ? loc.id : `loc_${Date.now()}_${idx}`,
+      label: typeof loc.label === 'string' ? loc.label.trim().slice(0, 32) : '',
+      name: loc.name.trim().slice(0, 60),
+      state: typeof loc.state === 'string' ? loc.state.trim().slice(0, 60) : '',
+      country: typeof loc.country === 'string' ? loc.country.trim().slice(0, 60) : '',
+      lat: Number(lat.toFixed(4)),
+      lon: Number(lon.toFixed(4))
+    };
+  }
+
+  function getLocationDisplayName(loc) {
+    if (!loc) return 'Unknown';
+    return (loc.label && loc.label.trim()) ? loc.label.trim() : loc.name;
+  }
+
+  function isSameLocation(a, b) {
+    if (!a || !b) return false;
+    if (a.id && b.id && a.id === b.id) return true;
+    return a.name === b.name && Math.abs((a.lat || 0) - (b.lat || 0)) < 0.05 && Math.abs((a.lon || 0) - (b.lon || 0)) < 0.05;
+  }
+
+  function readEmbeddedState() {
+    try {
+      const node = document.getElementById(EMBEDDED_STATE_SCRIPT_ID);
+      if (!node || !node.textContent) return null;
+      const parsed = JSON.parse(node.textContent.trim());
+      if (!parsed || typeof parsed !== 'object') return null;
+      return parsed;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function getStorageString(key, fallback) {
+    try {
+      const val = localStorage.getItem(key);
+      return val !== null ? val : fallback;
+    } catch (e) {
+      return fallback;
+    }
+  }
+
+  function setStorageString(key, val) {
+    try {
+      localStorage.setItem(key, String(val));
+    } catch (e) {
+      /* ignore restricted storage */
+    }
+  }
+
+  function initDogsPack(embeddedDogs) {
+    if (Array.isArray(embeddedDogs) && embeddedDogs.length > 0) {
+      const cleaned = embeddedDogs.map((d, i) => normalizeDog(d, i)).filter(Boolean);
+      if (cleaned.length > 0) {
+        saveJSON('pawcast_dogs', cleaned);
+        return cleaned;
+      }
+    }
     const savedPack = loadJSON('pawcast_dogs', null);
     if (Array.isArray(savedPack) && savedPack.length > 0) {
-      return savedPack;
+      const cleaned = savedPack.map((d, i) => normalizeDog(d, i)).filter(Boolean);
+      if (cleaned.length > 0) return cleaned;
     }
     const legacySingle = loadJSON('pawcast_pet', null);
     if (legacySingle && legacySingle.name) {
-      const migrated = [
-        {
-          id: 'dog_' + Date.now(),
-          name: legacySingle.name,
-          size: legacySingle.size || 'medium',
-          coat: legacySingle.coat || 'double',
-          snout: legacySingle.snout || 'normal',
-          allergy: legacySingle.allergy || 'normal',
-          age: legacySingle.age || 'adult'
-        }
-      ];
-      saveJSON('pawcast_dogs', migrated);
-      return migrated;
+      const migrated = [normalizeDog(legacySingle, 0)].filter(Boolean);
+      if (migrated.length > 0) {
+        saveJSON('pawcast_dogs', migrated);
+        return migrated;
+      }
     }
     saveJSON('pawcast_dogs', DEFAULT_DOGS);
-    return DEFAULT_DOGS;
+    return DEFAULT_DOGS.map(d => ({ ...d }));
   }
 
-  const initialDogs = initDogsPack();
-  const initialActiveId = localStorage.getItem('pawcast_active_dog_id') || initialDogs[0].id;
+  function initFavoritesList(embeddedFavorites) {
+    if (Array.isArray(embeddedFavorites)) {
+      const cleaned = embeddedFavorites.map((f, i) => normalizeLocation(f, i)).filter(Boolean);
+      saveJSON('pawcast_favorites', cleaned);
+      return cleaned;
+    }
+    const savedFavs = loadJSON('pawcast_favorites', null);
+    if (Array.isArray(savedFavs)) {
+      const cleaned = savedFavs.map((f, i) => normalizeLocation(f, i)).filter(Boolean);
+      saveJSON('pawcast_favorites', cleaned);
+      return cleaned;
+    }
+    saveJSON('pawcast_favorites', DEFAULT_FAVORITES);
+    return DEFAULT_FAVORITES.map(f => ({ ...f }));
+  }
+
+  const embeddedState = readEmbeddedState();
+  const localUpdatedAt = parseInt(getStorageString('pawcast_state_updated_at', '0'), 10) || 0;
+  const embeddedSavedAt = embeddedState && Number(embeddedState.savedAt) > 0 ? Number(embeddedState.savedAt) : 0;
+  const preferEmbedded = embeddedSavedAt > 0 && (localUpdatedAt === 0 || embeddedSavedAt > localUpdatedAt);
+
+  if (preferEmbedded) {
+    setStorageString('pawcast_state_updated_at', embeddedSavedAt);
+    if (embeddedState.units === 'imperial' || embeddedState.units === 'metric') {
+      setStorageString('pawcast_units', embeddedState.units);
+    }
+    if (embeddedState.source === 'openmeteo' || embeddedState.source === 'nws') {
+      setStorageString('pawcast_source', embeddedState.source);
+    }
+    if (typeof embeddedState.refreshIntervalMins === 'number') {
+      setStorageString('pawcast_refresh_interval', embeddedState.refreshIntervalMins);
+    }
+    if (embeddedState.activeDogId) {
+      setStorageString('pawcast_active_dog_id', embeddedState.activeDogId);
+    }
+    if (embeddedState.location) {
+      const normLoc = normalizeLocation(embeddedState.location, 0);
+      if (normLoc) saveJSON('pawcast_location', normLoc);
+    }
+  }
+
+  const initialDogs = initDogsPack(preferEmbedded ? embeddedState.dogs : null);
+  const initialActiveId = (preferEmbedded && embeddedState.activeDogId) || getStorageString('pawcast_active_dog_id', initialDogs[0].id);
+  const initialFavorites = initFavoritesList(preferEmbedded ? embeddedState.favorites : null);
+  const rawInitialLocation = (preferEmbedded && embeddedState.location) || loadJSON('pawcast_location', DEFAULT_LOCATION);
+  const initialLocation = normalizeLocation(rawInitialLocation, 0) || { ...DEFAULT_LOCATION };
 
   let appState = {
-    location: loadJSON('pawcast_location', DEFAULT_LOCATION),
-    units: localStorage.getItem('pawcast_units') || 'imperial',
-    source: localStorage.getItem('pawcast_source') || 'openmeteo',
+    location: initialLocation,
+    units: getStorageString('pawcast_units', 'imperial'),
+    source: getStorageString('pawcast_source', 'openmeteo'),
     dogs: initialDogs,
     activeDogId: initialDogs.some(d => d.id === initialActiveId) ? initialActiveId : initialDogs[0].id,
-    favorites: loadJSON('pawcast_favorites', DEFAULT_FAVORITES),
+    favorites: initialFavorites,
     weather: null,
     airQuality: null,
     searchDebounce: null,
     searchResultsData: [],
     searchActiveIdx: -1,
+    locLookupDebounce: null,
+    locLookupResultsData: [],
 
     // Interactive Selection State
     selectedDayIdx: null,
     selectedHourIdx: 0,
     lastUpdatedAt: null,
     modalTriggerEl: null,
+    locationModalTriggerEl: null,
 
     // Auto-Polling State
-    refreshIntervalMins: parseInt(localStorage.getItem('pawcast_refresh_interval') || '10', 10),
+    refreshIntervalMins: parseInt(getStorageString('pawcast_refresh_interval', '10'), 10),
     nextRefreshTimestamp: Date.now() + (10 * 60 * 1000),
     countdownTimer: null,
     isRefreshing: false,
@@ -150,10 +276,14 @@
     // Multi-Dog Pack Roster Bar
     dogRosterChips: document.getElementById('dog-roster-chips'),
     addDogQuickBtn: document.getElementById('add-dog-quick-btn'),
+    manageDogsBtn: document.getElementById('manage-dogs-btn'),
     weeklyPackTag: document.getElementById('weekly-pack-tag'),
 
     favoriteChips: document.getElementById('favorite-chips'),
     addFavoriteBtn: document.getElementById('add-favorite-btn'),
+    manageLocationsBtn: document.getElementById('manage-locations-btn'),
+    savePortableHtmlBtn: document.getElementById('save-portable-html-btn'),
+    footerSaveHtmlBtn: document.getElementById('footer-save-html-btn'),
     activeSourceName: document.getElementById('active-source-name'),
     sourceSelect: document.getElementById('source-select'),
     nwsGovLink: document.getElementById('nws-gov-link'),
@@ -289,23 +419,129 @@
     newDogModalBtn: document.getElementById('new-dog-modal-btn'),
     dogSensitivityPreview: document.getElementById('dog-sensitivity-preview'),
     deleteDogBtn: document.getElementById('delete-dog-btn'),
+    modalSaveHtmlBtn: document.getElementById('modal-save-html-btn'),
     exportConfigBtn: document.getElementById('export-config-btn'),
     importConfigBtn: document.getElementById('import-config-btn'),
     importConfigFile: document.getElementById('import-config-file'),
     petProfileForm: document.getElementById('pet-profile-form'),
     dogIdInput: document.getElementById('dog-id'),
     dogNameInput: document.getElementById('dog-name'),
+    dogBreedInput: document.getElementById('dog-breed'),
     dogSizeSelect: document.getElementById('dog-size'),
     dogCoatSelect: document.getElementById('dog-coat'),
     dogSnoutSelect: document.getElementById('dog-snout'),
     dogAllergySelect: document.getElementById('dog-allergy'),
     dogAgeSelect: document.getElementById('dog-age'),
 
+    // Saved Locations Manager Modal (CRUD)
+    locationModal: document.getElementById('location-modal'),
+    closeLocationModalBtn: document.getElementById('close-location-modal-btn'),
+    cancelLocationModalBtn: document.getElementById('cancel-location-modal-btn'),
+    modalLocationList: document.getElementById('modal-location-list'),
+    newLocationModalBtn: document.getElementById('new-location-modal-btn'),
+    locLookupInput: document.getElementById('loc-lookup-input'),
+    locLookupResults: document.getElementById('loc-lookup-results'),
+    locUseGpsBtn: document.getElementById('loc-use-gps-btn'),
+    locationProfileForm: document.getElementById('location-profile-form'),
+    locIdInput: document.getElementById('loc-id'),
+    locLabelInput: document.getElementById('loc-label'),
+    locNameInput: document.getElementById('loc-name'),
+    locStateInput: document.getElementById('loc-state'),
+    locCountryInput: document.getElementById('loc-country'),
+    locLatInput: document.getElementById('loc-lat'),
+    locLonInput: document.getElementById('loc-lon'),
+    locSetActiveCheckbox: document.getElementById('loc-set-active'),
+    deleteLocationBtn: document.getElementById('delete-location-btn'),
+    locSaveHtmlBtn: document.getElementById('loc-save-html-btn'),
+
     // Toasts
     toastContainer: document.getElementById('toast-container')
   };
 
+  function capturePristineDocumentSnapshot() {
+    if (!pristineDocumentHtml && document.documentElement) {
+      pristineDocumentHtml = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
+    }
+  }
+
+  function buildPortableStatePayload(savedAtMs = Date.now()) {
+    return {
+      version: '7.0',
+      savedAt: savedAtMs,
+      dogs: appState.dogs,
+      activeDogId: appState.activeDogId,
+      favorites: appState.favorites,
+      location: appState.location,
+      units: appState.units,
+      source: appState.source,
+      refreshIntervalMins: appState.refreshIntervalMins
+    };
+  }
+
+  function serializeStateForScriptTag(payload) {
+    return JSON.stringify(payload).replace(/<\/script/gi, '<\\/script');
+  }
+
+  function syncEmbeddedStateTag(touchTimestamp = true) {
+    const now = Date.now();
+    if (touchTimestamp) {
+      setStorageString('pawcast_state_updated_at', now);
+    }
+    const payload = buildPortableStatePayload(touchTimestamp ? now : (parseInt(getStorageString('pawcast_state_updated_at', '0'), 10) || now));
+    const node = document.getElementById(EMBEDDED_STATE_SCRIPT_ID);
+    if (node) {
+      node.textContent = serializeStateForScriptTag(payload);
+    }
+    return payload;
+  }
+
+  async function handleSavePortableHtml() {
+    playHardwareClick(900);
+    const payload = syncEmbeddedStateTag(true);
+    const safeJson = serializeStateForScriptTag(payload);
+
+    let htmlDoc = pristineDocumentHtml || ('<!DOCTYPE html>\n' + document.documentElement.outerHTML);
+    const scriptRegex = /(<script\s+id=["']pawcast-embedded-state["']\s+type=["']application\/json["']>)([\s\S]*?)(<\/script>)/i;
+    if (scriptRegex.test(htmlDoc)) {
+      htmlDoc = htmlDoc.replace(scriptRegex, `$1${safeJson}$3`);
+    } else {
+      htmlDoc = htmlDoc.replace(/<\/body>/i, `  <script id="${EMBEDDED_STATE_SCRIPT_ID}" type="application/json">${safeJson}</script>\n</body>`);
+    }
+
+    const suggestedName = 'pawcast-local.html';
+
+    if (typeof window.showSaveFilePicker === 'function') {
+      try {
+        const handle = await window.showSaveFilePicker({
+          suggestedName,
+          types: [{ description: 'PawCast Portable HTML', accept: { 'text/html': ['.html', '.htm'] } }]
+        });
+        const writable = await handle.createWritable();
+        await writable.write(htmlDoc);
+        await writable.close();
+        showToast(`Saved portable HTML with ${appState.dogs.length} dog(s) & ${appState.favorites.length} location(s).`, { type: 'success' });
+        return;
+      } catch (err) {
+        if (err && err.name === 'AbortError') return;
+        // Fall back to standard download if picker fails or is blocked
+      }
+    }
+
+    const blob = new Blob([htmlDoc], { type: 'text/html;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = suggestedName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showToast(`Downloaded ${suggestedName} with ${appState.dogs.length} dog(s) & ${appState.favorites.length} location(s).`, { type: 'success' });
+  }
+
   function init() {
+    capturePristineDocumentSnapshot();
+    syncEmbeddedStateTag(false);
     setupEventListeners();
     initQuickNavScrollSpy();
     updateUIPreferences();
@@ -314,6 +550,20 @@
     initLiveRadarMap();
     initAutoRefreshSystem();
     fetchWeatherData(appState.location);
+    registerServiceWorker();
+  }
+
+  function registerServiceWorker() {
+    if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1')) {
+      navigator.serviceWorker.register('./sw.js').catch(() => { /* optional PWA */ });
+    }
+  }
+
+  function setBackgroundInert(isInert) {
+    const chassis = document.querySelector('.station-chassis');
+    if (chassis) {
+      chassis.inert = Boolean(isInert);
+    }
   }
 
   // ==========================================================================
@@ -474,7 +724,8 @@
     el.sourceSelect.addEventListener('change', (e) => {
       playHardwareClick(520);
       appState.source = e.target.value;
-      localStorage.setItem('pawcast_source', appState.source);
+      setStorageString('pawcast_source', appState.source);
+      syncEmbeddedStateTag();
       fetchWeatherData(appState.location);
     });
 
@@ -482,6 +733,65 @@
       playHardwareClick(800);
       addCurrentLocationToFavorites();
     });
+
+    if (el.manageLocationsBtn) {
+      el.manageLocationsBtn.addEventListener('click', () => {
+        playHardwareClick(680);
+        openLocationModal(null, el.manageLocationsBtn);
+      });
+    }
+
+    if (el.manageDogsBtn) {
+      el.manageDogsBtn.addEventListener('click', () => {
+        playHardwareClick(660);
+        openPetModal(appState.activeDogId, el.manageDogsBtn);
+      });
+    }
+
+    // Portable Local HTML Save Listeners
+    [el.savePortableHtmlBtn, el.footerSaveHtmlBtn, el.modalSaveHtmlBtn, el.locSaveHtmlBtn].forEach(btn => {
+      if (btn) {
+        btn.addEventListener('click', handleSavePortableHtml);
+      }
+    });
+
+    // Location Manager Modal Listeners
+    if (el.closeLocationModalBtn) el.closeLocationModalBtn.addEventListener('click', closeLocationModal);
+    if (el.cancelLocationModalBtn) el.cancelLocationModalBtn.addEventListener('click', closeLocationModal);
+    if (el.newLocationModalBtn) {
+      el.newLocationModalBtn.addEventListener('click', () => {
+        playHardwareClick(780);
+        populateLocationFormForNew();
+      });
+    }
+    if (el.deleteLocationBtn) {
+      el.deleteLocationBtn.addEventListener('click', handleDeleteLocationFromModal);
+    }
+    if (el.locationProfileForm) {
+      el.locationProfileForm.addEventListener('submit', handleSaveLocation);
+    }
+    if (el.locationModal) {
+      el.locationModal.addEventListener('click', (e) => {
+        if (e.target === el.locationModal) closeLocationModal();
+      });
+    }
+    if (el.locLookupInput) {
+      el.locLookupInput.addEventListener('input', (e) => {
+        const q = e.target.value.trim();
+        clearTimeout(appState.locLookupDebounce);
+        if (q.length < 2) {
+          closeLocLookupDropdown();
+          return;
+        }
+        appState.locLookupDebounce = setTimeout(() => fetchLocationLookup(q), 280);
+      });
+    }
+    if (el.locUseGpsBtn) {
+      el.locUseGpsBtn.addEventListener('click', () => {
+        playHardwareClick(740);
+        useGpsForLocationModal();
+      });
+    }
 
     // Multi-Dog Pack Listeners
     el.petProfileBtn.addEventListener('click', () => {
@@ -628,8 +938,9 @@
 
     // Global Keyboard Handlers (Escape & Modal Focus Trap)
     document.addEventListener('keydown', (e) => {
-      if (e.key === 'Tab' && el.petModal && !el.petModal.classList.contains('hidden')) {
-        trapModalFocus(e);
+      const openModal = getActiveModalEl();
+      if (e.key === 'Tab' && openModal) {
+        trapModalFocus(e, openModal);
         return;
       }
 
@@ -640,7 +951,9 @@
           setTimeout(() => p.classList.remove('dismissed'), 400);
         });
 
-        if (el.petModal && !el.petModal.classList.contains('hidden')) {
+        if (el.locationModal && !el.locationModal.classList.contains('hidden')) {
+          closeLocationModal();
+        } else if (el.petModal && !el.petModal.classList.contains('hidden')) {
           closePetModal();
         } else if (el.allergenHelpDrawer && !el.allergenHelpDrawer.classList.contains('hidden')) {
           toggleAllergenHelpDrawer(false);
@@ -662,12 +975,23 @@
       if (!el.locationInput.contains(e.target) && !el.searchResults.contains(e.target)) {
         closeSearchDropdown();
       }
+      if (el.locLookupInput && el.locLookupResults && !el.locLookupInput.contains(e.target) && !el.locLookupResults.contains(e.target)) {
+        closeLocLookupDropdown();
+      }
     });
   }
 
-  function trapModalFocus(e) {
+  function getActiveModalEl() {
+    if (el.locationModal && !el.locationModal.classList.contains('hidden')) return el.locationModal;
+    if (el.petModal && !el.petModal.classList.contains('hidden')) return el.petModal;
+    return null;
+  }
+
+  function trapModalFocus(e, modalEl) {
+    const targetModal = modalEl || el.petModal;
+    if (!targetModal) return;
     const focusables = Array.from(
-      el.petModal.querySelectorAll('button:not([disabled]):not([style*="display: none"]), input:not([type="hidden"]):not(.sr-only), select:not([disabled]), [tabindex]:not([tabindex="-1"])')
+      targetModal.querySelectorAll('button:not([disabled]):not([style*="display: none"]), input:not([type="hidden"]):not(.sr-only):not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])')
     ).filter(node => node.offsetParent !== null);
 
     if (!focusables.length) return;
@@ -749,23 +1073,43 @@
 
     appState.dogs.forEach(dog => {
       const isAct = dog.id === appState.activeDogId;
-      const chip = document.createElement('button');
-      chip.type = 'button';
-      chip.className = `dog-chip ${isAct ? 'active' : ''}`;
-      chip.setAttribute('aria-pressed', isAct ? 'true' : 'false');
-      chip.title = `Switch active dog profile to ${dog.name} (${capitalize(dog.size)}, ${capitalize(dog.coat)} coat, ${dog.allergy === 'sensitive' ? 'Allergy-Sensitive' : 'Standard'})`;
-      chip.textContent = `🐾 ${dog.name}`;
-      chip.addEventListener('click', () => {
+      const group = document.createElement('div');
+      group.className = `dog-chip-group ${isAct ? 'active' : ''}`;
+
+      const selectBtn = document.createElement('button');
+      selectBtn.type = 'button';
+      selectBtn.className = 'dog-chip-select';
+      selectBtn.setAttribute('aria-pressed', isAct ? 'true' : 'false');
+      const breedNote = dog.breed ? `${dog.breed}, ` : '';
+      selectBtn.title = `Switch active dog profile to ${dog.name} (${breedNote}${capitalize(dog.size)}, ${capitalize(dog.coat)} coat, ${dog.allergy === 'sensitive' ? 'Allergy-Sensitive' : 'Standard'})`;
+      selectBtn.textContent = `🐾 ${dog.name}`;
+      selectBtn.addEventListener('click', () => {
         playHardwareClick(700);
         setActiveDog(dog.id);
       });
-      el.dogRosterChips.appendChild(chip);
+
+      const editBtn = document.createElement('button');
+      editBtn.type = 'button';
+      editBtn.className = 'chip-edit-btn';
+      editBtn.setAttribute('aria-label', `Edit ${dog.name}'s profile`);
+      editBtn.title = `Edit ${dog.name}`;
+      editBtn.textContent = '✎';
+      editBtn.addEventListener('click', () => {
+        playHardwareClick(640);
+        setActiveDog(dog.id);
+        openPetModal(dog.id, editBtn);
+      });
+
+      group.appendChild(selectBtn);
+      group.appendChild(editBtn);
+      el.dogRosterChips.appendChild(group);
     });
   }
 
   function setActiveDog(dogId) {
     appState.activeDogId = dogId;
-    localStorage.setItem('pawcast_active_dog_id', dogId);
+    setStorageString('pawcast_active_dog_id', dogId);
+    syncEmbeddedStateTag();
     updateUIPreferences();
     renderDogRosterChips();
     if (appState.weather) {
@@ -843,19 +1187,26 @@
     }
     el.petModal.classList.remove('hidden');
     el.petModal.setAttribute('aria-hidden', 'false');
+    setBackgroundInert(true);
     if (el.dogNameInput) el.dogNameInput.focus();
   }
 
   function populateFormWithDog(dog) {
     el.dogIdInput.value = dog.id;
     el.dogNameInput.value = dog.name;
+    if (el.dogBreedInput) el.dogBreedInput.value = dog.breed || '';
     el.dogSizeSelect.value = dog.size || 'medium';
     el.dogCoatSelect.value = dog.coat || 'double';
     el.dogSnoutSelect.value = dog.snout || 'normal';
     if (el.dogAllergySelect) el.dogAllergySelect.value = dog.allergy || 'normal';
     el.dogAgeSelect.value = dog.age || 'adult';
     if (el.deleteDogBtn) {
-      el.deleteDogBtn.style.display = appState.dogs.length > 1 ? 'inline-flex' : 'none';
+      el.deleteDogBtn.style.display = 'inline-flex';
+      const canDelete = appState.dogs.length > 1;
+      el.deleteDogBtn.disabled = !canDelete;
+      el.deleteDogBtn.title = canDelete
+        ? `Remove ${dog.name} from saved dogs`
+        : 'At least one dog profile is required';
     }
     renderModalDogList(dog.id);
     updateModalSensitivityPreview();
@@ -865,6 +1216,7 @@
     el.dogIdInput.value = '';
     el.dogNameInput.value = '';
     el.dogNameInput.placeholder = 'Enter new dog name (e.g. Cooper, Daisy)...';
+    if (el.dogBreedInput) el.dogBreedInput.value = '';
     el.dogSizeSelect.value = 'medium';
     el.dogCoatSelect.value = 'short';
     el.dogSnoutSelect.value = 'normal';
@@ -872,6 +1224,7 @@
     el.dogAgeSelect.value = 'adult';
     if (el.deleteDogBtn) {
       el.deleteDogBtn.style.display = 'none';
+      el.deleteDogBtn.disabled = false;
     }
     renderModalDogList('');
     updateModalSensitivityPreview();
@@ -881,6 +1234,7 @@
   function closePetModal() {
     el.petModal.classList.add('hidden');
     el.petModal.setAttribute('aria-hidden', 'true');
+    if (!getActiveModalEl()) setBackgroundInert(false);
     const restoreTarget = appState.modalTriggerEl || el.petProfileBtn;
     if (restoreTarget && typeof restoreTarget.focus === 'function') {
       restoreTarget.focus();
@@ -895,7 +1249,8 @@
     const nameVal = el.dogNameInput.value.trim() || 'My Dog';
     const updatedDog = {
       id: existingId || ('dog_' + Date.now()),
-      name: nameVal,
+      name: nameVal.slice(0, 40),
+      breed: el.dogBreedInput ? el.dogBreedInput.value.trim().slice(0, 80) : '',
       size: el.dogSizeSelect.value,
       coat: el.dogCoatSelect.value,
       snout: el.dogSnoutSelect.value,
@@ -913,7 +1268,8 @@
 
     appState.activeDogId = updatedDog.id;
     saveJSON('pawcast_dogs', appState.dogs);
-    localStorage.setItem('pawcast_active_dog_id', appState.activeDogId);
+    setStorageString('pawcast_active_dog_id', appState.activeDogId);
+    syncEmbeddedStateTag();
 
     updateUIPreferences();
     renderDogRosterChips();
@@ -937,7 +1293,8 @@
     appState.activeDogId = appState.dogs[0].id;
 
     saveJSON('pawcast_dogs', appState.dogs);
-    localStorage.setItem('pawcast_active_dog_id', appState.activeDogId);
+    setStorageString('pawcast_active_dog_id', appState.activeDogId);
+    syncEmbeddedStateTag();
 
     updateUIPreferences();
     renderDogRosterChips();
@@ -951,7 +1308,8 @@
         appState.dogs.splice(Math.min(dogIndex, appState.dogs.length), 0, removedDog);
         appState.activeDogId = previousActiveId;
         saveJSON('pawcast_dogs', appState.dogs);
-        localStorage.setItem('pawcast_active_dog_id', appState.activeDogId);
+        setStorageString('pawcast_active_dog_id', appState.activeDogId);
+        syncEmbeddedStateTag();
         updateUIPreferences();
         renderDogRosterChips();
         if (!el.petModal.classList.contains('hidden')) {
@@ -965,17 +1323,8 @@
 
   function handleExportConfiguration() {
     playHardwareClick(900);
-    const configPayload = {
-      version: '6.0',
-      exportedAt: new Date().toISOString(),
-      dogs: appState.dogs,
-      activeDogId: appState.activeDogId,
-      favorites: appState.favorites,
-      location: appState.location,
-      units: appState.units,
-      source: appState.source,
-      refreshIntervalMins: appState.refreshIntervalMins
-    };
+    const configPayload = buildPortableStatePayload(Date.now());
+    configPayload.exportedAt = new Date().toISOString();
 
     const blob = new Blob([JSON.stringify(configPayload, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -1002,16 +1351,8 @@
         }
 
         const sanitizedDogs = parsed.dogs
-          .filter(d => d && typeof d.name === 'string' && d.name.trim())
-          .map((d, idx) => ({
-            id: typeof d.id === 'string' && d.id ? d.id : `dog_imp_${Date.now()}_${idx}`,
-            name: d.name.trim().slice(0, 40),
-            size: ['small', 'medium', 'large'].includes(d.size) ? d.size : 'medium',
-            coat: ['short', 'double', 'hairless', 'dark'].includes(d.coat) ? d.coat : 'short',
-            snout: ['normal', 'brachy'].includes(d.snout) ? d.snout : 'normal',
-            allergy: ['normal', 'sensitive'].includes(d.allergy) ? d.allergy : 'normal',
-            age: ['puppy', 'adult', 'senior'].includes(d.age) ? d.age : 'adult'
-          }));
+          .map((d, idx) => normalizeDog(d, idx))
+          .filter(Boolean);
 
         if (!sanitizedDogs.length) throw new Error('Invalid dog profile entries.');
 
@@ -1020,29 +1361,33 @@
           ? parsed.activeDogId
           : sanitizedDogs[0].id;
         saveJSON('pawcast_dogs', appState.dogs);
-        localStorage.setItem('pawcast_active_dog_id', appState.activeDogId);
+        setStorageString('pawcast_active_dog_id', appState.activeDogId);
 
-        if (Array.isArray(parsed.favorites) && parsed.favorites.length > 0) {
-          appState.favorites = parsed.favorites.filter(f => f && f.name && typeof f.lat === 'number' && typeof f.lon === 'number');
+        if (Array.isArray(parsed.favorites)) {
+          appState.favorites = parsed.favorites.map((f, i) => normalizeLocation(f, i)).filter(Boolean);
           saveJSON('pawcast_favorites', appState.favorites);
         }
 
         if (parsed.units === 'imperial' || parsed.units === 'metric') {
           appState.units = parsed.units;
-          localStorage.setItem('pawcast_units', appState.units);
+          setStorageString('pawcast_units', appState.units);
         }
 
-        if (parsed.location && typeof parsed.location.lat === 'number' && typeof parsed.location.lon === 'number') {
-          appState.location = parsed.location;
-          saveJSON('pawcast_location', appState.location);
+        if (parsed.location) {
+          const normLoc = normalizeLocation(parsed.location, 0);
+          if (normLoc) {
+            appState.location = normLoc;
+            saveJSON('pawcast_location', appState.location);
+          }
         }
 
+        syncEmbeddedStateTag();
         updateUIPreferences();
         renderDogRosterChips();
         renderFavoriteChips();
         populateFormWithDog(getActiveDog());
         fetchWeatherData(appState.location);
-        showToast(`Restored ${appState.dogs.length} dog profile(s) and ${appState.favorites.length} saved city(ies).`, { type: 'success' });
+        showToast(`Restored ${appState.dogs.length} dog profile(s) and ${appState.favorites.length} saved location(s).`, { type: 'success' });
       } catch (err) {
         showToast(`Import failed: ${err.message || 'Invalid JSON backup file.'}`, { type: 'error' });
       }
@@ -1249,7 +1594,8 @@
       el.autoRefreshSelect.addEventListener('change', (e) => {
         playHardwareClick(600);
         appState.refreshIntervalMins = parseInt(e.target.value, 10);
-        localStorage.setItem('pawcast_refresh_interval', appState.refreshIntervalMins);
+        setStorageString('pawcast_refresh_interval', appState.refreshIntervalMins);
+        syncEmbeddedStateTag();
         resetAutoRefreshTimer();
       });
     }
@@ -1517,9 +1863,15 @@
 
   async function fetchWeatherData(loc) {
     setStationSyncState('syncing');
-    el.cityName.textContent = loc.name;
+    const displayTitle = getLocationDisplayName(loc);
+    el.cityName.textContent = displayTitle;
     if (el.cityRegion) {
-      const regionParts = [loc.state, loc.country].filter(Boolean);
+      const regionParts = [];
+      if (loc.label && loc.label.trim() && loc.label.trim() !== loc.name) {
+        regionParts.push(loc.name);
+      }
+      if (loc.state) regionParts.push(loc.state);
+      if (loc.country) regionParts.push(loc.country);
       el.cityRegion.textContent = regionParts.join(', ');
     }
     el.currentDate.textContent = new Date().toLocaleDateString('en-US', {
@@ -1548,10 +1900,16 @@
 
     try {
       let data = null;
+      let omError = null;
       const aqPromise = fetchAirQualityData(loc.lat, loc.lon);
-      const omPromise = fetchOpenMeteoData(loc.lat, loc.lon).catch(() => null);
+      const omPromise = fetchOpenMeteoData(loc.lat, loc.lon).catch((e) => {
+        omError = e;
+        return null;
+      });
+      const isLikelyUS = loc.country === 'United States' ||
+        (loc.lat >= 24 && loc.lat <= 50 && loc.lon >= -125 && loc.lon <= -66);
 
-      if (appState.source === 'nws' && loc.country === 'United States') {
+      if (appState.source === 'nws' && isLikelyUS) {
         const [nwsData, omData] = await Promise.all([
           fetchNWSData(loc.lat, loc.lon),
           omPromise
@@ -1559,9 +1917,10 @@
         if (nwsData) {
           if (omData) {
             if (nwsData.daily.length < 7) {
-              const existingDates = new Set(nwsData.daily.map(d => d.date.toDateString()));
+              const existingDates = new Set(nwsData.daily.map(d => d.isoDate || d.date.toDateString()));
               omData.daily.forEach(omDay => {
-                if (nwsData.daily.length < 7 && !existingDates.has(omDay.date.toDateString())) {
+                const key = omDay.isoDate || omDay.date.toDateString();
+                if (nwsData.daily.length < 7 && !existingDates.has(key)) {
                   nwsData.daily.push(omDay);
                 }
               });
@@ -1584,10 +1943,22 @@
 
       if (!data) {
         data = await omPromise;
-        el.activeSourceName.textContent = 'Open-Meteo + CAMS Air Quality + RainViewer';
+        if (data) {
+          el.activeSourceName.textContent = 'Open-Meteo + CAMS Air Quality + RainViewer';
+        } else if (isLikelyUS) {
+          // Automatic fallback to NOAA NWS when Open-Meteo is rate-limited (429) or unreachable
+          const nwsFallback = await fetchNWSData(loc.lat, loc.lon);
+          if (nwsFallback) {
+            data = nwsFallback;
+            el.activeSourceName.textContent = 'NOAA / NWS (Auto-Fallback) + RainViewer';
+          }
+        }
       }
 
-      if (!data) throw new Error('All weather sources failed');
+      if (!data) {
+        const err = omError || new Error('All weather sources failed');
+        throw err;
+      }
 
       appState.airQuality = await aqPromise;
       appState.weather = data;
@@ -1611,18 +1982,83 @@
     } catch (err) {
       console.error('Weather fetch error:', err);
       setStationSyncState('error');
-      if (el.lastUpdatedTag) el.lastUpdatedTag.textContent = 'Offline';
+      if (el.lastUpdatedTag) el.lastUpdatedTag.textContent = 'No Data';
+      const isRateLimited = err && err.status === 429;
+      const retryMins = appState.refreshIntervalMins > 0 ? appState.refreshIntervalMins : 10;
+      const reasonText = isRateLimited
+        ? `Weather service busy (rate limit) for ${loc.name} — retrying in ${retryMins} min.`
+        : `Unable to load live weather for ${loc.name}. Data unavailable.`;
+      renderNoData(reasonText);
       if (el.weatherStatusBanner) {
         el.weatherStatusBanner.classList.remove('hidden');
         el.weatherStatusBanner.classList.add('error');
         if (el.weatherStatusText) {
-          el.weatherStatusText.textContent = `Unable to load live weather for ${loc.name}. Check your connection and try again.`;
+          el.weatherStatusText.textContent = reasonText;
         }
         if (el.weatherRetryBtn) {
           el.weatherRetryBtn.classList.remove('hidden');
         }
       }
     }
+  }
+
+  function renderNoData(reasonText) {
+    appState.weather = null;
+    appState.todayAllergyProfile = null;
+    if (el.currentTemp) el.currentTemp.textContent = '—';
+    if (el.heroFeelsInline) el.heroFeelsInline.textContent = 'Feels —';
+    if (el.tempHigh) el.tempHigh.textContent = 'HIGH —';
+    if (el.tempLow) el.tempLow.textContent = 'LOW —';
+    if (el.weatherConditionText) el.weatherConditionText.textContent = 'DATA UNAVAILABLE';
+    if (el.weatherMainEmoji) el.weatherMainEmoji.textContent = '⚠️';
+
+    if (el.boxHeatSafety) el.boxHeatSafety.className = 'instrument-gauge status-unknown';
+    if (el.heatStatusPill) {
+      el.heatStatusPill.textContent = 'NO DATA';
+      el.heatStatusPill.className = 'status-pill status-unknown';
+    }
+    if (el.heatStatusTitle) el.heatStatusTitle.textContent = 'Weather data unavailable';
+    if (el.heatSafetyDesc) el.heatSafetyDesc.textContent = reasonText || 'Live weather telemetry could not be loaded.';
+
+    if (el.boxPawSafety) el.boxPawSafety.className = 'instrument-gauge status-unknown';
+    if (el.pawStatusPill) {
+      el.pawStatusPill.textContent = 'NO DATA';
+      el.pawStatusPill.className = 'status-pill status-unknown';
+    }
+    if (el.pawStatusTitle) el.pawStatusTitle.textContent = 'Walk check unavailable';
+    if (el.pawSafetyDesc) {
+      el.pawSafetyDesc.textContent = "We could not load weather data, so we can't estimate pavement heat. Use the 7-second bare-hand test before walking.";
+    }
+    if (el.walkChecklistRow) el.walkChecklistRow.innerHTML = '';
+    if (el.packAdvisoryBanner) el.packAdvisoryBanner.classList.add('hidden');
+
+    if (el.heroAllergyPill) {
+      el.heroAllergyPill.textContent = '🌿 Allergy: Unavailable';
+      el.heroAllergyPill.className = 'hero-allergy-pill';
+    }
+    if (el.heroDominantPollen) el.heroDominantPollen.textContent = 'Top: —';
+    if (el.heroAqiPill) el.heroAqiPill.textContent = 'AQI —';
+    if (el.allergyDataSourceTag) el.allergyDataSourceTag.textContent = 'Unavailable';
+    if (el.aqiBadge) el.aqiBadge.textContent = 'US AQI: Unavailable';
+    if (el.allergyOverallBadge) {
+      el.allergyOverallBadge.textContent = 'NO DATA';
+      el.allergyOverallBadge.className = 'status-pill status-unknown';
+    }
+    if (el.allergyProtocolCard) el.allergyProtocolCard.className = 'allergy-protocol-card';
+    if (el.allergyVerdictTitle) el.allergyVerdictTitle.textContent = 'Air Quality & Pollen Unavailable';
+    if (el.allergyVerdictDesc) el.allergyVerdictDesc.textContent = 'Weather and air quality data could not be loaded.';
+    if (el.symptomWatchRow) el.symptomWatchRow.innerHTML = '';
+
+    document.querySelectorAll('.resp-val, .sensor-reading, .surf-mono-val, .allergen-level, .aqi-val').forEach(node => {
+      node.textContent = '—';
+    });
+    document.querySelectorAll('.sensor-sub').forEach(node => {
+      node.textContent = 'Data unavailable';
+    });
+    document.querySelectorAll('.allergen-bar-fill, .sensor-fill').forEach(bar => {
+      bar.style.width = '0%';
+    });
+    document.querySelectorAll('.aqi-cell').forEach(cell => cell.classList.add('is-unavailable'));
   }
 
   async function fetchAirQualityData(lat, lon) {
@@ -1754,10 +2190,10 @@
     }
 
     const hasLiveAqi = !!(aqData && typeof aqData.us_aqi === 'number');
-    const usAqi = hasLiveAqi ? Math.round(aqData.us_aqi) : 34;
-    const pm25 = (aqData && typeof aqData.pm2_5 === 'number') ? aqData.pm2_5.toFixed(1) : '7.2';
-    const pm10 = (aqData && typeof aqData.pm10 === 'number') ? aqData.pm10.toFixed(1) : '12.4';
-    const ozone = (aqData && typeof aqData.ozone === 'number') ? Math.round(aqData.ozone) : 68;
+    const usAqi = hasLiveAqi ? Math.round(aqData.us_aqi) : null;
+    const pm25 = (aqData && typeof aqData.pm2_5 === 'number') ? aqData.pm2_5.toFixed(1) : null;
+    const pm10 = (aqData && typeof aqData.pm10 === 'number') ? aqData.pm10.toFixed(1) : null;
+    const ozone = (aqData && typeof aqData.ozone === 'number') ? Math.round(aqData.ozone) : null;
 
     return {
       grassScore,
@@ -1781,18 +2217,20 @@
     if (!el.pollenGrassVal) return null;
     const pet = getActiveDog();
     const profile = computeAeroallergenProfile(curWeather, appState.airQuality, appState.location.lat);
+    appState.todayAllergyProfile = profile;
 
     if (el.allergyDataSourceTag) {
       if (profile.hasLivePollen && profile.hasLiveAqi) {
-        el.allergyDataSourceTag.textContent = 'Live CAMS + EPA';
+        el.allergyDataSourceTag.textContent = 'Live CAMS Pollen + EPA AQI · Est. Mold';
       } else if (profile.hasLiveAqi) {
-        el.allergyDataSourceTag.textContent = 'Live EPA AQI · Est. Pollen';
+        el.allergyDataSourceTag.textContent = 'Live EPA AQI · Estimated Pollen/Mold (Seasonal Model)';
       } else {
-        el.allergyDataSourceTag.textContent = 'Seasonal Estimate';
+        el.allergyDataSourceTag.textContent = 'Estimated (Seasonal Model) · AQI Unavailable';
       }
     }
 
-    const setChannelUI = (valEl, barEl, score) => {
+    const estSuffix = profile.hasLivePollen ? '' : ' Est.';
+    const setChannelUI = (valEl, barEl, score, alwaysEstimated = false) => {
       let tier = 'LOW';
       let cls = 'safe';
       if (score >= 6.5) {
@@ -1802,73 +2240,97 @@
         tier = 'MODERATE';
         cls = 'caution';
       }
-      valEl.textContent = `${tier} (${score.toFixed(1)} / 10)`;
+      const suffix = alwaysEstimated ? ' Est.' : estSuffix;
+      valEl.textContent = `${tier} (${score.toFixed(1)} / 10${suffix})`;
       barEl.className = `allergen-bar-fill ${cls}`;
       barEl.style.width = `${Math.max(5, score * 10)}%`;
     };
 
-    setChannelUI(el.pollenGrassVal, el.pollenGrassBar, profile.grassScore);
-    setChannelUI(el.pollenTreeVal, el.pollenTreeBar, profile.treeScore);
-    setChannelUI(el.pollenWeedVal, el.pollenWeedBar, profile.weedScore);
-    setChannelUI(el.pollenMoldVal, el.pollenMoldBar, profile.moldScore);
+    setChannelUI(el.pollenGrassVal, el.pollenGrassBar, profile.grassScore, false);
+    setChannelUI(el.pollenTreeVal, el.pollenTreeBar, profile.treeScore, false);
+    setChannelUI(el.pollenWeedVal, el.pollenWeedBar, profile.weedScore, false);
+    setChannelUI(el.pollenMoldVal, el.pollenMoldBar, profile.moldScore, true);
 
-    el.aqiNumVal.textContent = profile.hasLiveAqi ? `${profile.usAqi}` : `~${profile.usAqi}`;
-    el.pm25Val.textContent = `${profile.pm25} µg/m³`;
-    el.pm10Val.textContent = `${profile.pm10} µg/m³`;
-    el.ozoneVal.textContent = `${profile.ozone} µg/m³`;
+    const setAqCell = (valEl, text, isAvail) => {
+      if (!valEl) return;
+      valEl.textContent = isAvail ? text : '—';
+      const cell = valEl.closest('.aqi-cell');
+      if (cell) cell.classList.toggle('is-unavailable', !isAvail);
+    };
 
-    let aqiCat = 'GOOD';
-    if (profile.usAqi > 150) aqiCat = 'UNHEALTHY';
-    else if (profile.usAqi > 100) aqiCat = 'SENSITIVE HAZARD';
-    else if (profile.usAqi > 50) aqiCat = 'MODERATE';
-    el.aqiBadge.textContent = `US AQI: ${profile.usAqi} (${aqiCat})`;
+    setAqCell(el.aqiNumVal, `${profile.usAqi}`, profile.usAqi !== null);
+    setAqCell(el.pm25Val, `${profile.pm25} µg/m³`, profile.pm25 !== null);
+    setAqCell(el.pm10Val, `${profile.pm10} µg/m³`, profile.pm10 !== null);
+    setAqCell(el.ozoneVal, `${profile.ozone} µg/m³`, profile.ozone !== null);
+
+    let aqiCat = null;
+    if (profile.usAqi !== null) {
+      if (profile.usAqi > 300) aqiCat = 'HAZARDOUS';
+      else if (profile.usAqi > 200) aqiCat = 'VERY UNHEALTHY';
+      else if (profile.usAqi > 150) aqiCat = 'UNHEALTHY';
+      else if (profile.usAqi > 100) aqiCat = 'UNHEALTHY FOR SENSITIVE';
+      else if (profile.usAqi > 50) aqiCat = 'MODERATE';
+      else aqiCat = 'GOOD';
+      el.aqiBadge.textContent = `US AQI: ${profile.usAqi} (${aqiCat})`;
+    } else {
+      el.aqiBadge.textContent = 'US AQI: Unavailable';
+    }
 
     const maxPollen = profile.maxScore;
     const isAtopicDog = pet.allergy === 'sensitive';
     const isBrachy = pet.snout === 'brachy';
     const effectivePollenRisk = maxPollen + (isAtopicDog ? 1.5 : 0);
-    const effectiveAqiRisk = profile.usAqi + (isBrachy ? 20 : 0);
+    const effectiveAqiRisk = profile.usAqi !== null ? (profile.usAqi + (isBrachy ? 20 : 0)) : 0;
 
     let overallStatus = 'green';
-    let badgeLabel = 'ALLERGY RISK: LOW';
+    let badgeLabel = profile.hasLivePollen ? 'ALLERGY RISK: LOW' : 'EST. ALLERGY: LOW';
     let shortRiskLabel = 'Low';
-    let verdictTitle = 'Clean Air & Low Seasonal Pollen';
-    let verdictDesc = `Air quality is ${aqiCat.toLowerCase()} (AQI ${profile.usAqi}) with minimal airborne pollen. Ideal conditions for outdoor exercise, yard work, and walking ${pet.name}.`;
-    let sinusLabel = '🌬️ Sinus / Hay Fever: Low';
-    let exerciseLabel = '🏃 Outdoor Exercise: Ideal';
+    let verdictTitle = profile.hasLiveAqi ? 'Clean Air & Low Estimated Pollen' : 'Low Estimated Seasonal Pollen (AQI Unavailable)';
+    let verdictDesc = profile.hasLiveAqi
+      ? `Air quality is ${aqiCat.toLowerCase()} (AQI ${profile.usAqi}) with low ${profile.hasLivePollen ? '' : 'estimated '}pollen. Comfortable conditions for walking ${pet.name}.`
+      : `Live air-quality telemetry is currently unavailable. Seasonal weather model indicates low pollen/mold activity for ${pet.name}.`;
+    let sinusLabel = '🌬️ Sinus / Hay Fever: Low (Est.)';
+    let exerciseLabel = profile.hasLiveAqi ? '🏃 Outdoor Exercise: Ideal' : '🏃 Air Quality: Unavailable';
     let canineLabel = `🐾 ${pet.name}: Standard Coat Check`;
 
-    if (effectivePollenRisk >= 6.8 || effectiveAqiRisk >= 115) {
+    if (effectivePollenRisk >= 6.8 || (profile.usAqi !== null && effectiveAqiRisk >= 115)) {
       overallStatus = 'red';
-      badgeLabel = 'ALLERGY RISK: HIGH';
+      badgeLabel = profile.hasLivePollen ? 'ALLERGY RISK: HIGH' : 'EST. ALLERGY: HIGH';
       shortRiskLabel = 'High';
-      verdictTitle = 'Elevated Pollen & Particulate Advisory';
-      verdictDesc = `High seasonal aeroallergen or particulate load detected. Allergy sufferers may experience sinus congestion; limit prolonged afternoon cardio and wipe ${pet.name}'s paws and coat after walks.`;
-      sinusLabel = '🌬️ Sinus / Hay Fever: High';
-      exerciseLabel = profile.usAqi > 100 ? '🏃 Exercise: Limit Cardio' : '🏃 Exercise: Morning Best';
+      verdictTitle = profile.usAqi !== null && effectiveAqiRisk >= 115
+        ? 'Elevated Air Quality & Allergen Advisory'
+        : 'High Estimated Pollen & Spore Activity';
+      verdictDesc = `Elevated ${profile.usAqi !== null && effectiveAqiRisk >= 115 ? `air pollution (AQI ${profile.usAqi}) or ` : ''}seasonal aeroallergen estimate. Limit prolonged afternoon exertion and wipe ${pet.name}'s paws and coat after walks.`;
+      sinusLabel = '🌬️ Sinus / Hay Fever: High (Est.)';
+      exerciseLabel = (profile.usAqi !== null && profile.usAqi > 100) ? '🏃 Exercise: Limit Cardio' : '🏃 Exercise: Morning Best';
       canineLabel = `🐾 ${pet.name}: Wipe Paws & Coat`;
-    } else if (effectivePollenRisk >= 3.8 || effectiveAqiRisk >= 65) {
+    } else if (effectivePollenRisk >= 3.8 || (profile.usAqi !== null && effectiveAqiRisk >= 65)) {
       overallStatus = 'yellow';
-      badgeLabel = 'ALLERGY RISK: MODERATE';
+      badgeLabel = profile.hasLivePollen ? 'ALLERGY RISK: MODERATE' : 'EST. ALLERGY: MODERATE';
       shortRiskLabel = 'Moderate';
-      verdictTitle = 'Moderate Seasonal Pollen & Spore Activity';
-      verdictDesc = `Moderate airborne pollen and mold spores present. Sensitive individuals may notice mild hay fever symptoms on breezy afternoons. Quick paw rinse advised for ${pet.name} after grassy walks.`;
-      sinusLabel = '🌬️ Sinus / Hay Fever: Moderate';
-      exerciseLabel = '🏃 Outdoor Exercise: Good';
+      verdictTitle = 'Moderate Estimated Pollen & Spore Activity';
+      verdictDesc = `Moderate ${profile.hasLivePollen ? '' : 'estimated '}pollen and mold spore activity${profile.hasLiveAqi ? ` (AQI ${profile.usAqi})` : ' (live AQI unavailable)'}. Quick paw rinse advised for ${pet.name} after grassy walks.`;
+      sinusLabel = '🌬️ Sinus / Hay Fever: Moderate (Est.)';
+      exerciseLabel = profile.hasLiveAqi ? '🏃 Outdoor Exercise: Good' : '🏃 Air Quality: Unavailable';
       canineLabel = `🐾 ${pet.name}: Rinse Paws if Itchy`;
     }
 
     // Update Hero Real-Time Allergy Bar
     if (el.heroAllergyPill) {
-      el.heroAllergyPill.textContent = `🌿 Allergy: ${shortRiskLabel} (${profile.maxScore.toFixed(1)}/10)`;
+      const prefix = profile.hasLivePollen ? '🌿 Allergy:' : '🌿 Est. Allergy:';
+      el.heroAllergyPill.textContent = `${prefix} ${shortRiskLabel} (${profile.maxScore.toFixed(1)}/10)`;
       el.heroAllergyPill.className = `hero-allergy-pill ${overallStatus === 'green' ? '' : overallStatus}`.trim();
     }
     if (el.heroDominantPollen) {
       el.heroDominantPollen.textContent = `Top: ${profile.dominantName} (${profile.maxScore.toFixed(1)})`;
     }
     if (el.heroAqiPill) {
-      const aqiShort = profile.usAqi <= 50 ? 'Good' : profile.usAqi <= 100 ? 'Mod' : 'High';
-      el.heroAqiPill.textContent = `AQI ${profile.usAqi} · ${aqiShort}`;
+      if (profile.usAqi !== null) {
+        const aqiShort = profile.usAqi <= 50 ? 'Good' : profile.usAqi <= 100 ? 'Mod' : 'High';
+        el.heroAqiPill.textContent = `AQI ${profile.usAqi} · ${aqiShort}`;
+      } else {
+        el.heroAqiPill.textContent = 'AQI Unavailable';
+      }
     }
 
     el.allergyOverallBadge.textContent = badgeLabel;
@@ -1892,28 +2354,45 @@
   async function fetchOpenMeteoData(lat, lon) {
     const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,weather_code,surface_pressure,wind_speed_10m,wind_direction_10m,wind_gusts_10m&hourly=temperature_2m,relative_humidity_2m,dew_point_2m,apparent_temperature,precipitation_probability,weather_code,surface_pressure,wind_speed_10m,uv_index,visibility,is_day&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,precipitation_sum,wind_speed_10m_max,uv_index_max,sunrise,sunset&forecast_days=8&timezone=auto`;
     const res = await fetch(url);
-    if (!res.ok) throw new Error('Open-Meteo failed');
+    if (!res.ok) {
+      const err = new Error(`Open-Meteo HTTP ${res.status}`);
+      err.status = res.status;
+      throw err;
+    }
     return parseOpenMeteoPayload(await res.json());
+  }
+
+  function formatLocalHourFromIso(isoStr) {
+    if (!isoStr || isoStr.length < 13) return '';
+    const hr = parseInt(isoStr.slice(11, 13), 10);
+    if (isNaN(hr)) return '';
+    const h12 = hr % 12 || 12;
+    return `${h12}${hr < 12 ? 'AM' : 'PM'}`;
   }
 
   function parseOpenMeteoPayload(raw) {
     const cur = raw.current;
     const h = raw.hourly;
     const d = raw.daily;
+    const locTz = raw.timezone || null;
 
-    const nowMs = Date.now() - (30 * 60 * 1000);
+    // Use the location's own local wall-clock time (cur.time) instead of browser timezone (F10)
+    const curTimeIso = typeof cur.time === 'string' ? cur.time : '';
+    const curHourPrefix = curTimeIso.slice(0, 13); // "YYYY-MM-DDTHH"
     let startHourIdx = 0;
-    for (let i = 0; i < h.time.length; i++) {
-      if (new Date(h.time[i]).getTime() >= nowMs) {
-        startHourIdx = i;
-        break;
-      }
+    if (curHourPrefix) {
+      const foundIdx = h.time.findIndex(t => t.slice(0, 13) >= curHourPrefix);
+      if (foundIdx >= 0) startHourIdx = foundIdx;
     }
 
     const hourlyList = [];
     for (let i = startHourIdx; i < startHourIdx + 24 && i < h.time.length; i++) {
+      const isoStr = h.time[i];
+      const hrNum = parseInt(isoStr.slice(11, 13), 10);
       hourlyList.push({
-        time: new Date(h.time[i]),
+        time: new Date(isoStr),
+        isoTime: isoStr,
+        hourLabel: formatLocalHourFromIso(isoStr),
         tempC: h.temperature_2m[i],
         feelsC: h.apparent_temperature[i],
         humidity: h.relative_humidity_2m[i],
@@ -1923,18 +2402,19 @@
         windKmh: h.wind_speed_10m[i],
         uv: h.uv_index[i] || 0,
         visibilityM: h.visibility ? h.visibility[i] : 16000,
-        isDay: h.is_day ? h.is_day[i] === 1 : (new Date(h.time[i]).getHours() >= 6 && new Date(h.time[i]).getHours() < 20)
+        isDay: h.is_day ? h.is_day[i] === 1 : (hrNum >= 6 && hrNum < 20)
       });
     }
 
-    const todayStr = new Date().toLocaleDateString('en-CA');
+    const todayStr = curTimeIso ? curTimeIso.slice(0, 10) : new Date().toLocaleDateString('en-CA');
     let startDayIdx = d.time.findIndex(t => t >= todayStr);
     if (startDayIdx < 0) startDayIdx = 0;
 
     const dailyList = [];
     for (let i = startDayIdx; i < d.time.length && dailyList.length < 7; i++) {
       dailyList.push({
-        date: new Date(d.time[i] + 'T12:00:00'),
+        date: new Date(d.time[i] + 'T12:00:00Z'),
+        isoDate: d.time[i],
         maxTempC: d.temperature_2m_max[i],
         minTempC: d.temperature_2m_min[i],
         weatherCode: d.weather_code[i],
@@ -1950,6 +2430,8 @@
     const curHourRef = hourlyList[0] || {};
 
     return {
+      timezone: locTz,
+      currentDateIso: todayStr,
       current: {
         tempC: cur.temperature_2m,
         feelsC: cur.apparent_temperature,
@@ -2051,6 +2533,23 @@
     return `${Math.round(tempC)}°${showUnit ? 'C' : ''}`;
   }
 
+  // NWS Rothfusz Regression Heat Index (valid for T >= 80°F & RH >= 40%; otherwise Steadman/ambient)
+  function computeNwsHeatIndexF(T, R) {
+    if (T < 80) {
+      const simple = 0.5 * (T + 61.0 + ((T - 68.0) * 1.2) + (R * 0.094));
+      return simple >= 80 ? simple : T;
+    }
+    let hi = -42.379 + 2.04901523 * T + 10.14333127 * R
+      - 0.22475541 * T * R - 0.00683783 * T * T - 0.05481717 * R * R
+      + 0.00122874 * T * T * R + 0.00085282 * T * R * R - 0.00000199 * T * T * R * R;
+    if (R < 13 && T >= 80 && T <= 112) {
+      hi -= ((13 - R) / 4) * Math.sqrt((17 - Math.abs(T - 95)) / 17);
+    } else if (R > 85 && T >= 80 && T <= 87) {
+      hi += ((R - 85) / 10) * ((87 - T) / 5);
+    }
+    return hi;
+  }
+
   function calculateSurfaceTemps(tempF, isDay = true, uv = 3, windMph = 5) {
     let solarHeatMultiplier = 0.0;
     if (isDay && uv > 0) {
@@ -2123,7 +2622,7 @@
     if (pet.size === 'small' || pet.size === 'large') heatSensitivityOffset += 2;
     if (pet.age === 'senior' || pet.age === 'puppy') heatSensitivityOffset += 2;
 
-    const heatIndexF = tempF + (humidity > 60 ? (humidity - 60) * 0.15 : 0);
+    const heatIndexF = computeNwsHeatIndexF(tempF, humidity);
     const adjustedHeatIndex = heatIndexF + heatSensitivityOffset;
     const heatIdxDisp = fmtTempF(heatIndexF, true);
 
@@ -2136,12 +2635,12 @@
       heatStatus = 'red';
       heatPill = 'HEAT ADVISORY';
       heatTitle = 'High Heat & Humidity Load';
-      heatDesc = `Hot thermal index (${heatIdxDisp}). Stay hydrated, seek shade midday, and keep ${pet.name}'s walks brief.`;
+      heatDesc = `Hot NWS heat index (${heatIdxDisp}). Stay hydrated, seek shade midday, and keep ${pet.name}'s walks brief${pet.snout === 'brachy' ? ' (extra caution for flat-faced dogs per AVMA)' : ''}.`;
     } else if (tempF >= 80 || adjustedHeatIndex >= 83) {
       heatStatus = 'yellow';
       heatPill = 'WARM & HUMID';
       heatTitle = 'Warm Outdoor Conditions';
-      heatDesc = `Warm air (${airDisp}). Bring water for extended outdoor exercise or walks with ${pet.name}.`;
+      heatDesc = `Warm air (${airDisp}, heat index ${heatIdxDisp}). Bring water for extended outdoor exercise or walks with ${pet.name}.`;
     } else if (tempF < 32) {
       heatStatus = 'yellow';
       heatPill = 'FREEZING';
@@ -2203,6 +2702,13 @@
     const highDisp = isImp ? Math.round((highC * 9 / 5) + 32) : Math.round(highC);
     const lowDisp = isImp ? Math.round((lowC * 9 / 5) + 32) : Math.round(lowC);
 
+    // Location-local date display (avoids browser timezone mismatch, F10)
+    if (el.currentDate && data.currentDateIso) {
+      el.currentDate.textContent = new Date(data.currentDateIso + 'T12:00:00Z').toLocaleDateString('en-US', {
+        weekday: 'long', month: 'short', day: 'numeric', timeZone: 'UTC'
+      });
+    }
+
     el.currentTemp.textContent = `${mainTemp}°`;
     if (el.heroFeelsInline) el.heroFeelsInline.textContent = `Feels ${feelsTemp}${unitSym}`;
     el.tempHigh.textContent = `HIGH ${highDisp}°`;
@@ -2215,14 +2721,17 @@
 
     // Card 1: Today's Weather Summary
     el.boxHeatSafety.className = `instrument-gauge status-${safety.heatStatus}`;
-    if (el.heatStatusPill) el.heatStatusPill.textContent = safety.heatPill;
+    if (el.heatStatusPill) {
+      el.heatStatusPill.className = 'status-pill';
+      el.heatStatusPill.textContent = safety.heatPill;
+    }
     el.heatStatusTitle.textContent = safety.heatTitle;
     el.heatSafetyDesc.textContent = safety.heatDesc;
     el.feelsLikeVal.textContent = `${feelsTemp}${unitSym}`;
-    el.humidityVal.textContent = `${cur.humidity}% · Dew ${dewDisp}°`;
+    el.humidityVal.textContent = `${cur.humidity}% · Dew ${dewDisp}${unitSym}`;
 
     if (el.heroWindVal) {
-      el.heroWindVal.textContent = `${windSpeedVal} ${compassDir} (G${gustSpeedVal})`;
+      el.heroWindVal.textContent = `${windSpeedVal} ${speedUnit} ${compassDir} (G${gustSpeedVal})`;
     }
     if (el.heroSunVal) {
       el.heroSunVal.textContent = formatSunTimes(todayDaily.sunrise, todayDaily.sunset);
@@ -2236,14 +2745,17 @@
     // Update Dynamic Thermal Scale Labels (°F / °C)
     if (el.scaleLblFreeze) {
       el.scaleLblFreeze.textContent = isImp ? '32°F Freeze' : '0°C Freeze';
-      el.scaleLblIdeal.textContent = isImp ? '85°F Ideal' : '29°C Ideal';
-      el.scaleLblWarm.textContent = isImp ? '105°F Warm' : '41°C Warm';
-      el.scaleLblHot.textContent = isImp ? '125°F+ Hot' : '52°C+ Hot';
+      el.scaleLblIdeal.textContent = isImp ? '85°F Mild' : '29°C Mild';
+      el.scaleLblWarm.textContent = isImp ? '105°F Caution' : '41°C Caution';
+      el.scaleLblHot.textContent = isImp ? '125°F+ Burn Risk' : '52°C+ Burn Risk';
     }
 
     // Card 2: Dog Walk & Pavement Check
     el.boxPawSafety.className = `instrument-gauge status-${safety.pawStatus}`;
-    if (el.pawStatusPill) el.pawStatusPill.textContent = safety.pawPill;
+    if (el.pawStatusPill) {
+      el.pawStatusPill.className = 'status-pill';
+      el.pawStatusPill.textContent = safety.pawPill;
+    }
     el.pawStatusTitle.textContent = safety.pawTitle;
     el.pawSafetyDesc.textContent = safety.pawDesc;
     el.asphaltTempVal.textContent = fmtTempF(safety.surfaces.asphaltF, true);
@@ -2424,9 +2936,10 @@
     const enrichedDays = [];
 
     slice7.forEach((d, i) => {
-      const dayName = i === 0 ? 'TODAY' : d.date.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase();
-      const fullDayName = i === 0 ? 'Today' : d.date.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
-      const dateSub = d.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }).toUpperCase();
+      const dateFmtOpts = d.isoDate ? { timeZone: 'UTC' } : {};
+      const dayName = i === 0 ? 'TODAY' : d.date.toLocaleDateString('en-US', { weekday: 'short', ...dateFmtOpts }).toUpperCase();
+      const fullDayName = i === 0 ? 'Today' : d.date.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric', ...dateFmtOpts });
+      const dateSub = d.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', ...dateFmtOpts }).toUpperCase();
       const cond = getWeatherConditionInfo(d.weatherCode, true);
       const maxT = isImp ? Math.round((d.maxTempC * 9 / 5) + 32) : Math.round(d.maxTempC);
       const minT = isImp ? Math.round((d.minTempC * 9 / 5) + 32) : Math.round(d.minTempC);
@@ -2442,21 +2955,24 @@
         statusText = '🐾 Wet Walk';
       }
 
-      const yyyy = d.date.getFullYear();
-      const mm = String(d.date.getMonth() + 1).padStart(2, '0');
-      const dd = String(d.date.getDate()).padStart(2, '0');
-      const dayIsoKey = `${yyyy}-${mm}-${dd}`;
-      const dailyAqBucket = (appState.airQuality && appState.airQuality._dailyByDate && appState.airQuality._dailyByDate[dayIsoKey])
-        ? appState.airQuality._dailyByDate[dayIsoKey]
-        : (i === 0 ? appState.airQuality : null);
-      const estHumidity = d.pop >= 65 ? 78 : d.pop >= 35 ? 62 : 48;
-      const dayAllergy = computeAeroallergenProfile({
-        tempC: d.maxTempC,
-        humidity: estHumidity,
-        windKmh: d.maxWindKmh || 12,
-        weatherCode: d.weatherCode,
-        pop: d.pop
-      }, dailyAqBucket, appState.location.lat, d.date);
+      const dayIsoKey = d.isoDate || `${d.date.getFullYear()}-${String(d.date.getMonth() + 1).padStart(2, '0')}-${String(d.date.getDate()).padStart(2, '0')}`;
+      let dayAllergy;
+      if (i === 0 && appState.todayAllergyProfile) {
+        // Reuse today's exact pollen profile so both panels always agree (F06)
+        dayAllergy = appState.todayAllergyProfile;
+      } else {
+        const dailyAqBucket = (appState.airQuality && appState.airQuality._dailyByDate && appState.airQuality._dailyByDate[dayIsoKey])
+          ? appState.airQuality._dailyByDate[dayIsoKey]
+          : null;
+        const estHumidity = d.pop >= 65 ? 78 : d.pop >= 35 ? 62 : 48;
+        dayAllergy = computeAeroallergenProfile({
+          tempC: d.maxTempC,
+          humidity: estHumidity,
+          windKmh: d.maxWindKmh || 12,
+          weatherCode: d.weatherCode,
+          pop: d.pop
+        }, dailyAqBucket, appState.location.lat, d.date);
+      }
 
       const isAtopicDog = pet.allergy === 'sensitive';
       const adjDayPollenScore = Math.min(10, dayAllergy.maxScore + (isAtopicDog ? 1.0 : 0));
@@ -2669,7 +3185,7 @@
       const val = isImp ? (h.tempC * 9 / 5) + 32 : h.tempC;
       const y = chartBottom - ((val - minT) / rangeT) * (chartBottom - chartTop);
       const saf = calculateDualSafetyIndex(h.tempC, h.humidity, h.windKmh, h.isDay, h.uv);
-      const timeStr = i === 0 ? 'NOW' : h.time.toLocaleTimeString('en-US', { hour: 'numeric', hour12: true }).replace(' ', '');
+      const timeStr = i === 0 ? 'NOW' : (h.hourLabel || h.time.toLocaleTimeString('en-US', { hour: 'numeric', hour12: true }).replace(' ', ''));
       points.push({ x, y, val, pop: h.pop, safety: saf, timeStr, idx: i, raw: h });
     });
 
@@ -2953,14 +3469,20 @@
   function selectSearchLocation(loc) {
     if (!loc) return;
     playHardwareClick(740);
-    appState.location = {
+    const matchingSaved = appState.favorites.find(f =>
+      f.name === loc.name && Math.abs((f.lat || 0) - loc.latitude) < 0.05 && Math.abs((f.lon || 0) - loc.longitude) < 0.05
+    );
+    appState.location = matchingSaved ? { ...matchingSaved } : {
+      id: 'loc_' + Date.now(),
+      label: '',
       name: loc.name,
       state: loc.admin1 || '',
       country: loc.country || '',
-      lat: loc.latitude,
-      lon: loc.longitude
+      lat: Number(Number(loc.latitude).toFixed(4)),
+      lon: Number(Number(loc.longitude).toFixed(4))
     };
     saveJSON('pawcast_location', appState.location);
+    syncEmbeddedStateTag();
     el.locationInput.value = '';
     if (el.clearSearchBtn) el.clearSearchBtn.classList.add('hidden');
     closeSearchDropdown();
@@ -2968,12 +3490,93 @@
     fetchWeatherData(appState.location);
   }
 
+  const US_STATE_ABBR = {
+    AL: 'Alabama', AK: 'Alaska', AZ: 'Arizona', AR: 'Arkansas', CA: 'California',
+    CO: 'Colorado', CT: 'Connecticut', DE: 'Delaware', FL: 'Florida', GA: 'Georgia',
+    HI: 'Hawaii', ID: 'Idaho', IL: 'Illinois', IN: 'Indiana', IA: 'Iowa',
+    KS: 'Kansas', KY: 'Kentucky', LA: 'Louisiana', ME: 'Maine', MD: 'Maryland',
+    MA: 'Massachusetts', MI: 'Michigan', MN: 'Minnesota', MS: 'Mississippi', MO: 'Missouri',
+    MT: 'Montana', NE: 'Nebraska', NV: 'Nevada', NH: 'New Hampshire', NJ: 'New Jersey',
+    NM: 'New Mexico', NY: 'New York', NC: 'North Carolina', ND: 'North Dakota', OH: 'Ohio',
+    OK: 'Oklahoma', OR: 'Oregon', PA: 'Pennsylvania', RI: 'Rhode Island', SC: 'South Carolina',
+    SD: 'South Dakota', TN: 'Tennessee', TX: 'Texas', UT: 'Utah', VT: 'Vermont',
+    VA: 'Virginia', WA: 'Washington', WV: 'West Virginia', WI: 'Wisconsin', WY: 'Wyoming',
+    DC: 'District of Columbia'
+  };
+
+  async function queryOpenMeteoGeocoding(rawQuery, count = 6) {
+    const trimmed = String(rawQuery || '').trim();
+    if (trimmed.length < 2) return [];
+
+    // Parse full-address queries like "San Marcos, TX 78666" or "Austin, TX" (F11)
+    let work = trimmed;
+    let zipCode = null;
+    let stateHint = null;
+
+    const zipMatch = work.match(/\b(\d{5})(?:-\d{4})?\b/);
+    if (zipMatch) {
+      zipCode = zipMatch[1];
+      work = work.replace(zipMatch[0], '').trim();
+    }
+
+    const parts = work.split(',').map(p => p.trim()).filter(Boolean);
+    let cityQuery = parts[0] || '';
+    if (parts.length >= 2) {
+      const stateToken = parts[1].replace(/\./g, '').trim();
+      const upper = stateToken.toUpperCase();
+      stateHint = US_STATE_ABBR[upper] || stateToken;
+    } else if (cityQuery) {
+      const trailingState = cityQuery.match(/^(.+?)\s+([A-Za-z]{2})$/);
+      if (trailingState && US_STATE_ABBR[trailingState[2].toUpperCase()]) {
+        cityQuery = trailingState[1].trim();
+        stateHint = US_STATE_ABBR[trailingState[2].toUpperCase()];
+      }
+    }
+
+    const fetchTerm = async (term, limit) => {
+      const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(term)}&count=${limit}&language=en&format=json`);
+      if (!res.ok) return [];
+      const data = await res.json();
+      return Array.isArray(data.results) ? data.results : [];
+    };
+
+    let results = [];
+    if (cityQuery.length >= 2) {
+      results = await fetchTerm(cityQuery, stateHint ? 12 : count);
+    }
+    if ((!results.length || (stateHint && !results.some(r => (r.admin1 || '').toLowerCase() === stateHint.toLowerCase()))) && zipCode) {
+      const zipResults = await fetchTerm(zipCode, count);
+      if (zipResults.length) {
+        results = zipResults.concat(results);
+      }
+    }
+    if (!results.length && trimmed !== cityQuery) {
+      results = await fetchTerm(trimmed, count);
+    }
+
+    if (stateHint && results.length) {
+      const hintLower = stateHint.toLowerCase();
+      results.sort((a, b) => {
+        const aMatch = (a.admin1 || '').toLowerCase() === hintLower ? 1 : 0;
+        const bMatch = (b.admin1 || '').toLowerCase() === hintLower ? 1 : 0;
+        return bMatch - aMatch;
+      });
+    }
+
+    // Deduplicate by lat/lon
+    const seen = new Set();
+    return results.filter(r => {
+      const key = `${r.name}|${r.admin1 || ''}|${Number(r.latitude).toFixed(2)}|${Number(r.longitude).toFixed(2)}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    }).slice(0, count);
+  }
+
   async function fetchGeocoding(query) {
     try {
-      const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=6&language=en&format=json`);
-      if (!res.ok) return;
-      const data = await res.json();
-      renderGeocodingResults(data.results || []);
+      const results = await queryOpenMeteoGeocoding(query, 6);
+      renderGeocodingResults(results);
     } catch (e) {
       console.error('Geocoding error:', e);
     }
@@ -2987,7 +3590,7 @@
     if (!results.length) {
       const empty = document.createElement('div');
       empty.className = 'search-result-item empty-state';
-      empty.textContent = 'No matching cities found';
+      empty.textContent = 'No matching cities found — try just the city name or 5-digit ZIP';
       el.searchResults.appendChild(empty);
       el.searchResults.classList.remove('hidden');
       el.locationInput.setAttribute('aria-expanded', 'true');
@@ -2998,14 +3601,24 @@
       const item = document.createElement('button');
       item.type = 'button';
       item.id = `search-opt-${idx}`;
-      item.role = 'option';
+      item.setAttribute('role', 'option');
       item.className = 'search-result-item';
       item.setAttribute('aria-selected', 'false');
-      const stateStr = loc.admin1 ? `, ${loc.admin1}` : '';
-      item.innerHTML = `
-        <span><strong>${escapeHtml(loc.name)}</strong>${escapeHtml(stateStr)}</span>
-        <span class="country">${escapeHtml(loc.country || '')}</span>
-      `;
+
+      const leftSpan = document.createElement('span');
+      const strongName = document.createElement('strong');
+      strongName.textContent = loc.name || '';
+      leftSpan.appendChild(strongName);
+      if (loc.admin1) {
+        leftSpan.appendChild(document.createTextNode(`, ${loc.admin1}`));
+      }
+
+      const rightSpan = document.createElement('span');
+      rightSpan.className = 'country';
+      rightSpan.textContent = loc.country || '';
+
+      item.appendChild(leftSpan);
+      item.appendChild(rightSpan);
       item.addEventListener('click', () => selectSearchLocation(loc));
       el.searchResults.appendChild(item);
     });
@@ -3044,13 +3657,16 @@
         const lon = pos.coords.longitude;
         const resolved = await reverseGeocodeCoords(lat, lon);
         appState.location = {
+          id: 'loc_gps_' + Date.now(),
+          label: '',
           name: resolved ? resolved.name : 'Current Location',
           state: resolved ? resolved.state : '',
           country: resolved ? resolved.country : 'GPS',
-          lat,
-          lon
+          lat: Number(lat.toFixed(4)),
+          lon: Number(lon.toFixed(4))
         };
         saveJSON('pawcast_location', appState.location);
+        syncEmbeddedStateTag();
         renderFavoriteChips();
         fetchWeatherData(appState.location);
         showToast(`Location updated to ${appState.location.name}.`, { type: 'success' });
@@ -3077,7 +3693,8 @@
   function setUnits(unit) {
     if (appState.units === unit) return;
     appState.units = unit;
-    localStorage.setItem('pawcast_units', unit);
+    setStorageString('pawcast_units', unit);
+    syncEmbeddedStateTag();
     updateUIPreferences();
     if (appState.weather) renderAllWeatherData(appState.weather);
   }
@@ -3085,28 +3702,42 @@
   function renderFavoriteChips() {
     el.favoriteChips.innerHTML = '';
     appState.favorites.forEach((fav, idx) => {
-      const isCurrent = fav.name === appState.location.name && Math.abs((fav.lat || 0) - appState.location.lat) < 0.25;
+      const isCurrent = isSameLocation(fav, appState.location);
+      const displayName = getLocationDisplayName(fav);
       const group = document.createElement('div');
       group.className = `loc-chip-group ${isCurrent ? 'active' : ''}`;
 
       const selectBtn = document.createElement('button');
       selectBtn.type = 'button';
       selectBtn.className = 'loc-chip-select';
-      selectBtn.textContent = fav.name;
+      selectBtn.textContent = displayName;
+      selectBtn.title = [fav.label, fav.name, fav.state, fav.country].filter(Boolean).join(' · ');
       selectBtn.setAttribute('aria-pressed', isCurrent ? 'true' : 'false');
       selectBtn.addEventListener('click', () => {
         playHardwareClick(680);
-        appState.location = fav;
-        saveJSON('pawcast_location', fav);
+        appState.location = { ...fav };
+        saveJSON('pawcast_location', appState.location);
+        syncEmbeddedStateTag();
         renderFavoriteChips();
-        fetchWeatherData(fav);
+        fetchWeatherData(appState.location);
+      });
+
+      const editBtn = document.createElement('button');
+      editBtn.type = 'button';
+      editBtn.className = 'chip-edit-btn';
+      editBtn.setAttribute('aria-label', `Edit ${displayName}`);
+      editBtn.title = `Edit ${displayName}`;
+      editBtn.textContent = '✎';
+      editBtn.addEventListener('click', () => {
+        playHardwareClick(640);
+        openLocationModal(fav.id, editBtn);
       });
 
       const removeBtn = document.createElement('button');
       removeBtn.type = 'button';
       removeBtn.className = 'chip-remove-btn';
-      removeBtn.setAttribute('aria-label', `Remove ${fav.name} from saved cities`);
-      removeBtn.title = `Remove ${fav.name}`;
+      removeBtn.setAttribute('aria-label', `Remove ${displayName} from saved cities`);
+      removeBtn.title = `Remove ${displayName}`;
       removeBtn.innerHTML = '&times;';
       removeBtn.addEventListener('click', () => {
         playHardwareClick(500);
@@ -3114,6 +3745,7 @@
       });
 
       group.appendChild(selectBtn);
+      group.appendChild(editBtn);
       group.appendChild(removeBtn);
       el.favoriteChips.appendChild(group);
     });
@@ -3121,14 +3753,22 @@
 
   function addCurrentLocationToFavorites() {
     const loc = appState.location;
-    if (appState.favorites.some(f => f.name === loc.name && Math.abs((f.lat || 0) - loc.lat) < 0.25)) {
-      showToast(`${loc.name} is already in Saved Cities.`, { type: 'info' });
+    if (appState.favorites.some(f => isSameLocation(f, loc))) {
+      showToast(`${getLocationDisplayName(loc)} is already in Saved Cities.`, { type: 'info' });
       return;
     }
-    appState.favorites.push({ ...loc });
+    const savedLoc = normalizeLocation({
+      ...loc,
+      id: loc.id && !appState.favorites.some(f => f.id === loc.id) ? loc.id : ('loc_' + Date.now())
+    });
+    if (!savedLoc) return;
+    appState.favorites.push(savedLoc);
+    appState.location = { ...savedLoc };
     saveJSON('pawcast_favorites', appState.favorites);
+    saveJSON('pawcast_location', appState.location);
+    syncEmbeddedStateTag();
     renderFavoriteChips();
-    showToast(`Saved ${loc.name} to quick cities.`, { type: 'success' });
+    showToast(`Saved ${getLocationDisplayName(savedLoc)} to quick cities.`, { type: 'success' });
   }
 
   function removeFavorite(idx) {
@@ -3136,17 +3776,281 @@
     if (!removed) return;
     appState.favorites.splice(idx, 1);
     saveJSON('pawcast_favorites', appState.favorites);
+    syncEmbeddedStateTag();
     renderFavoriteChips();
+    if (el.locationModal && !el.locationModal.classList.contains('hidden')) {
+      if (appState.favorites.length > 0) {
+        populateLocationForm(appState.favorites[0]);
+      } else {
+        populateLocationFormForNew();
+      }
+    }
 
-    showToast(`Removed ${removed.name} from Saved Cities.`, {
+    showToast(`Removed ${getLocationDisplayName(removed)} from Saved Cities.`, {
       type: 'info',
       undoLabel: 'Undo',
       onUndo: () => {
         appState.favorites.splice(Math.min(idx, appState.favorites.length), 0, removed);
         saveJSON('pawcast_favorites', appState.favorites);
+        syncEmbeddedStateTag();
         renderFavoriteChips();
+        if (el.locationModal && !el.locationModal.classList.contains('hidden')) {
+          populateLocationForm(removed);
+        }
+        showToast(`Restored ${getLocationDisplayName(removed)}.`, { type: 'success' });
       }
     });
+  }
+
+  // ==========================================================================
+  // SAVED LOCATIONS MANAGER MODAL (CREATE, READ, UPDATE, DELETE)
+  // ==========================================================================
+  function openLocationModal(targetId, triggerEl) {
+    if (!el.locationModal) return;
+    appState.locationModalTriggerEl = triggerEl || document.activeElement;
+    closeLocLookupDropdown();
+    if (el.locLookupInput) el.locLookupInput.value = '';
+
+    if (targetId === 'NEW') {
+      populateLocationFormForNew();
+    } else if (targetId) {
+      const found = appState.favorites.find(f => f.id === targetId);
+      if (found) populateLocationForm(found);
+      else populateLocationFormForNew();
+    } else {
+      const currentSaved = appState.favorites.find(f => isSameLocation(f, appState.location)) || appState.favorites[0];
+      if (currentSaved) populateLocationForm(currentSaved);
+      else populateLocationFormForNew();
+    }
+
+    el.locationModal.classList.remove('hidden');
+    el.locationModal.setAttribute('aria-hidden', 'false');
+    setBackgroundInert(true);
+    if (el.locLabelInput) el.locLabelInput.focus();
+  }
+
+  function closeLocationModal() {
+    if (!el.locationModal) return;
+    closeLocLookupDropdown();
+    el.locationModal.classList.add('hidden');
+    el.locationModal.setAttribute('aria-hidden', 'true');
+    if (!getActiveModalEl()) setBackgroundInert(false);
+    const restoreTarget = appState.locationModalTriggerEl || el.manageLocationsBtn;
+    if (restoreTarget && typeof restoreTarget.focus === 'function') {
+      restoreTarget.focus();
+    }
+  }
+
+  function renderModalLocationList(editingId) {
+    if (!el.modalLocationList) return;
+    el.modalLocationList.innerHTML = '';
+
+    if (appState.favorites.length === 0) {
+      const emptyNote = document.createElement('span');
+      emptyNote.className = 'mono-label';
+      emptyNote.textContent = 'No saved locations yet. Add one below.';
+      el.modalLocationList.appendChild(emptyNote);
+      return;
+    }
+
+    appState.favorites.forEach(fav => {
+      const chip = document.createElement('button');
+      chip.type = 'button';
+      chip.className = `dog-chip ${fav.id === editingId ? 'active' : ''}`;
+      chip.textContent = `📍 ${getLocationDisplayName(fav)}`;
+      chip.title = [fav.name, fav.state, fav.country].filter(Boolean).join(', ');
+      chip.addEventListener('click', () => {
+        playHardwareClick(660);
+        populateLocationForm(fav);
+      });
+      el.modalLocationList.appendChild(chip);
+    });
+  }
+
+  function populateLocationForm(loc) {
+    if (!loc) return;
+    el.locIdInput.value = loc.id || '';
+    el.locLabelInput.value = loc.label || '';
+    el.locNameInput.value = loc.name || '';
+    el.locStateInput.value = loc.state || '';
+    el.locCountryInput.value = loc.country || '';
+    el.locLatInput.value = typeof loc.lat === 'number' ? loc.lat : '';
+    el.locLonInput.value = typeof loc.lon === 'number' ? loc.lon : '';
+    if (el.locSetActiveCheckbox) el.locSetActiveCheckbox.checked = true;
+    if (el.deleteLocationBtn) {
+      el.deleteLocationBtn.style.display = 'inline-flex';
+      el.deleteLocationBtn.disabled = false;
+      el.deleteLocationBtn.title = `Remove ${getLocationDisplayName(loc)} from saved locations`;
+    }
+    renderModalLocationList(loc.id);
+  }
+
+  function populateLocationFormForNew() {
+    el.locIdInput.value = '';
+    el.locLabelInput.value = '';
+    el.locNameInput.value = '';
+    el.locStateInput.value = '';
+    el.locCountryInput.value = '';
+    el.locLatInput.value = '';
+    el.locLonInput.value = '';
+    if (el.locLookupInput) el.locLookupInput.value = '';
+    closeLocLookupDropdown();
+    if (el.locSetActiveCheckbox) el.locSetActiveCheckbox.checked = true;
+    if (el.deleteLocationBtn) {
+      el.deleteLocationBtn.style.display = 'none';
+    }
+    renderModalLocationList('');
+    if (el.locLookupInput) el.locLookupInput.focus();
+  }
+
+  function handleSaveLocation(e) {
+    e.preventDefault();
+    playHardwareClick(860);
+
+    const existingId = el.locIdInput.value;
+    const latNum = parseFloat(el.locLatInput.value);
+    const lonNum = parseFloat(el.locLonInput.value);
+    const nameVal = el.locNameInput.value.trim();
+
+    if (!nameVal) {
+      showToast('Please enter a city or place name.', { type: 'error' });
+      el.locNameInput.focus();
+      return;
+    }
+    if (!Number.isFinite(latNum) || latNum < -90 || latNum > 90 || !Number.isFinite(lonNum) || lonNum < -180 || lonNum > 180) {
+      showToast('Please enter valid Latitude (-90 to 90) and Longitude (-180 to 180).', { type: 'error' });
+      el.locLatInput.focus();
+      return;
+    }
+
+    const updatedLoc = normalizeLocation({
+      id: existingId || ('loc_' + Date.now()),
+      label: el.locLabelInput.value.trim(),
+      name: nameVal,
+      state: el.locStateInput.value.trim(),
+      country: el.locCountryInput.value.trim(),
+      lat: latNum,
+      lon: lonNum
+    });
+
+    const idx = appState.favorites.findIndex(f => f.id === existingId);
+    const isNew = idx < 0;
+    const wasActive = !isNew && isSameLocation(appState.favorites[idx], appState.location);
+
+    if (!isNew) {
+      appState.favorites[idx] = updatedLoc;
+    } else {
+      appState.favorites.push(updatedLoc);
+    }
+
+    saveJSON('pawcast_favorites', appState.favorites);
+
+    const shouldActivate = (el.locSetActiveCheckbox && el.locSetActiveCheckbox.checked) || wasActive;
+    if (shouldActivate) {
+      appState.location = { ...updatedLoc };
+      saveJSON('pawcast_location', appState.location);
+    }
+
+    syncEmbeddedStateTag();
+    renderFavoriteChips();
+    closeLocationModal();
+
+    if (shouldActivate) {
+      fetchWeatherData(appState.location);
+    }
+    showToast(`${isNew ? 'Added' : 'Updated'} saved location: ${getLocationDisplayName(updatedLoc)}.`, { type: 'success' });
+  }
+
+  function handleDeleteLocationFromModal() {
+    const targetId = el.locIdInput.value;
+    if (!targetId) return;
+    const idx = appState.favorites.findIndex(f => f.id === targetId);
+    if (idx < 0) return;
+    playHardwareClick(440);
+    removeFavorite(idx);
+  }
+
+  function closeLocLookupDropdown() {
+    if (!el.locLookupResults) return;
+    el.locLookupResults.classList.add('hidden');
+    el.locLookupResults.innerHTML = '';
+    appState.locLookupResultsData = [];
+  }
+
+  async function fetchLocationLookup(query) {
+    try {
+      const results = await queryOpenMeteoGeocoding(query, 5);
+      appState.locLookupResultsData = results;
+      el.locLookupResults.innerHTML = '';
+
+      if (!results.length) {
+        const empty = document.createElement('div');
+        empty.className = 'search-result-item empty-state';
+        empty.textContent = 'No matching cities found — try just the city or 5-digit ZIP';
+        el.locLookupResults.appendChild(empty);
+        el.locLookupResults.classList.remove('hidden');
+        return;
+      }
+
+      results.forEach((loc) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'search-result-item';
+        const leftSpan = document.createElement('span');
+        const strongName = document.createElement('strong');
+        strongName.textContent = loc.name || '';
+        leftSpan.appendChild(strongName);
+        if (loc.admin1) leftSpan.appendChild(document.createTextNode(`, ${loc.admin1}`));
+        const rightSpan = document.createElement('span');
+        rightSpan.className = 'country';
+        rightSpan.textContent = loc.country || '';
+        btn.appendChild(leftSpan);
+        btn.appendChild(rightSpan);
+        btn.addEventListener('click', () => {
+          playHardwareClick(720);
+          el.locNameInput.value = loc.name || '';
+          el.locStateInput.value = loc.admin1 || '';
+          el.locCountryInput.value = loc.country || '';
+          el.locLatInput.value = Number(loc.latitude).toFixed(4);
+          el.locLonInput.value = Number(loc.longitude).toFixed(4);
+          el.locLookupInput.value = '';
+          closeLocLookupDropdown();
+          el.locLabelInput.focus();
+        });
+        el.locLookupResults.appendChild(btn);
+      });
+
+      el.locLookupResults.classList.remove('hidden');
+    } catch (e) {
+      console.error('Location lookup error:', e);
+    }
+  }
+
+  function useGpsForLocationModal() {
+    if (!navigator.geolocation) {
+      showToast('Location services are not supported by this browser.', { type: 'error' });
+      return;
+    }
+    if (el.locUseGpsBtn) el.locUseGpsBtn.textContent = 'Locating…';
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const lat = Number(pos.coords.latitude.toFixed(4));
+        const lon = Number(pos.coords.longitude.toFixed(4));
+        const resolved = await reverseGeocodeCoords(lat, lon);
+        el.locNameInput.value = resolved ? resolved.name : 'Current Location';
+        el.locStateInput.value = resolved ? resolved.state : '';
+        el.locCountryInput.value = resolved ? resolved.country : 'GPS';
+        el.locLatInput.value = lat;
+        el.locLonInput.value = lon;
+        if (el.locUseGpsBtn) el.locUseGpsBtn.textContent = 'Use GPS';
+        showToast('Filled coordinates from your current GPS location.', { type: 'success' });
+      },
+      (err) => {
+        if (el.locUseGpsBtn) el.locUseGpsBtn.textContent = 'Use GPS';
+        showToast(`Could not access GPS: ${err.message}`, { type: 'error' });
+      },
+      { timeout: 10000 }
+    );
   }
 
   // ==========================================================================
@@ -3222,18 +4126,24 @@
   }
 
   function formatSunTimes(sunriseIso, sunsetIso) {
-    if (!sunriseIso || !sunsetIso) return '6:45a / 6:30p';
+    if (!sunriseIso || !sunsetIso) return '—';
     try {
-      const sr = new Date(sunriseIso);
-      const ss = new Date(sunsetIso);
-      const fmt = (dt) => {
+      const fmtIsoWallClock = (iso) => {
+        const m = String(iso).match(/T(\d{2}):(\d{2})/);
+        if (m) {
+          const h = parseInt(m[1], 10);
+          const min = m[2];
+          return `${h % 12 || 12}:${min}${h < 12 ? 'a' : 'p'}`;
+        }
+        const dt = new Date(iso);
+        if (isNaN(dt.getTime())) return '—';
         const h = dt.getHours();
-        const m = dt.getMinutes();
-        return `${h % 12 || 12}:${m < 10 ? '0' : ''}${m}${h < 12 ? 'a' : 'p'}`;
+        const min = dt.getMinutes();
+        return `${h % 12 || 12}:${min < 10 ? '0' : ''}${min}${h < 12 ? 'a' : 'p'}`;
       };
-      return `${fmt(sr)} / ${fmt(ss)}`;
+      return `${fmtIsoWallClock(sunriseIso)} / ${fmtIsoWallClock(sunsetIso)}`;
     } catch (e) {
-      return '6:45a / 6:30p';
+      return '—';
     }
   }
 

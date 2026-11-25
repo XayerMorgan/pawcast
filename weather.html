@@ -5,7 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>PawCast — Weather, Radar, Air Quality &amp; Dog Walk Forecast</title>
   <meta name="description" content="Local weather forecast, rolling 7-day outlook, live Doppler radar, EPA air quality &amp; pollen tracker, and dog walk pavement safety guide." />
-  <link rel="icon" href="pawcast_logo.png" type="image/png" />
+  <meta name="theme-color" content="#111315" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" href="favicon-32.png" type="image/png" sizes="32x32" />
+  <link rel="apple-touch-icon" href="icon-180.png" />
+  <link rel="preload" as="image" href="field_station_day.webp" type="image/webp" fetchpriority="high" />
 
   <!-- Editorial & Technical Typography: Fraunces (Serif), Plus Jakarta Sans (Humanist), JetBrains Mono (Telemetry) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -107,7 +111,7 @@
     </header>
 
     <!-- COLLAPSIBLE OPTIONS & DATA SETTINGS DRAWER -->
-    <div id="station-settings-drawer" class="settings-drawer hidden" aria-hidden="true">
+    <section id="station-settings-drawer" class="settings-drawer hidden" aria-label="Weather station options" aria-hidden="true">
       <div class="settings-drawer-inner">
         <div class="setting-item">
           <label for="source-select" class="mono-label">Weather Data Source:</label>
@@ -150,6 +154,14 @@
         </div>
 
         <div class="setting-item">
+          <span class="mono-label">Portable Copy:</span>
+          <button id="save-portable-html-btn" type="button" class="hw-pill-switch portable-save-switch" title="Download a self-contained HTML file with your saved dogs and cities baked in">
+            <span aria-hidden="true">💾</span>
+            <span>Save Local HTML</span>
+          </button>
+        </div>
+
+        <div class="setting-item">
           <a id="nws-gov-link" href="https://forecast.weather.gov" target="_blank" rel="noopener noreferrer" class="gov-dispatch-link" title="Open official National Weather Service forecast for this location">
             <span>Official Weather.gov</span>
             <svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" stroke-width="2.5" fill="none" aria-hidden="true">
@@ -159,22 +171,24 @@
           </a>
         </div>
       </div>
-    </div>
+    </section>
 
     <!-- QUICK SWITCHER BAR: SAVED CITIES & DOG PROFILES -->
-    <div class="sub-telemetry-bar" aria-label="Saved cities and dog profiles">
+    <nav class="sub-telemetry-bar" aria-label="Saved cities and dog profiles">
       <div class="waypoints-group">
         <span class="mono-label">Saved Cities:</span>
         <div id="favorite-chips" class="chips-container"></div>
         <button id="add-favorite-btn" type="button" class="waypoint-add-btn" title="Save current city to quick list">+ Save City</button>
+        <button id="manage-locations-btn" type="button" class="waypoint-manage-btn" title="Create, edit, or delete saved locations">Manage</button>
       </div>
 
       <div class="waypoints-group pack-switcher-group">
         <span class="mono-label">My Dogs:</span>
         <div id="dog-roster-chips" class="chips-container"></div>
         <button id="add-dog-quick-btn" type="button" class="waypoint-add-btn" title="Add another dog profile">+ Add Dog</button>
+        <button id="manage-dogs-btn" type="button" class="waypoint-manage-btn" title="Edit or delete saved dog profiles">Manage</button>
       </div>
-    </div>
+    </nav>
 
     <!-- STICKY SECTION JUMP NAV (Fast wayfinding on desktop & mobile) -->
     <nav class="station-quick-nav" aria-label="Forecast sections">
@@ -231,13 +245,13 @@
               </div>
 
               <!-- Real-Time Allergy & Air Quality Button inside the Hero Weather Box -->
-              <button type="button" class="hero-realtime-allergy-bar" id="hero-realtime-allergy-bar" aria-label="Jump to detailed pollen, allergy, and air quality report" title="Jump to full Pollen, Allergy &amp; Air Quality breakdown">
+              <button type="button" class="hero-realtime-allergy-bar" id="hero-realtime-allergy-bar" title="Jump to full Pollen, Allergy &amp; Air Quality breakdown">
                 <span class="hero-allergy-left">
-                  <span id="hero-allergy-pill" class="hero-allergy-pill">🌿 Allergy: Low (--/10)</span>
-                  <span id="hero-dominant-pollen" class="hero-allergy-meta">Top: Checking...</span>
+                  <span id="hero-allergy-pill" class="hero-allergy-pill">🌿 Allergy: —</span>
+                  <span id="hero-dominant-pollen" class="hero-allergy-meta">Top: —</span>
                 </span>
                 <span class="hero-allergy-right">
-                  <span id="hero-aqi-pill" class="hero-aqi-chip">AQI --</span>
+                  <span id="hero-aqi-pill" class="hero-aqi-chip">AQI —</span>
                   <span class="hero-jump-arrow" aria-hidden="true">→</span>
                 </span>
               </button>
@@ -248,53 +262,53 @@
           <div class="telemetry-gauges-col">
 
             <!-- Card 1: Today's Weather Summary (Non-redundant, complete almanac) -->
-            <div class="instrument-gauge" id="box-heat-safety">
+            <div class="instrument-gauge status-unknown" id="box-heat-safety">
               <div class="gauge-top-bar">
                 <span class="gauge-index">TODAY'S WEATHER SUMMARY</span>
-                <span class="status-pill" id="heat-status-pill">FAIR WEATHER</span>
+                <span class="status-pill status-unknown" id="heat-status-pill">LOADING</span>
               </div>
 
-              <h3 id="heat-status-title" class="gauge-verdict">Comfortable Outdoor Conditions</h3>
+              <h3 id="heat-status-title" class="gauge-verdict">Loading Weather Summary…</h3>
 
               <div class="almanac-metrics-grid">
                 <div class="resp-cell">
                   <span class="resp-label">Feels Like</span>
-                  <strong id="feels-like-val" class="resp-val">--°</strong>
+                  <strong id="feels-like-val" class="resp-val">—</strong>
                 </div>
                 <div class="resp-cell">
                   <span class="resp-label">Humidity &amp; Dew</span>
-                  <strong id="humidity-val" class="resp-val">--%</strong>
+                  <strong id="humidity-val" class="resp-val">—</strong>
                 </div>
                 <div class="resp-cell">
                   <span class="resp-label">Wind &amp; Gusts</span>
-                  <strong id="hero-wind-val" class="resp-val">-- mph</strong>
+                  <strong id="hero-wind-val" class="resp-val">—</strong>
                 </div>
                 <div class="resp-cell">
                   <span class="resp-label">Sunrise / Sunset</span>
-                  <strong id="hero-sun-val" class="resp-val">-- / --</strong>
+                  <strong id="hero-sun-val" class="resp-val">—</strong>
                 </div>
                 <div class="resp-cell">
                   <span class="resp-label">Visibility</span>
-                  <strong id="hero-vis-val" class="resp-val">-- mi</strong>
+                  <strong id="hero-vis-val" class="resp-val">—</strong>
                 </div>
                 <div class="resp-cell">
                   <span class="resp-label">Moon Phase</span>
-                  <strong id="hero-moon-val" class="resp-val">--</strong>
+                  <strong id="hero-moon-val" class="resp-val">—</strong>
                 </div>
               </div>
 
-              <p id="heat-safety-desc" class="gauge-advisory">Pleasant ambient conditions with clear visibility and light winds.</p>
+              <p id="heat-safety-desc" class="gauge-advisory">Fetching current conditions…</p>
             </div>
 
             <!-- Card 2: Dog Walk & Pavement Check -->
-            <div class="instrument-gauge" id="box-paw-safety">
+            <div class="instrument-gauge status-unknown" id="box-paw-safety">
               <div class="gauge-top-bar">
                 <span class="gauge-index">DOG WALK &amp; PAVEMENT CHECK</span>
-                <span class="status-pill" id="paw-status-pill">PAWS SAFE</span>
+                <span class="status-pill status-unknown" id="paw-status-pill">LOADING</span>
               </div>
 
               <div class="adjunct-title-row">
-                <h3 id="paw-status-title" class="gauge-verdict">All Surfaces Safe</h3>
+                <h3 id="paw-status-title" class="gauge-verdict">Checking Surface Conditions…</h3>
                 <span id="subject-coat-val" class="mono-tag">🐾 Max</span>
               </div>
 
@@ -302,9 +316,9 @@
               <div class="thermal-scale-wrap">
                 <div class="thermal-scale-labels">
                   <span id="scale-lbl-freeze">32°F Freeze</span>
-                  <span id="scale-lbl-ideal">85°F Ideal</span>
-                  <span id="scale-lbl-warm">105°F Warm</span>
-                  <span id="scale-lbl-hot">125°F+ Hot</span>
+                  <span id="scale-lbl-ideal">85°F Mild</span>
+                  <span id="scale-lbl-warm">105°F Caution</span>
+                  <span id="scale-lbl-hot">125°F+ Burn Risk</span>
                 </div>
                 <div class="thermal-track" role="img" id="paw-thermal-track" aria-label="Estimated pavement temperature gauge">
                   <div class="thermal-zones"></div>
@@ -317,22 +331,30 @@
               <div class="surface-telemetry-row">
                 <div class="surf-readout-box">
                   <span class="surf-label">Asphalt / Pavement (Est.)</span>
-                  <strong id="asphalt-temp-val" class="surf-mono-val">--°F</strong>
+                  <strong id="asphalt-temp-val" class="surf-mono-val">—</strong>
                 </div>
                 <div class="surf-divider"></div>
                 <div class="surf-readout-box">
                   <span class="surf-label">Lawn / Grass (Est.)</span>
-                  <strong id="grass-temp-val" class="surf-mono-val safe-text">--°F</strong>
+                  <strong id="grass-temp-val" class="surf-mono-val">—</strong>
                 </div>
               </div>
 
-              <p id="paw-safety-desc" class="gauge-advisory">Pavement and grass temperatures are comfortable for walking.</p>
+              <p id="paw-safety-desc" class="gauge-advisory">Waiting for live weather data. Always verify sun-baked pavement with the 7-second bare-hand test before walking.</p>
 
               <!-- Tailored Walk Readiness Checklist -->
               <div id="walk-checklist-row" class="walk-checklist-row" aria-label="Recommended walk gear and actions"></div>
 
               <!-- Cross-Pack Alert Banner (shown if another saved dog has stricter risk) -->
               <button type="button" id="pack-advisory-banner" class="pack-advisory-banner hidden"></button>
+
+              <!-- Cited Pavement Methodology & Veterinary Sources (F07/F28) -->
+              <details class="pavement-method-note">
+                <summary>ⓘ How we estimate pavement &amp; veterinary sources</summary>
+                <div class="pavement-method-body">
+                  Pavement estimates are <strong>guidance, not direct surface measurements</strong>. Direct sunlight can heat dark asphalt 40–60°F (22–33°C) above air temperature (<a href="https://www.aaha.org/resources/how-to-protect-dog-paws-from-hot-pavement/" target="_blank" rel="noopener noreferrer">AAHA</a>); <a href="https://archive.news.wsu.edu/press-release/2017/07/06/protect-pets-feet-from-heat/" target="_blank" rel="noopener noreferrer">WSU CVM</a> (citing Berens, <em>JAMA</em> 1970) reports asphalt reaching 125°F (52°C) at 77°F air and 135°F (57°C) at 86°F air in calm sun, where burns can occur in 60 seconds. Use the <strong>7-second bare-hand test</strong> (<a href="https://www.royalkennelclub.com/health-and-dog-care/health-dog-care/health/health-and-care/a-z-of-health-and-care-issues/hot-pavements/" target="_blank" rel="noopener noreferrer">Royal Kennel Club</a>) and take extra caution with flat-faced, senior, or thick-coated dogs (<a href="https://www.avma.org/resources-tools/pet-owners/petcare/walking-your-pet" target="_blank" rel="noopener noreferrer">AVMA</a>).
+                </div>
+              </details>
             </div>
 
           </div>
@@ -360,7 +382,7 @@
             <span class="pulse-dot amber" aria-hidden="true"></span>
             <span class="mono-title">Best Hours Today:</span>
           </div>
-          <div id="walk-windows-grid" class="windows-ribbon"></div>
+          <div id="walk-windows-grid" class="windows-ribbon" tabindex="0" role="region" aria-label="Best walk hours today"></div>
         </div>
       </section>
 
@@ -404,7 +426,7 @@
         <!-- Hourly Cards Strip with Scroll Controls -->
         <div class="hourly-strip-shell">
           <button type="button" id="hourly-scroll-left" class="strip-scroll-btn left" aria-label="Scroll hourly forecast earlier" title="Scroll earlier">‹</button>
-          <div class="hourly-strip" id="hourly-scroller"></div>
+          <div class="hourly-strip" id="hourly-scroller" tabindex="0" role="region" aria-label="24-hour forecast cards"></div>
           <button type="button" id="hourly-scroll-right" class="strip-scroll-btn right" aria-label="Scroll hourly forecast later" title="Scroll later">›</button>
         </div>
       </section>
@@ -464,12 +486,12 @@
         <div class="panel-header">
           <div>
             <span class="panel-code">AIR QUALITY &amp; ALLERGENS</span>
-            <h2 class="panel-title">Pollen Levels, EPA Air Quality Index &amp; Allergy Guide</h2>
+            <h2 class="panel-title">Pollen &amp; Mold Estimates, EPA Air Quality Index &amp; Allergy Guide</h2>
           </div>
           <div class="allergy-header-badges">
-            <span id="allergy-data-source-tag" class="mono-tag source-tag">CAMS / Seasonal</span>
-            <span id="aqi-badge" class="mono-tag aqi-pill">US AQI: --</span>
-            <span id="allergy-overall-badge" class="status-pill">Allergy Risk: Low</span>
+            <span id="allergy-data-source-tag" class="mono-tag source-tag" title="Open-Meteo CAMS provides live pollen in Europe; outside Europe, pollen and mold are estimated from season, temperature, humidity, wind, and rain.">Loading…</span>
+            <span id="aqi-badge" class="mono-tag aqi-pill">US AQI: —</span>
+            <span id="allergy-overall-badge" class="status-pill status-unknown">Allergy Risk: —</span>
             <button id="allergen-help-toggle-btn" class="hw-pill-switch allergen-help-btn" type="button" aria-expanded="false" aria-controls="allergen-help-drawer">
               <span class="help-q-icon" aria-hidden="true">?</span>
               <span id="allergen-help-btn-text">Allergen Guide</span>
@@ -490,10 +512,10 @@
                     Common late-spring and summer allergen (Bermuda, Timothy, Bluegrass, Rye). Can trigger human hay fever when airborne and cling to dog paws on lawns.
                   </span>
                 </span>
-                <strong id="pollen-grass-val" class="allergen-level">LOW (1.8 / 10)</strong>
+                <strong id="pollen-grass-val" class="allergen-level">—</strong>
               </div>
               <div class="allergen-bar-track">
-                <div id="pollen-grass-bar" class="allergen-bar-fill safe" style="width: 18%;"></div>
+                <div id="pollen-grass-bar" class="allergen-bar-fill" style="width: 0%;"></div>
               </div>
             </div>
 
@@ -507,10 +529,10 @@
                     Wind-dispersed spring pollen. A primary driver of spring sinus congestion and itchy eyes; also settles on outdoor surfaces and pet coats.
                   </span>
                 </span>
-                <strong id="pollen-tree-val" class="allergen-level">LOW (1.2 / 10)</strong>
+                <strong id="pollen-tree-val" class="allergen-level">—</strong>
               </div>
               <div class="allergen-bar-track">
-                <div id="pollen-tree-bar" class="allergen-bar-fill safe" style="width: 12%;"></div>
+                <div id="pollen-tree-bar" class="allergen-bar-fill" style="width: 0%;"></div>
               </div>
             </div>
 
@@ -524,27 +546,27 @@
                     Late-summer to autumn allergen active until frost. Triggers human seasonal allergies and can irritate sensitive skin or paws in dogs.
                   </span>
                 </span>
-                <strong id="pollen-weed-val" class="allergen-level">MODERATE (4.8 / 10)</strong>
+                <strong id="pollen-weed-val" class="allergen-level">—</strong>
               </div>
               <div class="allergen-bar-track">
-                <div id="pollen-weed-bar" class="allergen-bar-fill caution" style="width: 48%;"></div>
+                <div id="pollen-weed-bar" class="allergen-bar-fill" style="width: 0%;"></div>
               </div>
             </div>
 
             <div class="allergen-row" data-allergen-help="mold">
               <div class="allergen-meta">
                 <span class="allergen-name-wrap">
-                  <span class="allergen-name">Mold &amp; Damp Spores</span>
+                  <span class="allergen-name">Mold &amp; Damp Spores (Est.)</span>
                   <button type="button" class="inline-help-trigger" data-help-target="mold" aria-label="Mold spores definition">?</button>
                   <span class="help-popover" role="tooltip">
-                    <strong>Fungal Mold &amp; Damp Spores (Alternaria, Cladosporium)</strong>
-                    Spores thriving in high humidity, damp soil, and wet leaves. Can trigger sinus or respiratory irritation and damp paw sensitivity.
+                    <strong>Fungal Mold &amp; Damp Spores (Estimated Model)</strong>
+                    Estimated from humidity, precipitation, season, and freezing temperatures. Spores thrive in damp soil and wet leaves.
                   </span>
                 </span>
-                <strong id="pollen-mold-val" class="allergen-level">LOW (2.4 / 10)</strong>
+                <strong id="pollen-mold-val" class="allergen-level">—</strong>
               </div>
               <div class="allergen-bar-track">
-                <div id="pollen-mold-bar" class="allergen-bar-fill safe" style="width: 24%;"></div>
+                <div id="pollen-mold-bar" class="allergen-bar-fill" style="width: 0%;"></div>
               </div>
             </div>
           </div>
@@ -711,7 +733,7 @@
                 Standardized EPA index combining particulate matter and ground-level ozone into a 0–500 scale for planning outdoor activity.
               </p>
               <div class="def-clinical-meta">
-                <div><strong>0–50 (Good):</strong> Ideal outdoors | <strong>51–100 (Moderate):</strong> Generally acceptable | <strong>101–150:</strong> Sensitive groups &amp; flat-faced dogs should limit heavy exertion | <strong>151+:</strong> Unhealthy for all.</div>
+                <div><strong>EPA Bands (<a href="https://www.airnow.gov/aqi/aqi-basics/" target="_blank" rel="noopener noreferrer">AirNow.gov</a>):</strong> <strong>0–50</strong> Good · <strong>51–100</strong> Moderate · <strong>101–150</strong> Unhealthy for Sensitive Groups · <strong>151–200</strong> Unhealthy · <strong>201–300</strong> Very Unhealthy · <strong>301+</strong> Hazardous.</div>
               </div>
             </article>
 
@@ -753,7 +775,7 @@
               </div>
               <h4 class="def-title">☀️ Ground-Level Ozone (O₃)</h4>
               <p class="def-body">
-                A reactive gas formed when strong sunlight reacts with vehicle and industrial emissions on warm days. Typically peaks between <strong>2:00 PM and 7:00 PM</strong>.
+                A reactive gas formed when strong sunlight reacts with vehicle and industrial emissions on warm days. Levels are often highest on warm, sunny afternoons (<a href="https://www.airnow.gov/aqi/aqi-basics/" target="_blank" rel="noopener noreferrer">US EPA AirNow</a>).
               </p>
               <div class="def-clinical-meta">
                 <div><strong>Guidance:</strong> Can cause throat irritation and coughing during strenuous exercise. Schedule runs and longer dog walks for the morning hours.</div>
@@ -779,9 +801,9 @@
               <span class="sensor-id">Rain Chance</span>
               <span class="sensor-unit">Today</span>
             </div>
-            <strong id="metric-pop" class="sensor-reading">0%</strong>
+            <strong id="metric-pop" class="sensor-reading">—</strong>
             <div class="sensor-mini-bar"><div id="bar-pop" class="sensor-fill" style="width: 0%"></div></div>
-            <span id="metric-precip-sub" class="sensor-sub">0.00 in expected today</span>
+            <span id="metric-precip-sub" class="sensor-sub">Loading…</span>
           </div>
 
           <div class="sensor-cell">
@@ -789,8 +811,8 @@
               <span class="sensor-id">Wind &amp; Gusts</span>
               <span class="sensor-unit">Speed</span>
             </div>
-            <strong id="metric-wind" class="sensor-reading">5 mph NW</strong>
-            <span id="metric-gust-sub" class="sensor-sub">Gusts to 9 mph</span>
+            <strong id="metric-wind" class="sensor-reading">—</strong>
+            <span id="metric-gust-sub" class="sensor-sub">Loading…</span>
           </div>
 
           <div class="sensor-cell">
@@ -798,9 +820,9 @@
               <span class="sensor-id">UV Index</span>
               <span class="sensor-unit">Sun</span>
             </div>
-            <strong id="metric-uv" class="sensor-reading">3 (Mod)</strong>
-            <div class="sensor-mini-bar"><div id="bar-uv" class="sensor-fill uv-fill" style="width: 30%"></div></div>
-            <span id="metric-uv-sub" class="sensor-sub">Sunscreen advised midday</span>
+            <strong id="metric-uv" class="sensor-reading">—</strong>
+            <div class="sensor-mini-bar"><div id="bar-uv" class="sensor-fill uv-fill" style="width: 0%"></div></div>
+            <span id="metric-uv-sub" class="sensor-sub">Loading…</span>
           </div>
 
           <div class="sensor-cell">
@@ -808,9 +830,9 @@
               <span class="sensor-id">Humidity</span>
               <span class="sensor-unit">Air</span>
             </div>
-            <strong id="metric-humidity" class="sensor-reading">45%</strong>
-            <div class="sensor-mini-bar"><div id="bar-hum" class="sensor-fill" style="width: 45%"></div></div>
-            <span id="metric-hum-sub" class="sensor-sub">Comfortable air moisture</span>
+            <strong id="metric-humidity" class="sensor-reading">—</strong>
+            <div class="sensor-mini-bar"><div id="bar-hum" class="sensor-fill" style="width: 0%"></div></div>
+            <span id="metric-hum-sub" class="sensor-sub">Loading…</span>
           </div>
 
           <div class="sensor-cell">
@@ -818,8 +840,8 @@
               <span class="sensor-id">Dew Point</span>
               <span class="sensor-unit">Comfort</span>
             </div>
-            <strong id="metric-dewpoint" class="sensor-reading">52°F</strong>
-            <span id="metric-vis-sub" class="sensor-sub">Visibility: 10.0 mi</span>
+            <strong id="metric-dewpoint" class="sensor-reading">—</strong>
+            <span id="metric-vis-sub" class="sensor-sub">Visibility: —</span>
           </div>
 
           <div class="sensor-cell">
@@ -827,8 +849,8 @@
               <span class="sensor-id">Pressure</span>
               <span class="sensor-unit" id="baro-unit-label">inHg</span>
             </div>
-            <strong id="metric-pressure" class="sensor-reading">29.97 inHg</strong>
-            <span id="metric-baro-sub" class="sensor-sub">1015 hPa · Steady</span>
+            <strong id="metric-pressure" class="sensor-reading">—</strong>
+            <span id="metric-baro-sub" class="sensor-sub">Loading…</span>
           </div>
         </div>
       </section>
@@ -843,6 +865,7 @@
       </div>
       <div class="footer-right">
         <span class="privacy-pill">Saved cities &amp; dog profiles stored locally in your browser</span>
+        <button id="footer-save-html-btn" type="button" class="hw-btn secondary sm-btn" title="Save a standalone local HTML copy with your current dogs and cities embedded">💾 Save Local HTML</button>
       </div>
     </footer>
 
@@ -877,7 +900,7 @@
         <div class="form-grid-two">
           <div class="form-field">
             <label for="dog-name">Dog Name</label>
-            <input type="text" id="dog-name" value="Max" placeholder="e.g. Max, Bella, Cooper" required />
+            <input type="text" id="dog-name" value="Max" placeholder="e.g. Max, Bella, Cooper" maxlength="40" required />
           </div>
 
           <div class="form-field">
@@ -888,6 +911,11 @@
               <option value="senior">Senior (7+ years)</option>
             </select>
           </div>
+        </div>
+
+        <div class="form-field">
+          <label for="dog-breed">Breed / Care Notes (Optional)</label>
+          <input type="text" id="dog-breed" value="" placeholder="e.g. Golden Retriever · wears booties in snow" maxlength="80" />
         </div>
 
         <div class="form-field">
@@ -929,6 +957,7 @@
         <div class="dialog-footer-split">
           <div class="config-backup-actions">
             <button type="button" id="delete-dog-btn" class="hw-btn danger-outline" title="Remove this dog profile">Delete</button>
+            <button type="button" id="modal-save-html-btn" class="hw-btn secondary" title="Download a standalone HTML file with your saved dogs and locations">Save HTML</button>
             <button type="button" id="export-config-btn" class="hw-btn secondary" title="Download saved dogs and cities as a JSON backup">Export</button>
             <button type="button" id="import-config-btn" class="hw-btn secondary" title="Restore saved dogs and cities from a JSON backup">Import</button>
             <input type="file" id="import-config-file" accept=".json,application/json" class="sr-only" aria-label="Import backup JSON file" />
@@ -942,11 +971,104 @@
     </div>
   </div>
 
+  <!-- ACCESSIBLE LOCATION MANAGER MODAL DIALOG (CREATE, READ, UPDATE, DELETE) -->
+  <div id="location-modal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="location-modal-title">
+    <div class="calibration-dialog">
+      <div class="dialog-header">
+        <div>
+          <span class="panel-code">SAVED LOCATIONS &amp; WAYPOINTS</span>
+          <h3 id="location-modal-title">Manage Saved Locations</h3>
+        </div>
+        <button id="close-location-modal-btn" type="button" class="hw-icon-btn" aria-label="Close location manager dialog">&times;</button>
+      </div>
+
+      <!-- Saved Locations Roster Strip inside Modal -->
+      <div class="modal-pack-roster">
+        <div class="roster-bar-top">
+          <span class="mono-label">Saved Locations (click to edit or switch):</span>
+          <button type="button" id="new-location-modal-btn" class="waypoint-add-btn">+ Add New Location</button>
+        </div>
+        <div id="modal-location-list" class="chips-container"></div>
+      </div>
+
+      <!-- Quick Lookup Helper (Geocoding Search or Current GPS) -->
+      <div class="loc-lookup-box">
+        <div class="loc-lookup-row">
+          <label for="loc-lookup-input" class="sr-only">Look up a city to auto-fill coordinates</label>
+          <input type="text" id="loc-lookup-input" placeholder="Search city or postal code to auto-fill coordinates..." autocomplete="off" />
+          <button type="button" id="loc-use-gps-btn" class="hw-btn secondary sm-btn" title="Fill coordinates from your current GPS location">Use GPS</button>
+        </div>
+        <div id="loc-lookup-results" class="loc-lookup-results hidden" role="listbox" aria-label="Location lookup suggestions"></div>
+      </div>
+
+      <form id="location-profile-form" class="calibration-form">
+        <input type="hidden" id="loc-id" value="" />
+
+        <div class="form-grid-two">
+          <div class="form-field">
+            <label for="loc-label">Custom Label (Optional)</label>
+            <input type="text" id="loc-label" placeholder="e.g. Home, Dog Park, Cabin" maxlength="32" />
+          </div>
+
+          <div class="form-field">
+            <label for="loc-name">City / Place Name</label>
+            <input type="text" id="loc-name" placeholder="e.g. Austin" maxlength="60" required />
+          </div>
+        </div>
+
+        <div class="form-grid-two">
+          <div class="form-field">
+            <label for="loc-state">State / Region</label>
+            <input type="text" id="loc-state" placeholder="e.g. Texas" maxlength="60" />
+          </div>
+
+          <div class="form-field">
+            <label for="loc-country">Country</label>
+            <input type="text" id="loc-country" placeholder="e.g. United States" maxlength="60" />
+          </div>
+        </div>
+
+        <div class="form-grid-two">
+          <div class="form-field">
+            <label for="loc-lat">Latitude (-90 to 90)</label>
+            <input type="number" id="loc-lat" step="any" min="-90" max="90" placeholder="40.7128" required />
+          </div>
+
+          <div class="form-field">
+            <label for="loc-lon">Longitude (-180 to 180)</label>
+            <input type="number" id="loc-lon" step="any" min="-180" max="180" placeholder="-74.0060" required />
+          </div>
+        </div>
+
+        <div class="form-field checkbox-field">
+          <label class="checkbox-label" for="loc-set-active">
+            <input type="checkbox" id="loc-set-active" checked />
+            <span>Switch active weather forecast to this location on save</span>
+          </label>
+        </div>
+
+        <div class="dialog-footer-split">
+          <div class="config-backup-actions">
+            <button type="button" id="delete-location-btn" class="hw-btn danger-outline" title="Remove this saved location">Delete</button>
+            <button type="button" id="loc-save-html-btn" class="hw-btn secondary" title="Download a standalone HTML file with your saved locations and dogs">Save HTML</button>
+          </div>
+          <div class="dialog-actions">
+            <button type="button" id="cancel-location-modal-btn" class="hw-btn secondary">Cancel</button>
+            <button type="submit" class="hw-btn primary">Save Location</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- NON-BLOCKING TOAST NOTIFICATION STACK (Supports Undo!) -->
   <div id="toast-container" class="toast-container" role="status" aria-live="polite" aria-atomic="true"></div>
 
-  <!-- Leaflet JS CDN -->
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-  <script src="app.js"></script>
+  <!-- PORTABLE EMBEDDED STATE (Preserves saved dogs & locations in a singular HTML file) -->
+  <script id="pawcast-embedded-state" type="application/json">{"version":"7.0","savedAt":0,"dogs":null,"activeDogId":null,"favorites":null,"location":null,"units":null,"source":null,"refreshIntervalMins":null}</script>
+
+  <!-- Leaflet JS CDN (Deferred for faster FCP/LCP) -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin="" defer></script>
+  <script src="app.js" defer></script>
 </body>
 </html>
